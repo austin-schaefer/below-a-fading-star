@@ -31,14 +31,14 @@ export function tubsOf() {
 
 // The heads' turning. heads: [{ slot, at: [x, y, z], yaw }]; flask: [x, y, z]; uTurn: the material's Vector4s.
 // update(dt, eye, dark): eye the visitor's (a Vector3), dark the gutter's depth (sky.flicker.dark).
-const TAU = [1.5, 2.4, 1.0, 3.1, 1.9, 1.9, 1.3, 0.8]; // each its own pace (s); the lovers together
+const TAU = [1.1, 1.7, 0.8, 2.2, 1.4, 1.4, 1.0, 0.6]; // each its own pace (s); the lovers together
 const WEST = -Math.PI / 2, STILL_AFTER = 8, REACH = 34;
 export function makeTurner(heads, flask, uTurn, { stillAfter = STILL_AFTER } = {}) {
   const headingTo = (h, x, z) => Math.atan2(x - h.at[0], z - h.at[2]);
   const S = heads.map((h) => { const y0 = angDiff(headingTo(h, flask[0], flask[2]), h.yaw); return { h, yaw: y0, aim: y0, pitch: 0.4, tau: TAU[h.slot], mode: 'flask' }; });
   let still = 1e3, lx = NaN, lz = NaN;
   const ease = (dt, tau) => 1 - Math.exp(-dt / tau);
-  const state = { S, get still() { return still; }, mode: 'flask' };
+  const state = { S, get still() { return still; }, mode: 'flask', err: () => Math.max(...S.map((s) => s.err || 0)) }; // err: the worst head's angle off the visitor (rad)
   state.update = (dt, eye, dark = 0) => {
     dt = Math.min(dt, 0.25);
     if (dt <= 0) return;
@@ -54,14 +54,14 @@ export function makeTurner(heads, flask, uTurn, { stillAfter = STILL_AFTER } = {
       if (mode === 'west') { heading = WEST; pitch = 0.12; k = 0.55; }
       else if (mode === 'visitor') { heading = headingTo(h, eye.x, eye.z); pitch = Math.max(-0.45, Math.min(0.5, Math.atan2(eye.y - h.at[1] - 0.19, hyp(eye.x - h.at[0], eye.z - h.at[2])))); k = 1; }
       else { heading = headingTo(h, flask[0], flask[2]); pitch = Math.min(0.7, Math.atan2(flask[1] - h.at[1] - 0.19, hyp(flask[0] - h.at[0], flask[2] - h.at[2]))); k = 3.2; }
-      // the turn from rest, kept on the side it is already on until the stem would be wrung past its limit
+      // the head goes round the short way, as often as it likes; the stem under it leans with it and never winds up
+      // (the body's share is 1.2 sin(turn): none when the head looks straight back)
       const base = angDiff(heading, h.yaw);
-      let to = base + Math.PI * 2 * Math.round((s.aim - base) / (Math.PI * 2));
-      if (Math.abs(to) > Math.PI * 1.3) to = base;
-      s.aim += (to - s.aim) * ease(dt, 0.35 * s.tau * k);       // a little late: the turn itself follows an eased aim
-      s.yaw += (s.aim - s.yaw) * ease(dt, s.tau * k);
+      s.aim += angDiff(base, s.aim) * ease(dt, 0.3 * s.tau * k);       // a little late: the turn itself follows an eased aim
+      s.yaw += angDiff(s.aim, s.yaw) * ease(dt, 0.7 * s.tau * k);
+      s.err = mode === 'visitor' ? Math.abs(angDiff(base, s.yaw)) : 0;
       s.pitch += (pitch - s.pitch) * ease(dt, s.tau * k);
-      uTurn[h.slot].set(s.yaw, h.slot === 7 ? s.pitch * 0.3 : s.pitch, h.yaw, 0);
+      uTurn[h.slot].set(s.yaw, h.slot === 7 ? s.pitch * 0.3 : s.pitch, h.yaw, 1.2 * Math.sin(s.yaw));
     }
   };
   state.update(1e-3, { x: 1e6, y: 0, z: 1e6 }, 0);
@@ -115,7 +115,7 @@ export async function build(ctx) {
   panes.name = 'florilegium-glass'; panes.position.copy(frame.position); panes.renderOrder = 3;
   scene.add(panes);
   const ground = makeGround(ctx);
-  const cast = buildCast({ groundAt: (x, z) => ground.at(cx + x, cz + z) - fy, low });
+  const cast = buildCast({ groundAt: (x, z) => ground.at(cx + x, cz + z) - fy, low, r1: 27 });
   cast.mesh.position.copy(frame.position);
   scene.add(cast.mesh);
   // the glints: one Points draw. The flask's halo (never under 9 px, so it is found from the wood), and a scatter of
@@ -126,7 +126,7 @@ export async function build(ctx) {
     const h = (k * 5 + j) * 0.618 % 1, a = (k + (h - 0.5) * 0.7) * (Math.PI * 2 / N), i = [0, 0, 1, 3, 5][j], t = (j * 0.37 + h) % 1;
     const r = j < 2 ? A + 0.05 : PROF[i][0] + (PROF[i + 1][0] - PROF[i][0]) * t, y = j < 2 ? 2.7 + 1.0 * t : PROF[i][1] + (PROF[i + 1][1] - PROF[i][1]) * t;
     const c = PANES[(j + k) % 3 === 0 ? SCHEME_B[k] : SCHEME_A[k]];
-    gp.push(cx + Math.cos(a) * r * 0.97, fy + y, cz + Math.sin(a) * r * 0.97); gc.push(c[0], c[1], c[2]); gs.push(0.5 + 0.5 * h, 2.6, 1);
+    gp.push(cx + Math.cos(a) * r * 0.97, fy + y, cz + Math.sin(a) * r * 0.97); gc.push(c[0], c[1], c[2]); gs.push(0.7 + 0.6 * h, 3.6, 1);
   }
   const hg = new THREE.BufferGeometry();
   hg.setAttribute('position', new THREE.Float32BufferAttribute(gp, 3)); hg.setAttribute('aCol', new THREE.Float32BufferAttribute(gc, 3)); hg.setAttribute('aS', new THREE.Float32BufferAttribute(gs, 3));
@@ -136,14 +136,16 @@ export async function build(ctx) {
       void main() { vec4 mv = modelViewMatrix * vec4(position, 1.0); gl_Position = projectionMatrix * mv; float d = max(-mv.z, 0.1);
         gl_PointSize = clamp(aS.x * uScale / d, aS.y, 56.0);
         float far = smoothstep(16.0, 34.0, d) * (1.0 - smoothstep(110.0, 170.0, d));
-        vCol = aCol * mix(1.0, far * 1.5, aS.z); vHeart = 1.0 - aS.z; }`,
+        vCol = aCol * mix(1.0, far * 2.6, aS.z); vHeart = 1.0 - aS.z; }`,
     fragmentShader: `uniform float uBreath; varying vec3 vCol; varying float vHeart; void main() { vec2 c = (gl_PointCoord - 0.5) * 2.0; float r2 = dot(c, c); gl_FragColor = vec4(vCol * (exp(-r2 * 4.0) * 0.5 + exp(-r2 * 40.0) * 1.4 * vHeart + exp(-r2 * 9.0) * 0.5 * (1.0 - vHeart)) * (1.0 - smoothstep(0.7, 1.0, r2)) * uBreath, 1.0); }`,
     transparent: true, depthWrite: false, blending: THREE.AdditiveBlending,
   }));
   // the glow in the wood's air: five soft discs that face the eye, drawn at the house's depth so every trunk between
   // stands black against them; from 20 m in they are gone and the house is its own light
   const hz = { p: [], o: [], c: [], i: [] };
-  [[NOON.light, 0, 5.5, 0, 10, 0.4], [PANES[0], 3.6, 4, 2.4, 9, 0.6], [PANES[3], -2.6, 4.4, 3.6, 9, 0.7], [PANES[4], -3.4, 5.2, -2.6, 9, 0.6], [PANES[1], 2.8, 6, -3.4, 9, 0.5], [PANES[2], 0, 8, 0, 7, 0.4]].forEach(([c, x, y, z, r, k], q) => {
+  [[NOON.light, 0, 7, 0, 13, 0.55], [PANES[0], 4.6, 4.5, 3.4, 12, 0.95], [PANES[3], -2.6, 5, 4.6, 12, 1.1], [PANES[4], -4.4, 6, -3.6, 12, 0.95], [PANES[1], 3.8, 7, -4.4, 12, 0.8], [PANES[2], 0, 10, 0, 9, 0.7],
+    // the mist between the house and the wood way: its colours carried east along the spur, low, thinning
+    [PANES[1], 14, 2.5, 3, 8, 0.3], [PANES[5], 22, 2.2, -4, 9, 0.24], [PANES[3], 30, 2, 2, 9, 0.2], [PANES[0], 38, 2, -2, 9, 0.15], [PANES[4], 12, 3, -9, 8, 0.25], [PANES[2], 13, 3, 10, 8, 0.22]].forEach(([c, x, y, z, r, k], q) => {
     for (const [ox, oy] of [[-1, -1], [1, -1], [1, 1], [-1, 1]]) { hz.p.push(cx + x, fy + y, cz + z); hz.o.push(ox, oy, r); hz.c.push(c[0] * k, c[1] * k, c[2] * k); }
     hz.i.push(q * 4, q * 4 + 1, q * 4 + 2, q * 4, q * 4 + 2, q * 4 + 3);
   });
@@ -153,7 +155,7 @@ export async function build(ctx) {
     uniforms: { uBreath: glass.uniforms.uBreath },
     vertexShader: `attribute vec3 aOff, aCol; varying vec3 vCol; varying vec2 vC;
       void main() { vec4 mv = modelViewMatrix * vec4(position, 1.0); float d = max(-mv.z, 0.1); mv.xy += aOff.xy * aOff.z; gl_Position = projectionMatrix * mv;
-        vC = aOff.xy; vCol = aCol * smoothstep(20.0, 42.0, d) * (1.0 - smoothstep(120.0, 190.0, d)); }`,
+        vC = aOff.xy; vCol = aCol * smoothstep(13.0, 34.0, d) * (1.0 - smoothstep(120.0, 190.0, d)); }`,
     fragmentShader: `uniform float uBreath; varying vec3 vCol; varying vec2 vC; void main() { float r2 = dot(vC, vC); gl_FragColor = vec4(vCol * exp(-r2 * 3.2) * (1.0 - smoothstep(0.75, 1.0, r2)) * uBreath, 1.0); }`,
     transparent: true, depthWrite: false, blending: THREE.AdditiveBlending,
   }));

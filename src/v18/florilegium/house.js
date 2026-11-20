@@ -110,12 +110,12 @@ export function buildFrame({ low = false, tubs = [] } = {}) {
     P.paint('#000000', 0, 1, 0); P.box(leaf + 0.092, 1.05, w - 0.22, 0.004, 0.07, 0.025);
     { const pts = []; for (let i = 0; i <= 12; i++) { const a = (i / 12) * Math.PI * 2; pts.push([leaf + 0.1, 1.3 + Math.cos(a) * 0.075 - 0.075, w - 0.22 + Math.sin(a) * 0.075]); } P.paint(mixc(IRON, RUST_L, 0.5), 0.6, 0.5, 0); P.loft(pts, pts.map(() => 0.014), 5, 0, false); }
     // the key: brass, a hand long, on a nail in the middle rail's inner face, hanging behind the clear pane
-    const kx = x - 0.07, kz = 0.12, ky = 1.82;
-    P.paint(IRON, 0.5, 0.6, 0); P.loft([[x - 0.01, 1.9, kz], [kx - 0.03, 1.91, kz]], [0.008, 0.008], 4, 0, true);
-    P.paint(GILT, 0.7, 0.35, 1.6);
-    { const pts = []; for (let i = 0; i <= 12; i++) { const a = (i / 12) * Math.PI * 2; pts.push([kx, ky + Math.cos(a) * 0.075, kz + Math.sin(a) * 0.06]); } P.loft(pts, pts.map(() => 0.016), 5, 0, false); }
-    P.loft([[kx, ky - 0.075, kz], [kx, ky - 0.42, kz]], [0.018, 0.018], 5, 0, true);
-    P.box(kx, ky - 0.34, kz + 0.05, 0.016, 0.06, 0.09); P.box(kx, ky - 0.4, kz + 0.04, 0.016, 0.04, 0.07); P.box(kx, ky - 0.1, kz, 0.03, 0.02, 0.03);
+    const kx = x - 0.07, kz = 0.0, ky = 1.8;
+    P.paint(IRON, 0.5, 0.6, 0); P.loft([[x - 0.01, 1.92, kz], [kx - 0.03, 1.93, kz]], [0.01, 0.01], 4, 0, true);
+    P.paint(GILT, 0.7, 0.35, 4.0);
+    { const pts = []; for (let i = 0; i <= 12; i++) { const a = (i / 12) * Math.PI * 2; pts.push([kx, ky + Math.cos(a) * 0.1, kz + Math.sin(a) * 0.085]); } P.loft(pts, pts.map(() => 0.022), 5, 0, false); }
+    P.loft([[kx, ky - 0.1, kz], [kx, ky - 0.56, kz]], [0.024, 0.024], 5, 0, true);
+    P.box(kx, ky - 0.46, kz + 0.07, 0.022, 0.08, 0.13); P.box(kx, ky - 0.54, kz + 0.055, 0.022, 0.05, 0.1); P.box(kx, ky - 0.1, kz, 0.03, 0.02, 0.03);
   }
   // ---- outside the door: a step, the paving, and in it the grate over the dark
   {
@@ -245,7 +245,7 @@ export function buildGlass({ low = false } = {}) {
           // fish-scale quarries: each pane a disc lapped by the row above, so what shows is a petal hanging down
           // (the lower wall is a vitrine: inside a border of the side's colours its panes are large and nearly clear, so
           // what stands in the tubs is seen)
-          bool clear = kind < 1.5 && abs(vUv.x) < ${(RC * Math.sin(Math.PI / N) - 0.36).toFixed(3)} && vUv.y < ${(MID - SILL + 0.62).toFixed(3)};   // (to a little over the transom: the tallest heads and what they hold up)
+          bool clear = kind < 1.5 && abs(vUv.x) < ${(RC * Math.sin(Math.PI / N) - 0.36).toFixed(3)} && vUv.y < ${(MID - SILL + 0.95).toFixed(3)};   // (to a little over the transom: the tallest heads and what they hold up)
           vec2 q = vUv / (clear ? vec2(0.98, 0.9) : vec2(0.37, 0.33)); float jb = floor(q.y * 2.0), R = 0.72, od = 9.0; vec2 oc = vec2(0.0);
           for (int i = 2; i >= -2; i--) {
             float j = jb + float(i), off = 0.5 * mod(j, 2.0), cx = floor(q.x - off + 0.5) + off; vec2 c = vec2(cx, j * 0.5); float d = distance(q, c);
@@ -256,15 +256,15 @@ export function buildGlass({ low = false } = {}) {
           float h = flH(oc * 3.1 + seed), h2 = flH(oc * 5.7 + seed + 3.0), h3 = flH(oc * 1.3 + seed + 9.0);
           if (h3 > 0.953 && kind < 1.5) discard;                                   // a pane gone: the hole looks in
           float up = smoothstep(0.6, 6.6, vY + (h2 - 0.5) * 3.2);
-          int ci = h < 0.11 ? int(h * 72.0) : (h2 < up ? int(vBay.y + 0.5) : int(vBay.x + 0.5));
+          int ci = h < 0.15 ? int(h * 53.0) : (h2 < up ? int(vBay.y + 0.5) : int(vBay.x + 0.5));
           tint = PANES[ci] * (0.62 + 0.38 * h2);
-          glow = 0.3 + 0.7 * flH(oc * 7.3 + seed + 1.0); if (flH(oc * 2.9 + seed + 4.0) > 0.84) { glow *= 0.22; tint *= 0.5; }   // some gone dull with soot
+          glow = 0.15 + 0.85 * flH(oc * 7.3 + seed + 1.0); if (flH(oc * 2.9 + seed + 4.0) > 0.84) { glow *= 0.22; tint *= 0.5; }   // some gone dull with soot
           if (clear && h > 0.07) { tint = mix(vec3(0.8, 0.86, 0.76), PANES[ci], 0.16) * (0.78 + 0.22 * h2); glow = 0.1; }
           // hand-made glass: thicker and darker toward the lead, streaked
-          tint *= (1.0 - 0.3 * smoothstep(0.25, 0.72, od)) * (0.93 + 0.07 * sin(dot(q - oc, cd0(h)) * 11.0));
+          tint *= (1.0 - 0.45 * smoothstep(0.2, 0.72, od)) * (1.0 + 0.5 * smoothstep(0.1, 0.0, abs(od - (R - lw - 0.09))) * step(0.5, h2)) * (0.93 + 0.07 * sin(dot(q - oc, cd0(h)) * 11.0));
           // a crack across some: a dark line where it was leaded up again
           vec2 cd = vec2(cos(h * 40.0), sin(h * 40.0));
-          if (h3 < 0.1) lead = max(lead, 1.0 - smoothstep(0.02, 0.05, abs(dot(q - oc, cd) - 0.12)));
+          if (h3 < 0.17) lead = max(lead, 1.0 - smoothstep(0.02, 0.05, abs(dot(q - oc, cd) - 0.12)));
           // green slime low on the walls, soot and dust everywhere
           float low = kind < 0.5 ? exp(-vUv.y * 1.6) : 0.0;
           tint = mix(tint, tint * vec3(0.5, 0.78, 0.42), low * 0.8) * (1.0 - 0.3 * low);
@@ -300,7 +300,7 @@ export function buildCast({ groundAt, low = false, r1 = 19 }) {
   g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
   g.setAttribute('aPol', new THREE.Float32BufferAttribute(pol, 2));
   g.setIndex(idx); g.computeBoundingSphere();
-  const uniforms = { uCast: { value: 1.5 }, uBreath: { value: 1 }, uT: { value: 0 } };
+  const uniforms = { uCast: { value: 2.6 }, uBreath: { value: 1 }, uT: { value: 0 } };
   const material = new THREE.ShaderMaterial({
     uniforms: { ...THREE.UniformsUtils.merge([THREE.UniformsLib.fog]), ...uniforms },
     vertexShader: `attribute vec2 aPol; varying vec2 vPol;
@@ -320,7 +320,7 @@ export function buildCast({ groundAt, low = false, r1 = 19 }) {
         int ci = h < 0.12 ? int(h * 66.0) : (h2 < smoothstep(6.0, 15.0, r) ? SB[si] : SA[si]);
         float blot = smoothstep(0.7, 0.12, length(f * vec2(1.0, 1.2))) * (0.35 + 0.65 * h2);
         float rib = smoothstep(0.5, 0.4, abs(la));
-        float fall = pow(${RC.toFixed(3)} / r, 1.7) * smoothstep(${r1.toFixed(1)}, ${(r1 * 0.6).toFixed(1)}, r) * smoothstep(${(RC + 0.25).toFixed(2)}, ${(RC + 0.9).toFixed(2)}, r);
+        float fall = pow(${RC.toFixed(3)} / r, 1.25) * smoothstep(${r1.toFixed(1)}, ${(r1 * 0.6).toFixed(1)}, r) * smoothstep(${(RC + 0.25).toFixed(2)}, ${(RC + 0.9).toFixed(2)}, r);
         vec3 col = PANES[ci] * blot * rib * fall * uCast * uBreath;
         #ifdef USE_FOG
           col *= exp(-fogDensity * fogDensity * vFogDepth * vFogDepth);
