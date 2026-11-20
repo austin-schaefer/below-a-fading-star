@@ -42,6 +42,14 @@ The owner's word: issue #18 ("Enliven and enrich the forest biome"), pinned `nex
 
 ## Status
 
+**2026-11-20, 06:05 PST. F1 merged (de61256): the ground is in. F2, F3, F4 built and reviewed, merging on top in that order.**
+
+- **F1 merged** after round two: `settings` 103 (stands' view lines are cleared of trees for 4.5 m), the reach casts no shadow on low and triangles on low are under v17.1's at every stand (heart 1557k to 1502k), small scatter and fallen trunks keep the claims; the orchestrator's own run: settings 103, geometry 146, threads 25, foxfire 21. The once-red `geometry` did not reproduce in six runs. **Not met: the spur junctions are not found from the road** (two readers). F1 is in round three on the same branch for it: spurs leave square to the road, a made threshold at each, foxfire inside the mouth and off the moss light's teal.
+- **F2** (round two in; in its last pass after merging `next`): faces are flowers' markings now, the key hangs lit, the house sits in a halo from the road. Left: the magnate's cup and the falconer's bird through the glass; a test row for the heads' facing.
+- **F3** (round two in, `2e9dad4`; waits for F2's merge: its grate hole closes only on F2's level court at y -3.2): the vault reads at once; `beds-walk` now requires the `beds` floor at its level; the chamber's reader: "a half-open sarcophagus, mallet and chisel on the lid ... the work abandoned; roots ... converging at a doorway". Weak: the lid's carved figure is a blob, the room is very dark, the tubs from below read as pods. Cold review: the under kit used soundly; claims.js and plan.js will conflict with F2 (two `BEDS` imports would stop the page).
+- **F4** (round two in; round three among the lobe's real trees): the stilters pass for trees in a line-up with real ones. Not met: a moved one reads as a swap, not as having followed. Moths wait for F2's panes.
+- Worktrees and ports as opened. Next: F2 merges, then F3, then F4; the suite on `next`; F5 the sound; the map's marks and the names; critic, curator, gate.
+
 **2026-11-20, 05:10 PST. Three of four handed back once; none merged; all in round two.**
 
 - **F1 the reach** (`issue-1801-reach`, 8181, opus; `briefs/v18/reports/issue-1801-reach.md`): the lobe (`src/v18/reach.js`, behind one box test, `heightAt` unchanged), about 40 lobe trees and a ragged rim, spurs P57 to P59, P33 rerouted south of the glasshouse, foxfire. **Sent back** on the cold review and the orchestrator's run: `settings` red (the reshuffle put a tree before a stand; `standNear` clears a footprint, not a view line); 27k new shadow triangles on low; small scatter (toadstools, pods, pebbles, bracken, fallen trunks) ignores the claims; the junctions are not found from the road (its own reader); `geometry` red once and green once (an unstable row, also seen by F4). Not to merge until 1 to 4 are green: the others stand on it.
