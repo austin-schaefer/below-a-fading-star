@@ -427,10 +427,10 @@ export function buildStilters(ctx, { leadAt = null, exitAt = null, trees = [] } 
     } else {
       // it follows: nearer, on the side the visitor came by, between where it stood and the way they came
       const came = cameFrom(), own = Math.atan2(st.x - vx, st.z - vz);
-      const mid = own + Math.atan2(Math.sin(came - own), Math.cos(came - own)) * 0.6;
-      const want = Math.max(S.keep + 1, Math.min(14, d - 3 - rng() * 3));
+      const mid = own + Math.atan2(Math.sin(came - own), Math.cos(came - own)) * 0.3;
+      const want = Math.max(S.keep + 1, Math.min(12, d * 0.6));
       for (let k = 0; k < 28; k++) {
-        const a = mid + (rng() - 0.5) * Math.min(1.6, 0.5 + k * 0.06), dd = Math.max(S.keep + 1, want + (rng() - 0.5) * (2 + k * 0.15));
+        const a = mid + (rng() - 0.5) * Math.min(1.6, 0.3 + k * 0.05), dd = Math.max(S.keep + 1, want + (rng() - 0.5) * (1 + k * 0.15));
         tries.push([vx + Math.sin(a) * dd, vz + Math.cos(a) * dd]);
       }
     }
