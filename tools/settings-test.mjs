@@ -139,7 +139,7 @@ const shown = (page) => page.evaluate(() => document.getElementById('settings').
   check('quality: carries pos and yaw', nu && Math.abs(nx - nav.x) < 0.06 && Math.abs(nz - nav.z) < 0.06 && Math.abs(Number(nu.searchParams.get('yaw')) - nav.yaw) < 0.001, nav);
   check('quality: keeps the other params', nu && nu.searchParams.get('shadows') === '0' && nu.searchParams.get('bloom') === '0', nav.nav);
 
-  // v17.1-Q1 (#70): the panel's places are a drawn map: sixteen marks or fewer, each a stand from PLACES (the whole list
+  // v17.1-Q1 (#70): the panel's places are a drawn map: seventeen marks or fewer, each a stand from PLACES (the whole list
   // stays for the debug panel and the tools) with a plain line and its name; the rows below check every mark's stand
   // as they checked every entry of the old list
   await page.evaluate(() => window.__fp.settings.open());
@@ -151,7 +151,7 @@ const shown = (page) => page.evaluate(() => document.getElementById('settings').
   });
   const n = mapInfo.n;
   check(`map: fetched and drawn on the first open (${mapInfo.ms} ms), a chart with something on it`, mapInfo.fetched && mapInfo.w >= 400 && mapInfo.lit > 0.5, mapInfo);
-  check('map: sixteen marks (twelve at the least), each a button, each a stand in the whole list (PLACES)', n >= 12 && n <= 16 && n === (await page.evaluate(async () => (await import('./src/v17_1/map.js')).MARKS.length)) && mapInfo.buttons === n && mapInfo.inPlaces, mapInfo);
+  check('map: seventeen marks (twelve at the least), each a button, each a stand in the whole list (PLACES)', n >= 12 && n <= 17 && n === (await page.evaluate(async () => (await import('./src/v17_1/map.js')).MARKS.length)) && mapInfo.buttons === n && mapInfo.inPlaces, mapInfo);
   check('map: each mark has a plain line (short, not a quotation) and a name', mapInfo.lines.every((l) => l.length >= 12 && l.length <= 64 && !/[\u201c\u201d"]/.test(l)) && new Set(mapInfo.names).size === n, mapInfo.lines);
   check('map: the whole list (PLACES) still holds every place, the cut ones too (the Bitter End, the Long Wait, the living, the story ends)', await page.evaluate(() => { const P = window.__fp.settings.places; return P.length > 70 && ['The Bitter End', 'The Long Wait', 'The Hanging Croft'].every((k) => P.some((p) => p.name === k)) && P.filter((p) => p.group === 'Stories').length === 8 && P.filter((p) => p.group === 'The living').length === 17; }));
   // the mouse: pointing at a mark says what it is, its name second; leaving it puts the line back
@@ -220,7 +220,7 @@ const shown = (page) => page.evaluate(() => document.getElementById('settings').
   }
   let allNear = true, allClosed = true, allGround = true, noCue = true, facing = true;
   const detail = [];
-  // every stand in PLACES (the map's sixteen by a click on their mark, the rest by settings.teleport, as cards-walk, perf and the tools go)
+  // every stand in PLACES (the map's seventeen by a click on their mark, the rest by settings.teleport, as cards-walk, perf and the tools go)
   const nAll = await page.evaluate(() => window.__fp.settings.places.length);
   for (let i = 0; i < nAll; i++) {
     const r = await page.evaluate((i) => {

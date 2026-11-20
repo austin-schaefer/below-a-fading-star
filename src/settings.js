@@ -27,6 +27,7 @@ const HAND = { // stand points kept from the first list; look: a point, a landma
   wood: { x: SITES.lightMoss.x + 6, z: SITES.lightMoss.z, look: SITES.lightMoss },
   bridge: { x: -60, z: 150, look: { x: 60, z: 215 }, pitch: 0.25 }, // v11-F2: on the open ground south of the arches, the Span's arcade in view (the old stand was in the woods)
   tarn: { x: -90, z: 50, look: LANDMARKS.tarn },
+  florilegium: { x: -250, z: 128, look: { x: -265, z: 126 }, pitch: 0.05 }, // v18: the level court east of the glasshouse's door, the house across it to the west
   taverna: { x: 66, z: -52, look: { x: 95, z: -45 }, pitch: 0.05 }, // v15-W1: on the west way, the house's west wall and its towers across the grass (r + 6 toward spawn now lands inside the Strake's new house)
 };
 // v11-F2: the card places (no `at`, no hand stand) were r + 6 m from their centre toward spawn: grass at the foot of a wall
