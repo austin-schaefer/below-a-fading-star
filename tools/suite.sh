@@ -43,6 +43,8 @@ run music-selftest tools/music-score-selftest.mjs
 run music-render tools/music-render.mjs all
 run music-director tools/music-director-sim.mjs
 run music-live tools/music-test.mjs $B
+run sketches tools/sketch-render.mjs all
+run listen tools/listen-test.mjs $B
 run settings tools/settings-test.mjs "$B/?q=low&shadows=0&bloom=0"
 run dressing tools/dressing-test.mjs $B
 run threads tools/threads-test.mjs $B

@@ -26,7 +26,7 @@ export default {
       part: `-:4 | -:4 | <.5> ${SH} | ${SH} | ${SH} | ${SH} | ${SH} | ${SH} | ${SH} | ${SH} | <.35> ${SH} | -:1` },
     { id: 'bars', patch: 's-marimba', gain: 1,
       part: `-:4 | <.5> ${OD} | ${OD} | ${OD} | ${OD} | ${OD} | <.56> ${OG} | ${OG} | <.5> ${OD} | ${OD} | <.42> ${OD} | <.5> D3:1` },
-    { id: 'drone', patch: 's-cello', gain: 0.7,
+    { id: 'drone', patch: 's-cello', gain: 0.55,
       part: `-:4 | <.3> D2+A2:4 | D2+A2:4 | D2+A2:4 | D2+A2:4 | D2+A2:4 | G2+D3:4 | G2+D3:4 | D2+A2:4 | D2+A2:4 | D2+A2:4 | D2+A2:3` },
   ],
 };

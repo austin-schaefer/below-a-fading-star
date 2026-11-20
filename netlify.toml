@@ -6,11 +6,11 @@
   # run on the site names its commit, and _headers stamps every response with it (X-Fp-Commit): the service
   # worker (sw.js, v13-L1) keeps a file only under the commit its own response names, so it cannot mix releases.
   publish = "_site"
-  command = 'rm -rf _site && mkdir _site && cp -R index.html sw.js src vendor favicon-32.png apple-touch-icon.png _site/ && printf "{\"commit\":\"%s\"}" "${COMMIT_REF:0:7}" > _site/commit.json && printf "/*\n  X-Fp-Commit: %s\n" "${COMMIT_REF:0:7}" > _site/_headers'
+  command = 'rm -rf _site && mkdir _site && cp -R index.html listen.html sw.js src vendor favicon-32.png apple-touch-icon.png _site/ && printf "{\"commit\":\"%s\"}" "${COMMIT_REF:0:7}" > _site/commit.json && printf "/*\n  X-Fp-Commit: %s\n" "${COMMIT_REF:0:7}" > _site/_headers'
   # Build only when something the site serves changed. Netlify bills by the build, and most commits here
   # are docs, briefs, tools and tests. Exit 0 skips the build (Netlify's ignore contract). Runs against the
   # last successfully built commit. A new top-level file the page loads goes in both lists.
-  ignore = "git diff --quiet $CACHED_COMMIT_REF $COMMIT_REF -- index.html sw.js src vendor netlify.toml favicon-32.png apple-touch-icon.png"
+  ignore = "git diff --quiet $CACHED_COMMIT_REF $COMMIT_REF -- index.html listen.html sw.js src vendor netlify.toml favicon-32.png apple-touch-icon.png"
 
 [[headers]]
   for = "/*"
