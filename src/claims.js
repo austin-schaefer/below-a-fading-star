@@ -14,6 +14,7 @@
 //   'trees'   trees and shrubs: placed but neither drawn nor collided (src/vegetation/ground.js hiddenAt), by the collider's r
 //   'cover'   ground cover: grass, flowers, reeds (src/vegetation/ground.js excluded, margin < 0)
 //   'trods'   the walked trods worn across the grass between the leads (src/v4/paths.js)
+//   'pebbles' the pebbles (src/rocks.js, after their draws; v18-F1): only a claim that names them keeps them off
 //
 // A claim: { name, keeps: [who, ...], kind, ...shape, y0?, y1? }
 //   disc   { x, z, r }                    box  { x0, x1, z0, z1 }      strip { a: [x, z], b: [x, z], half }
@@ -35,7 +36,7 @@ import { CLEARINGS, inEntry, leadUnder, CAUSEWAY_CLEAR } from './v8/clearings.js
 import { villageClear } from './v15/plan.js';
 import { LANDMARKS as L } from './world.js';
 import { SPHERE } from './v17/plan.js';
-import { GLASSHOUSE, BEDS, GROVE } from './v18/plan.js';
+import { GLASSHOUSE, BEDS, GROVE, SPUR_MOUTHS } from './v18/plan.js';
 
 export const CLAIMS = [
   // v8-11's table, kept clear of stones and boulders (see src/v8/clearings.js for each place's reasons)
@@ -66,10 +67,11 @@ export const CLAIMS = [
   // its glass; the Lower Beds' door in the bank and the ground before it; the stilters' glade at the north spur's end, where
   // they ring the visitor (the grove round it stays wooded). And the glasshouse seen from the wood way: a few trunks
   // thinned off the line from (-205, 128) to its door, below the crowns (the canopy is not cut: no ride).
-  { name: 'the Florilegium', keeps: ['rocks', 'blocks', 'trees', 'cover', 'trods'], kind: 'disc', x: GLASSHOUSE.x, z: GLASSHOUSE.z, r: GLASSHOUSE.r },
+  { name: 'the Florilegium', keeps: ['rocks', 'pebbles', 'blocks', 'trees', 'cover', 'trods'], kind: 'disc', x: GLASSHOUSE.x, z: GLASSHOUSE.z, r: GLASSHOUSE.r },
   { name: 'the walk round the Florilegium', keeps: ['rocks', 'trees'], kind: 'disc', x: GLASSHOUSE.x, z: GLASSHOUSE.z, r: GLASSHOUSE.r + 3 },
-  { name: 'the Lower Beds\' door', keeps: ['rocks', 'blocks', 'trees', 'trods'], kind: 'disc', x: BEDS.door.x, z: BEDS.door.z, r: 5 },
+  { name: 'the Lower Beds\' door', keeps: ['rocks', 'pebbles', 'blocks', 'trees', 'cover', 'trods'], kind: 'disc', x: BEDS.door.x, z: BEDS.door.z, r: 5 },
   { name: 'the stilters\' glade', keeps: ['rocks', 'trees'], kind: 'disc', x: GROVE.x, z: GROVE.z, r: 6 },
+  ...SPUR_MOUTHS.map((m, i) => ({ name: `the mouth of spur ${i + 1}`, keeps: ['trees'], kind: 'strip', a: m.a, b: m.b, half: m.half })), // v18-F1: a gap in the trunks at each spur's head, seen from the road
   { name: 'the glasshouse\'s sightline', keeps: ['trees'], kind: 'strip', a: [-205, 128], b: [GLASSHOUSE.door.x, GLASSHOUSE.door.z], half: 0.5 },
 ];
 

@@ -49,11 +49,12 @@ const res = await page.evaluate(async () => {
     const knot = cl.filter((c) => Math.hypot(c.x - head[0], c.z - head[1]) < 9);
     const mouth = knot.filter((c) => c.host === 'stump').length;
     // the chain
-    const along = cl.filter((c) => !knot.includes(c) || c.host === 'stump');
+    // (every clump past the knot is seen from one before it, within 14 m: the knot's two mouth stumps are one station)
     const breaks = [];
-    for (let i = 1; i < along.length; i++) {
-      const a = along[i - 1], b = along[i], d = Math.hypot(a.x - b.x, a.z - b.z);
-      if (d > 14 || !sees(a, b)) breaks.push(`${a.at.toFixed(0)}->${b.at.toFixed(0)} (${d.toFixed(1)} m${d > 14 ? '' : ', blocked'})`);
+    for (const b of cl) {
+      if (knot.includes(b)) continue;
+      const before = cl.filter((a) => a !== b && a.at <= b.at);
+      if (!before.some((a) => Math.hypot(a.x - b.x, a.z - b.z) <= 14 && sees(a, b))) { const a = before[before.length - 1]; breaks.push(`${a ? a.at.toFixed(0) : '?'}->${b.at.toFixed(0)} (${a ? Math.hypot(a.x - b.x, a.z - b.z).toFixed(1) : '?'} m)`); }
     }
     // from every 4 m of the spur, a clump in sight within 16 m
     const blind = [];

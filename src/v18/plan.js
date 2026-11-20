@@ -11,6 +11,12 @@ export const SPURS = {
   beds: { from: { x: -214, z: 172 }, to: { x: -249, z: 172 } },   // south-west, to the Lower Beds' door in the bank
   north: { from: { x: -160, z: 86 }, to: { x: -198, z: 24 } },    // north, out of the old wood and into the lobe, to the stilters' grove
 };
+// F1: each spur's mouth, kept clear of trunks (a gap seen from the road): from its head on P32 along its first leg
+export const SPUR_MOUTHS = [
+  { a: [-200, 125], b: [-208.5, 123.2], half: 2.4 },
+  { a: [-214, 172], b: [-219.5, 178.8], half: 2.4 },
+  { a: [-160, 86], b: [-166.5, 80.6], half: 2.4 },
+];
 
 // F2: the Florilegium, the glasshouse. A claim of r 13 on the patch at mean slope 0.24; nobody walks inside it.
 export const GLASSHOUSE = { x: -265, z: 126, r: 13, door: { x: -257, z: 127 } };

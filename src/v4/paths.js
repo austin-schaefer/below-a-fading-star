@@ -176,7 +176,7 @@ function buildLeads(ctx) {
   for (const L of B.list) {
     if (L.kind === 'kerb') continue; // the kerb is stones (buildKerb), not a wear
     const kind = KIND[L.kind];
-    const lift = L.cls === 'way' ? 1 : L.cls === 'spur' ? 0.3 : 0.55; // v8-01: a way reads paler than a trod; v18-F1: a spur darker still
+    const lift = L.cls === 'way' ? 1 : L.cls === 'spur' ? 0.42 : 0.55; // v8-01: a way reads paler than a trod; v18-F1: a spur a little darker
     // the decal is wider than the worn line: the shoulders are where it fades
     const half = L.kind === 'rivulet' ? Math.max(0.55, L.w * 3.2) : L.kind === 'kerb' ? L.w * 1.4 : L.w * 2.0;
     for (const S of L.lines) {
@@ -210,13 +210,15 @@ function buildLeads(ctx) {
     function pushRow(c, r) {
       const T = c.T, base = T.pos.length / 3, nx = -r.tz, nz = r.tx; // across: left of the direction
       const ang = Math.atan2(nz, nx);
+      // (v18-F1: a spur's first 10 m worn wider and paler, so its line is seen leaving the road's edge)
+      const head = L.cls === 'spur' ? 1 - smoothstep(4, 11, r.s) : 0, hw = half * (1 + 0.6 * head), lf = lift + 0.5 * head;
       for (const u of across) {
-        const x = r.x + nx * u * half, z = r.z + nz * u * half;
+        const x = r.x + nx * u * hw, z = r.z + nz * u * hw;
         let y = Math.max(G.heightAt(x, z), terrain.heightAt(x, z)) + 0.035;
         if (L.kind === 'kerb') y += 0.05 * (1 - Math.abs(u)); // the stones stand a little proud
         T.pos.push(x, y, z);
         T.lead.push(u, r.s, kind, r.open);
-        T.mat.push(r.mat, lift, ang);
+        T.mat.push(r.mat, lf, ang);
         groundCol(x, z, _gc); T.gc.push(_gc[0], _gc[1], _gc[2]);
       }
       if (c.rows > 0) {

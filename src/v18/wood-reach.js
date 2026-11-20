@@ -107,14 +107,17 @@ export function growReach(ctx, ground, K) {
   }
   return { stats };
 
+  // a standing tree whose trunk is within d of (x, z) (near() keeps a tree's spacing, half the sum of two gaps: too wide
+  // for a log laid between trunks)
+  function nearTrunk(x, z, d) { return near(x, z, 2 * d, true, true); }
   // a fallen trunk from (x, z) along rot, if all of it lies on open ground and (clear > 0) that far off every lead
   function lay(x, z, v, rot, tint, clear = 0) {
     const len = variants[v].len, dx = Math.cos(rot), dz = -Math.sin(rot); // object +x after rotation about y
     for (let t = 0; t <= 1; t += 0.2) {
       const px = x + dx * len * t, pz = z + dz * len * t;
       // (beside a spur, the root plate may lie on the worn verge: excluded()'s woody margin keeps the rest 2 m off the line)
-      if (ground.excluded(px, pz, clear > 0 && t === 0 ? -0.01 : 1) || ground.slopeAt(px, pz) > 0.35 || near(px, pz, clear > 0 ? -3 : 0.6, true)) return false;
-      if (clear > 0 && (ground.wornAt(px, pz) > 0.8 || ground.hiddenAt(px, pz, 0.4))) return false; // (off the tread and its worn verge, and every claim)
+      if (ground.excluded(px, pz, clear > 0 && t === 0 ? -0.01 : 1) || ground.slopeAt(px, pz) > 0.35 || nearTrunk(px, pz, clear > 0 ? 0.9 : 2.8)) return false;
+      if ((clear > 0 && ground.wornAt(px, pz) > 0.8) || ground.hiddenAt(px, pz, 0.4)) return false; // (off the tread and its worn verge; no part of it across a claimed site)
     }
     const t = place(x, z, v, 1, 0, rot, tint, 'fallen', false);
     t.fullTilt = true;
