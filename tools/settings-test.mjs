@@ -151,7 +151,7 @@ const shown = (page) => page.evaluate(() => document.getElementById('settings').
   });
   const n = mapInfo.n;
   check(`map: fetched and drawn on the first open (${mapInfo.ms} ms), a chart with something on it`, mapInfo.fetched && mapInfo.w >= 400 && mapInfo.lit > 0.5, mapInfo);
-  check('map: twelve to sixteen marks, each a button, each a stand in the whole list (PLACES)', n >= 12 && n <= 16 && mapInfo.buttons === n && mapInfo.inPlaces, mapInfo);
+  check('map: sixteen marks (twelve at the least), each a button, each a stand in the whole list (PLACES)', n >= 12 && n <= 16 && n === (await page.evaluate(async () => (await import('./src/v17_1/map.js')).MARKS.length)) && mapInfo.buttons === n && mapInfo.inPlaces, mapInfo);
   check('map: each mark has a plain line (short, not a quotation) and a name', mapInfo.lines.every((l) => l.length >= 12 && l.length <= 64 && !/[\u201c\u201d"]/.test(l)) && new Set(mapInfo.names).size === n, mapInfo.lines);
   check('map: the whole list (PLACES) still holds every place, the cut ones too (the Bitter End, the Long Wait, the living, the story ends)', await page.evaluate(() => { const P = window.__fp.settings.places; return P.length > 70 && ['The Bitter End', 'The Long Wait', 'The Hanging Croft'].every((k) => P.some((p) => p.name === k)) && P.filter((p) => p.group === 'Stories').length === 8 && P.filter((p) => p.group === 'The living').length === 17; }));
   // the mouse: pointing at a mark says what it is, its name second; leaving it puts the line back
@@ -483,8 +483,8 @@ const shown = (page) => page.evaluate(() => document.getElementById('settings').
   const lay = await page.evaluate(async () => {
     const S = window.__fp.settings; await S.mapReady();
     const f = document.querySelector('.map-frame').getBoundingClientRect(), R = S.marks.map((m) => m.el.getBoundingClientRect());
-    let overlap = 0; for (let a = 0; a < R.length; a++) for (let b = a + 1; b < R.length; b++) overlap = Math.max(overlap, Math.min(R[a].right, R[b].right) - Math.max(R[a].left, R[b].left) > 0 && Math.min(R[a].bottom, R[b].bottom) - Math.max(R[a].top, R[b].top) > 0 ? Math.min(Math.min(R[a].right, R[b].right) - Math.max(R[a].left, R[b].left), Math.min(R[a].bottom, R[b].bottom) - Math.max(R[a].top, R[b].top)) : 0);
-    return { frame: [Math.round(f.width), Math.round(f.height)], small: R.filter((r) => r.width < 43.9 || r.height < 43.9).length, out: R.filter((r) => r.left < f.left - 1 || r.right > f.right + 1 || r.top < f.top - 1 || r.bottom > f.bottom + 1 || r.right > innerWidth).length, overlap: +overlap.toFixed(1) };
+    let close = 1e9; for (let a = 0; a < R.length; a++) for (let b = a + 1; b < R.length; b++) close = Math.min(close, Math.hypot(R[a].left - R[b].left, R[a].top - R[b].top)); // the marks are round: centre to centre
+    return { frame: [Math.round(f.width), Math.round(f.height)], small: R.filter((r) => r.width < 43.9 || r.height < 43.9).length, out: R.filter((r) => r.left < f.left - 1 || r.right > f.right + 1 || r.top < f.top - 1 || r.bottom > f.bottom + 1 || r.right > innerWidth).length, overlap: +(44 - close).toFixed(1) };
   });
   check('touch: the map\'s marks are 44 px, inside the chart and the screen, none over another by more than 4 px', lay.small === 0 && lay.out === 0 && lay.overlap <= 4 && lay.frame[0] >= 280, lay);
   const mk = await page.evaluate(() => { const m = window.__fp.settings.marks[5], r = m.el.getBoundingClientRect(); return { i: 5, name: m.name, line: m.line, x: r.left + r.width / 2, y: r.top + r.height / 2 }; });

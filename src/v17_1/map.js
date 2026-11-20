@@ -25,7 +25,7 @@ export const MARKS = [
   { name: 'The Fountain of Noon', line: 'the village square under the keep, and its well of daylight', glyph: 'fountain' },
   { name: 'Circumbambulate Pool', line: 'a still black lake west of the keep', glyph: 'pool' },
   { name: 'The Cardinal Stones', line: 'four standing stones, each its own colour', glyph: 'stones' },
-  { name: 'The Armiger’s Tower', line: 'a lone spire on a mound under the north-west cliffs', glyph: 'tower' },
+  { name: "The Armiger's Tower", line: 'a lone spire on a mound under the north-west cliffs', glyph: 'tower' },
   { name: 'The Sunken Court', line: 'a paved court sunk into the moor, facing the sun', glyph: 'court' },
   { name: 'The Lattice', line: 'great blue crystals at the glacier’s foot', glyph: 'crystal' },
   { name: 'The Collation', line: 'a table laid for twelve among the medlar trees', glyph: 'table' },
@@ -65,7 +65,8 @@ const G = {
 };
 
 const hash = (i, j) => { let h = (i * 374761393 + j * 668265263) | 0; h = (h ^ (h >>> 13)) * 1274126177; return ((h ^ (h >>> 16)) >>> 0) / 4294967296; };
-const yieldNow = () => new Promise((r) => setTimeout(r, 0));
+let awake = () => true; // the panel is open: the chart is drawn only then, so a panel shut mid-draw costs the walk nothing
+const yieldNow = async () => { await new Promise((r) => setTimeout(r, 0)); while (!awake()) await new Promise((r) => setTimeout(r, 250)); };
 
 // The chart, sampled from the terrain and drawn on a canvas; sliced into ~10 ms pieces
 async function drawChart(ctx, canvas) {
@@ -219,7 +220,8 @@ async function drawChart(ctx, canvas) {
 }
 
 // The map in the panel: the chart, the marks over it, "you are here", and the line under it
-export function buildMap(ctx, host, places, { go, touch }) {
+export function buildMap(ctx, host, places, { go, touch, shown }) {
+  if (shown) awake = shown;
   host.textContent = '';
   host.classList.add('map');
   const frame = document.createElement('div'); frame.className = 'map-frame';

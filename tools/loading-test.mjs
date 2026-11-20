@@ -47,6 +47,8 @@ const marks = await page.evaluate(() => {
   let ordered = true; for (let i = 1; i < want.length; i++) if (!(at[want[i]] >= at[want[i - 1]])) ordered = false;
   return { all: want.every((k) => at[k] != null && ms.has('fp:' + k)), ordered, ready: at.ready };
 });
+// v17.1-Q1: the settings panel's map is neither fetched nor built by a load (only by the panel's first open)
+const mapAtLoad = await page.evaluate(() => ({ fetched: performance.getEntriesByType('resource').filter((e) => /\/v17_1\/map\.js/.test(e.name)).length, built: document.getElementById('set-places')?.childElementCount ?? -1 }));
 let mono = true; for (let i = 1; i < samples.length; i++) if (samples[i].w < samples[i - 1].w) mono = false;
 console.log('labels', [...new Set(samples.map((s) => s.label))]);
 const checks = [
@@ -58,6 +60,7 @@ const checks = [
   ['fill never decreased (' + samples.length + ' samples)', mono],
   ['startup marks set, in order, as measures (ready at ' + Math.round(marks.ready) + ' ms)', marks.all && marks.ordered],
   ['button disabled in every pre-ready sample', samples.filter((s) => !s.ready).every((s) => s.disabled)],
+  ['the settings panel\'s map is not fetched or built by the load (' + JSON.stringify(mapAtLoad) + ')', mapAtLoad.fetched === 0 && mapAtLoad.built === 0],
 ];
 // ---------------------------------------------------------------- v13 L3: the kept store
 const ready = (p) => p.waitForFunction(() => window.__fp_startup?.report().ready != null, null, { timeout: 300000 });

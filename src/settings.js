@@ -291,7 +291,7 @@ export function buildSettings(ctx) {
   const touchy = () => ('ontouchstart' in window) || navigator.maxTouchPoints > 0 || matchMedia?.('(pointer: coarse)').matches;
   let map = null, mapLoad = null;
   function mapReady() {
-    if (!mapLoad) mapLoad = import('./v17_1/map.js').then((m) => { map = m.buildMap(ctx, placesEl, PLACES, { go: teleport, touch: touchy() }); api.marks = map.marks; return map; });
+    if (!mapLoad) mapLoad = import('./v17_1/map.js').then((m) => { map = m.buildMap(ctx, placesEl, PLACES, { go: teleport, touch: touchy(), shown: () => open_ }); api.marks = map.marks; return map; });
     return mapLoad;
   }
   api.mapReady = () => mapReady().then((m) => m.drawn).then(() => map);
