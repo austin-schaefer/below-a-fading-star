@@ -5,11 +5,16 @@
 // it shows the four sketches and the A/B pair, each with a line and a button, and does not scroll sideways; every
 // button, pressed, plays (the page's analyser shows signal within 5 s and the bar moves) and, pressed again, stops;
 // pressing another while one plays leaves one playing; no console error, no 404.
+// Then, as a visitor who has walked before: a copy of the site stamped as Netlify stamps it (tools/sw-site.mjs, served
+// from this checkout on the base's port + 1100, with the real sw.js and index.html's own registration script on a
+// page that stands in for the walk); `/` is visited until the worker has proven itself, then listen.html, which the
+// worker now controls, must load its script, fonts and samples and play a sketch (the worker once refused them all).
 // --frames=<stage> writes shots/wip/v17.1-Q4-listen-<stage>-<view>.png (the page idle, playing, and its foot).
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { launch } from './launch.mjs';
+import { serveSite } from './sw-site.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const args = process.argv.slice(2), base = (args.find((a) => !a.startsWith('--')) || 'http://localhost:8123').replace(/\/$/, '');
@@ -60,6 +65,39 @@ try {
     if (view === 'phone') await shot(page, `${view}-4-whole`, true);
     check(errors.length === 0, `${view}: no console error, warning or failed request${errors.length ? ': ' + errors.slice(0, 4).join(' | ') : ''}`);
     await ctx.close();
+  }
+  // --- after the walk: under the walk's service worker
+  {
+    const port = +(new URL(base).port || 80) + 1100, S = `http://localhost:${port}`, COMMIT = 'abc1234';
+    const register = fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8').match(/<script id="sw-register">[\s\S]*?<\/script>/)?.[0];
+    const walk = `<!doctype html><meta charset="utf-8"><title>the walk's stand-in</title>${register}<body>`;
+    const srv = await serveSite({ port, commit: () => COMMIT, files: (p) => {
+      if (p === '/index.html') return walk;
+      if (p === '/commit.json') return JSON.stringify({ commit: COMMIT });
+      if (!/^\/(listen\.html|sw\.js|favicon-32\.png|src\/|vendor\/)/.test(p) || p.includes('..')) return null;
+      const f = path.join(ROOT, p); return fs.existsSync(f) && fs.statSync(f).isFile() ? fs.readFileSync(f) : null;
+    } });
+    try {
+      const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true }), page = await ctx.newPage();
+      const errors = [];
+      page.on('pageerror', (e) => errors.push(e.message));
+      page.on('requestfailed', (r) => errors.push('failed ' + new URL(r.url()).pathname));
+      await page.goto(`${S}/?sw=1`);
+      let sw = null;
+      for (let i = 0; i < 100 && !(sw = await page.evaluate(() => window.__fp_sw).catch(() => null))?.proven; i++) await sleep(100);
+      check(register && sw?.proven === true, `after the walk: the walk's worker is registered and proven (${JSON.stringify(sw)})`);
+      errors.length = 0; // the probe's own sub-request on the walk's page is answered by the worker and reads as failed
+      await page.goto(`${S}/listen.html`, { waitUntil: 'networkidle' });
+      const st = await page.evaluate(async () => { await document.fonts.ready; return { controlled: !!navigator.serviceWorker.controller, buttons: document.querySelectorAll('.play').length, font: document.fonts.check("16px 'Fell English'") }; });
+      check(st.controlled && st.buttons === 6 && st.font, `after the walk: listen.html, under the worker, has its script and type (controlled ${st.controlled}, ${st.buttons} buttons, the display face loaded ${st.font})`);
+      await page.locator('.play').nth(0).tap();
+      let peak = 0;
+      for (const t0 = Date.now(); Date.now() - t0 < 6000 && peak < 0.005;) { await sleep(120); peak = Math.max(peak, await page.evaluate(() => { const L = window.__listen; if (!L.tap) return 0; const d = new Float32Array(L.tap.fftSize); L.tap.getFloatTimeDomainData(d); let e = 0; for (const v of d) e += v * v; return Math.sqrt(e / d.length); })); }
+      const q = await page.evaluate(() => ({ playing: window.__listen.playing, error: window.__listen.error }));
+      check(peak > 0.005 && q.playing === 'moor/sampled' && !q.error && errors.length === 0, `after the walk: a sketch plays under the worker (signal ${peak.toFixed(3)} rms, ${q.playing}; ${errors.length} failed requests or errors${errors.length ? ': ' + errors.slice(0, 4).join(' | ') : ''})`);
+      await shot(page, 'worker-playing');
+      await ctx.close();
+    } finally { await srv.close(); }
   }
 } finally { await browser.close(); }
 console.log(fails ? `listen-test: ${fails} FAIL` : 'listen-test: all PASS');

@@ -37,13 +37,13 @@ export const SAMPLES = {
 // forte has more 2-5 kHz than anything in the walk: the owner's "piercing" is judged per instrument, tools/sketch-render.mjs)
 export const INSTRUMENTS = {
   harp: { gain: 0.62, ring: 1.6, rel: 1.2 },
-  glock: { gain: 1.6, ring: 1.4, rel: 1.0, lp: 2000, steep: true },
+  glock: { gain: 1.5, ring: 1.4, rel: 1.0, lp: 2200, steep: true },
   pizz: { gain: 1.6, ring: 0.9, rel: 0.6 },
   marimba: { gain: 0.6, ring: 0.6, rel: 0.5, lp: 1800, steep: true },
   drum: { gain: 1.4, ring: 0.7, rel: 0.3 },
   shaker: { gain: 0.55, ring: 0.2, rel: 0.05 },
   flute: { gain: 1.2, ring: 0, rel: 0.22, lp: 2600 },
-  oboe: { gain: 0.9, ring: 0, rel: 0.16 },
+  oboe: { gain: 1.15, ring: 0, rel: 0.16, lp: 2000 },
   violin: { gain: 1.1, ring: 0, rel: 0.28, lp: 1600, steep: true },
   viola: { gain: 0.85, ring: 0, rel: 0.4, lp: 2200 },
   cello: { gain: 0.9, ring: 0, rel: 0.45, lp: 2600 },
@@ -53,22 +53,43 @@ export const instrumentOf = (patch) => (patch.startsWith('s-') && INSTRUMENTS[pa
 export const fileOf = (inst, note) => `${inst}-${note}.mp3`;
 
 const BUFFERS = new Map(); // 'harp-D4' → AudioBuffer (an AudioBuffer serves any context, live or offline)
+const STARTS = new Map(); // 'harp-D4' → seconds into its buffer where the sound begins (below)
+const LOADING = new Map(); // 'harp-D4' → the Promise of a load in flight, so two sketches pressed together fetch a note once
+
+// An MP3 decoder puts silence in front of what was encoded (the encoder's delay: 0 to about 50 ms, different in each
+// browser), which would land every sampled note late by an amount nobody chose. Measured once a buffer: the first
+// sample over 1 % of its peak, less 2 ms; a note starts from there.
+function startOf(buf) {
+  const d = buf.getChannelData(0);
+  let peak = 0;
+  for (let i = 0; i < d.length; i++) { const v = Math.abs(d[i]); if (v > peak) peak = v; }
+  let i = 0;
+  while (i < d.length && Math.abs(d[i]) < peak * 0.01) i++;
+  return Math.max(0, i / buf.sampleRate - 0.002);
+}
 const FALL = Float32Array.from({ length: 48 }, (_, i) => { const x = i / 47; return (Math.exp(-4 * x) - Math.exp(-4)) / (1 - Math.exp(-4)); });
 
-// fetch and decode every note of these instruments (those not held already); resolves to the bytes fetched
+// fetch and decode every note of these instruments (those not held or already on their way); resolves to the bytes this call fetched
 export async function loadSamples(ac, instruments, dir = SAMPLE_DIR) {
   let bytes = 0;
-  await Promise.all(instruments.flatMap((inst) => Object.keys(SAMPLES[inst] || {}).map(async (note) => {
+  await Promise.all(instruments.flatMap((inst) => Object.keys(SAMPLES[inst] || {}).map((note) => {
     const key = `${inst}-${note}`;
-    if (BUFFERS.has(key)) return;
-    const res = await fetch(dir + fileOf(inst, note));
-    if (!res.ok) throw new Error(`music: sample ${key}: HTTP ${res.status}`);
-    const data = await res.arrayBuffer();
-    bytes += data.byteLength;
-    BUFFERS.set(key, await ac.decodeAudioData(data));
+    if (BUFFERS.has(key)) return null;
+    if (!LOADING.has(key)) {
+      LOADING.set(key, (async () => {
+        const res = await fetch(dir + fileOf(inst, note));
+        if (!res.ok) throw new Error(`music: sample ${key}: HTTP ${res.status}`);
+        const data = await res.arrayBuffer();
+        bytes += data.byteLength;
+        const buf = await ac.decodeAudioData(data);
+        STARTS.set(key, startOf(buf)); BUFFERS.set(key, buf);
+      })().finally(() => LOADING.delete(key)));
+    }
+    return LOADING.get(key);
   })));
   return bytes;
 }
+export const sampleStart = (key) => STARTS.get(key);
 export const samplesLoaded = (instruments) => instruments.every((inst) => Object.keys(SAMPLES[inst]).every((n) => BUFFERS.has(`${inst}-${n}`)));
 
 function nearest(inst, f) {
@@ -84,25 +105,25 @@ for (const [inst, I] of Object.entries(INSTRUMENTS)) {
     attack: () => 0.005,
     release: (d) => Math.max(0, I.ring - d) + I.rel, // what sounds after the written length: the rest of the ring, then the fall
     make(ac, out) {
-      const live = new Set();
       let bus = out;
       for (let i = 0; I.lp && i < (I.steep ? 2 : 1); i++) { const f = ac.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = I.lp; f.Q.value = 0.5; f.connect(bus); bus = f; }
       return {
         note(t, f, dur, vel, end) {
-          const [note, f0] = nearest(inst, f), buf = BUFFERS.get(`${inst}-${note}`);
-          if (!buf) throw new Error(`music: sample ${inst}-${note} is not loaded`);
+          const [note, f0] = nearest(inst, f), key = `${inst}-${note}`, buf = BUFFERS.get(key);
+          if (!buf) throw new Error(`music: sample ${key} is not loaded`);
           const src = ac.createBufferSource(), g = ac.createGain(), peak = vel * I.gain;
           src.buffer = buf; src.playbackRate.value = f0 ? f / f0 : 1;
           const [h, r] = cut(t, Math.max(dur, I.ring), I.rel, end);
           g.gain.setValueAtTime(peak, t);
           g.gain.setValueCurveAtTime(FALL.map((v) => v * peak), t + h, r);
           src.connect(g).connect(bus);
-          src.start(t); src.stop(t + h + r + 0.02);
-          live.add(src);
-          src.onended = () => { live.delete(src); g.disconnect(); };
+          src.start(t, STARTS.get(key) || 0);
+          src.stop(t + h + r + 0.02); // its one stop(): a source is never stopped twice (older WebKit refuses the second)
+          src.onended = () => g.disconnect();
         },
-        start() {},
-        stop(t) { for (const s of live) { try { s.stop(t); } catch { /* ended already */ } } },
+        // a note's source is stopped once, by its own note; a track stopped early is silenced by the player's stem
+        // (its fade, then its disconnect), and at most the lookahead's two seconds of notes play out unheard
+        start() {}, stop() {},
       };
     },
   };
