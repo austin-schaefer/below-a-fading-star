@@ -44,3 +44,19 @@
   - In the frames the marks are faint.
 - **Waiting on F1 and F2:** stilters among the lobe's real trees, `paneColour` and the moth ring tied to F2's panes, then everything rerun.
 - **Blind reader on the grove frames (s3 medium):** "while my back was turned, the thick tree on the right seemed to be replaced by bare trunks". It still reads as a swap or pop-in, not "that tree followed me". Not yet met.
+
+## Round three (2026-11-20; F1's wood and F2's glasshouse merged)
+
+- **Merged `origin/next` twice** (F1, then F2). The only conflict was `main.js`'s module line; both lines are kept.
+- **Placement:** the stilters stand among the lobe's real trees (`ctx.trunks`, at least 2.6 m off a trunk) and outside the glade's open middle (7.5 m when standing still; a follower may come to its rim at 5 m). They keep off P59.
+- **One mover a look:** the mover is the stilter the visitor last looked at (its middle within 0.35 rad of the look). It follows nearer on its own bearing, leaning 30% toward the way the visitor came, and falls back to a shorter straight step where the wood allows nothing else. After a stilter has moved, none moves again until the visitor has seen it, or for 12 s.
+- **Identifying marks:** each has one mark a visitor can remember (`mark`: a pale scar down a bole, a long rag of moss, a broken bough, or the scar and the rag together).
+- **Rings of earth:** the rings left where a stilter stood are darker and wider (3.4 times the foot), with plainer root-holes.
+- **Eyes:** the eyes shut on the frame's own centre (in NDC), so they work on the phone. The test places its eyes at 0.7 of the view's own half-width.
+- **Moths:** the moths are on the Florilegium's real glass, taken from `florilegium/house.js` (`N`, `A`, `SILL`, `EAVE`, `PANES`, the schemes) and `FLORILEGIUM.floor`. They sit on its twelve walls, with the wing tint taken from each side's scheme, and are hidden past 200 m along with the house. The `MOTHS` stand-in row and `?mothpanes` are removed.
+- **Gate:** `ONLY=stilters,study,perf,walk,dressing,strata,geometry,settings,florilegium tools/suite.sh 8184` passed 9 of 9 tests. Counts: settings 103, dressing 22, florilegium 12, strata 8, walk 13, geometry 149, perf 29, study 15, stilters 36.
+- **Stilters frames (low, medium, phone):** 60/0. The one looked at went 11.1→9.5 m, 10.4→10.0 m and 11.3→10.0 m.
+- **Frames to look at:**
+  - Grove: `shots/wip/v18-F4-t7-{low,medium}-desktop-00..12-*` and `v18-F4-t7-low-phone-*`.
+  - Moths: `v18-F4-moths3-{medium,low,phone}-m-{10m,3m,plinth}`. `m-side` stood in the wrong place; ignore it.
+- **Fresh reader on the t7 medium frames:** "the same view, almost identical … the trunks at right look a bit denser". The "it followed" read **fails**. Among the real trees the follower's step is only 0.4 to 1.6 m, because the dense lobe, the 7 m keep and the 5.5 m spacing leave few spots, and the frames are near black, so the change cannot be seen. The next fix is to let the follower step 3 to 5 m and stand in a gap of the wood on the look line, and to frame the look-back so the boles and the pale scar are lit (lower pitch, nearer). This is still to do.
