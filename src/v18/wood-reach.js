@@ -32,7 +32,7 @@ export function growReach(ctx, ground, K) {
       ground.biomeAt(x, z, b);
       if (b.wood < 0.2 || b.wood - b.wood0 < 0.03 || rng() > Math.pow(b.wood, 1.1) * 1.2) continue;
       if (ground.excluded(x, z, 2)) continue;
-      const gap = (low ? 7.5 : 6.6) - b.wood * 2.6;
+      const gap = (low ? 8.3 : 6.6) - b.wood * 2.6; // (on low a metre sparser than the old wood: part of what pays for it)
       if (near(x, z, gap, true)) continue;
       const rim = b.wood < 0.5, r = rng(), rot = rng() * Math.PI * 2, tint = 0.8 + rng() * 0.3, u = rng();
       if (rim && r < 0.24) { place(x, z, deadV[Math.floor(u * deadV.length)], 0.75 + rng() * 0.35, gap, rot, tint, 'dead'); stats.lobeDead++; }

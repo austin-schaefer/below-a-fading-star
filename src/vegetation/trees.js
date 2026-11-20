@@ -721,7 +721,9 @@ export function buildTrees(ctx, ground, mats) {
     col.setRGB(t.tint, t.tint * (0.95 + 0.05 * t.tint), t.tint * 0.95);
     batch.setColorAt(t.id, col);
     // LOD distance scale: big things keep detail further out, small things drop it sooner
-    t.lodK = t.kind === 'giant' ? 2.2 : t.kind === 'rimgiant' ? 1.6 : t.kind === 'lone' || t.kind === 'dead' ? 1.5 : t.kind === 'thorn' || t.kind === 'mound' ? 0.6 : 1;
+    // (v18-F1: the wood's trees, the lobe's and the rim's drop detail 12% sooner on low: what pays for the lobe, whose
+    // trees are mostly seen through the old wood's own trunks)
+    t.lodK = t.kind === 'giant' ? 2.2 : t.kind === 'rimgiant' ? (low ? 1.25 : 1.6) : t.kind === 'lone' || t.kind === 'dead' ? 1.5 : t.kind === 'thorn' || t.kind === 'mound' ? 0.6 : low && (t.kind === 'wood' || t.kind === 'rim') ? 0.88 : 1;
     t.fade = -1;
   }
   // spare instances, hidden until a switch shows one: { tree, spare id, geo, dir } (dir +1 fades toward the main
