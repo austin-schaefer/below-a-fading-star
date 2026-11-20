@@ -47,7 +47,7 @@ export const BEDS = {
   tombs: [[-261.1, 166.2], [-261.1, 163.3], [-261.1, 160.4], [-257.9, 166.2], [-257.9, 163.3], [-257.9, 160.4]],
   way: { pts: [[-259.5, 158.5], [-259.5, 155.2], [-258.6, 151.5], [-261.5, 145.5], [-267, 141], [-269, 136.5], [-266.2, 130.2]], half: 0.85, height: 2.7 }, // the way under, north (half: its walls; a walker keeps 0.4 m inside them)
   chamber: { x: -265, z: 126, r: 4.5, y: -9.0, wall: 3.0, ceil: 4.2 }, // the round room under the glasshouse
-  grate: { x: -258.0, z: 126.0, half: 0.6, top: -3.25 },       // F2's opening in the paving outside its east door (its report): the shaft up to it is F3's to y -3.25, F2 draws from there up
+  grate: { x: -258.0, z: 126.0, half: 0.6, top: -3.36 },       // F2's opening in the paving outside its east door: the shaft is F3's up to the foot of F2's kerb (y -3.36), whose inner faces line it from there up
   bay: { x1: -256.6, half: 1.539 },                             // the chamber's east bay out to under the grate (its walls meet the round wall at 20 degrees)
   // the seven tubs' undersides overhead: F2's tubs (its report: a ring of r 3.4 at 30, 90 .. 330 degrees from +x toward +z,
   // LIKENESSES' order, and the sprout's 4.1 m east of the middle); the seventh tomb lies under the sprout

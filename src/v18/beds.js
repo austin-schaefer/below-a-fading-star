@@ -86,7 +86,7 @@ export async function build(ctx) {
   const mk = (B, mat, name) => { const m = new THREE.Mesh(B.geometry(), mat); m.name = name; m.receiveShadow = true; m.castShadow = false; ctx.scene.add(m); return m; };
   const mDoor = mk(BD, underMaterial(std(0.9), 'beds-door', '#9fe8c2'), 'beds-door'); mDoor.castShadow = !low;
   const mStone = mk(BS, underMaterial(std(), 'beds-stone', '#e0aa84'), 'beds-stone');
-  const GL = grateLight({ x: GR.x, z: GR.z, half: GR.half, top: ch.grateTop, floor: YC, slant, hues: [HUES[0], HUES[1], HUES[2], HUES[3]] });
+  const GL = grateLight({ x: GR.x, z: GR.z, half: GR.half - 0.03, top: ch.grateTop, floor: YC, slant, hues: [HUES[0], HUES[1], HUES[2], HUES[3]] });
   const mWay = mk(BW, underMaterial(grateLit(std(), 'way', GL.uniforms), 'beds-way', '#d6aa74', { far: [10, 21] }), 'beds-way');
   const mRoots = mk(BR, underMaterial(grateLit(std(0.6), 'roots', GL.uniforms), 'beds-roots', '#ffffff'), 'beds-roots');
   const mGlow = new THREE.Mesh(glowG, glowMat); mGlow.name = 'beds-glow'; ctx.scene.add(mGlow);
