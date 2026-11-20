@@ -136,6 +136,7 @@ async function buildSubjects() {
         const r = (await def.build(S.ctx)) || {};
         sub.at = r.at || ((out) => out.set(guess[0], 0, guess[1]));
         sub.face = r.face || null; sub.floor = r.floor; sub.fly = !!def.fly || !!r.fly;
+        sub.ground = r.ground !== false;
         if (r.h) sub.h = r.h;
         sub.ok = true;
       } catch (e) {
@@ -271,6 +272,7 @@ function render() {
     try { dist = aim(s); s.at(T0); }
     catch (e) { s.ok = false; s.error = `at: ${e.message}`.slice(0, 300); errors.push(`${s.id}: at: ${e.message}`); layoutSoon = true; continue; }
     ground.position.set(T0.x, s.fly ? 0 : (s.floor ?? 0), T0.z);
+    ground.visible = s.ground !== false;
     if (s.kind === 'recipe' && s.box) ground.position.y = 0;
     // the key: the walk's sun, or the neutral key over the camera's left shoulder; its shadow box round the subject
     const r = Math.max(4, dist * 1.2);

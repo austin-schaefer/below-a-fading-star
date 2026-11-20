@@ -12,14 +12,19 @@ import * as THREE from 'three';
 import { makeSimplex, mulberry32 } from '../noise.js';
 import { WORLD, SUN, LANDMARKS, CAUSEWAY_V4, WATER, PALETTE, SPAWN } from '../world.js';
 
-const FLAT = (() => {
+// the terrain's mesh, flat: its heights in y as the real one's, with its colour (moss) and normals; one per subject,
+// since a module may cut triangles out of it (v7/workers/cut.js)
+function flatMesh() {
   const g = new THREE.PlaneGeometry(WORLD.size, WORLD.size, 8, 8);
-  g.rotateX(-Math.PI / 2); // as the terrain's: its heights in y
-  return new THREE.Mesh(g, new THREE.MeshBasicMaterial());
-})();
+  g.rotateX(-Math.PI / 2);
+  const n = g.attributes.position.count, col = new Float32Array(n * 3);
+  for (let i = 0; i < n; i++) col.set([0.25, 0.24, 0.19], i * 3);
+  g.setAttribute('color', new THREE.BufferAttribute(col, 3));
+  return new THREE.Mesh(g, new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.95 }));
+}
 
 const BIOME = { moor: 1, heath: 0, wood: 0, marsh: 0, shore: 0, rock: 0, ice: 0, orchard: 0, crystal: 0, slope: 0, h: 0 };
-export const terrain = {
+const terrainBase = {
   heightAt: () => 0,
   normalAt: (x, z, out) => (out ? out.set(0, 1, 0) : new THREE.Vector3(0, 1, 0)),
   slopeAt: () => 0,
@@ -30,7 +35,6 @@ export const terrain = {
   glacierMask: () => 0,
   regionRadius: WORLD.regionRadius,
   size: WORLD.size,
-  mesh: FLAT,
   river: null,
 };
 
@@ -91,7 +95,7 @@ export function studyCtx(shared, sub) {
     log: (...a) => console.log(`[study:${sub.id}]`, ...a),
     progress: async () => {},
     throttle: false,
-    terrain, regions, mountains,
+    terrain: { ...terrainBase, mesh: flatMesh() }, regions, mountains,
     tinctures: { at: () => null },
     lights: shared.lights,
     sky: { flicker: shared.flicker, dark: 0, lamps: 0, gutter: 0 },
