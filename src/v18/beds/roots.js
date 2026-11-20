@@ -21,7 +21,7 @@ export function roots(B, { tubs, ends, vault, wayEnd, tomb }) {
   const ceilV = (x) => vault.oy + Math.sqrt(Math.max(0, vault.R * vault.R - (x - cx) ** 2)) - 0.1;
   const a = {}, lights = [];
   for (let k = 0; k < 6; k++) {
-    const [tx, ty, tz] = tubs[k], o = (k - 2.5) * 0.15, hue = C(HUES[k]), col = PALE.map((v, i) => v * 0.74 + hue[i] * 0.26);
+    const [tx, ty, tz] = tubs[k], o = (k - 2.5) * 0.24, hue = C(HUES[k]), col = PALE.map((v, i) => v * 0.74 + hue[i] * 0.26);
     const P = [];
     const along = (s, dy = 0) => { W.at(s, a); return new THREE.Vector3(a.x - a.tz * o, top(s) + dy, a.z + a.tx * o); };
     // out of the mass, up under the ceiling toward the mouth, down the wall over it
@@ -43,7 +43,7 @@ export function roots(B, { tubs, ends, vault, wayEnd, tomb }) {
     P.push(new THREE.Vector3(ex, ey + 0.35, ez), new THREE.Vector3(ex, ey - 0.15, ez));
     const curve = new THREE.CatmullRomCurve3(P, false, 'centripetal');
     const L = curve.getLength(), seg = Math.ceil(L / 0.45);
-    B.geo(taper(curve, 0.095, 0.055, seg, 6), new THREE.Matrix4(), col, 0.12);
+    B.geo(taper(curve, 0.06, 0.08, seg, 6), new THREE.Matrix4(), col, 0.12); // (thin out of the tub, as thick as an arm where it goes into the lid)
     // the mass it comes out of: a dozen thinner roots hanging out of the tub's drain, crooked
     for (let j = 0; j < 12; j++) {
       const a0 = hash(k, j) * Math.PI * 2, r0 = 0.08 + hash(j, k) * 0.2, l = 0.5 + hash(k + 3, j) * 1.0;

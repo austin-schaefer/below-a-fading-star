@@ -51,7 +51,7 @@ export async function build(ctx) {
   const litWay = (x, y, z, out) => { L.way.near(x, z, _n); const h = (y - L.way.floorY(Math.max(0, Math.min(L.way.LEN, _n.s)))) / L.way.height; out[0] = 0.01; out[1] = 0; out[2] = 0.16 + 0.4 * Math.max(0, h) ** 2; return out; };
   const slant = [0.3, 0.05], spot = [GR.x + slant[0], YC + 0.3, GR.z + slant[1]];
   const litChamber = (x, y, z, out) => { out[0] = 0.01; out[1] = 0; out[2] = Math.min(1.2, 0.06 + near([spot, [GR.x, YC + CH.ceil, GR.z]], x, y, z, 0.6, 1.6) + near(BEDS.tubs.slice(0, 6).map(([a, b]) => [a, YC + CH.ceil - 0.8, b]), x, y, z, 0.12, 1.0)); return out; };
-  const litRoot = (x, y, z, out) => { out[0] = 0.01; out[1] = 0; out[2] = 0.24; return out; };
+  const litRoot = (x, y, z, out) => { out[0] = 0.01; out[1] = 0; out[2] = 0.15; return out; };
 
   // ---- the parts
   const BD = new UnderBuilder(litDoor), dr = door(BD, T);
@@ -99,7 +99,7 @@ export async function build(ctx) {
   pl('#8fe0b8', 1.1, 5, BEDS.face + 1.0, L.Y.sill + 0.4, 172);
   pl(HUES[0], 2.6, 6, vcx, YV + 2.5, 165.6);
   pl(HUES[3], 2.6, 6, vcx, YV + 2.5, 161.0);
-  for (const f of [0.3, 0.7]) { const a = L.way.at(L.way.LEN * f); pl(f < 0.5 ? HUES[2] : HUES[4], 3.2, 7, a.x, L.way.floorY(L.way.LEN * f) + L.way.height - 0.3, a.z); }
+  for (const f of [0.3, 0.7]) { const a = L.way.at(L.way.LEN * f); pl(f < 0.5 ? HUES[2] : HUES[4], 2.2, 7, a.x, L.way.floorY(L.way.LEN * f) + 1.3, a.z); }
   pl(HUES[1], 7, 8, spot[0], YC + 2.6, spot[2]);
 
   // ---- the floors: the forecourt and the doorway are the ground there (replacing heightAt, so the bank's walkers

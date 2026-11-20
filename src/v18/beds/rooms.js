@@ -331,7 +331,7 @@ export function chamber(B, out) {
     // its walls and its end, coursed to the ceiling; broad pilasters where they meet the round wall
     coursedZ(B, cz - bh, 1, cx + u0, BY.x1, y, yc, COL.vault, COL.vaultW, 0.45); coursedZ(B, cz + bh, -1, cx + u0, BY.x1, y, yc, COL.vault, COL.vaultW, 0.45);
     coursedX(B, BY.x1, -1, cz - bh, cz + bh, y, yc, COL.vault, COL.vaultW, 0.45);
-    for (const s of [-1, 1]) B.box(cx + u0 - 0.05, (y + yc) / 2 + 0.003, cz + s * (bh - 0.18), 0.32, (yc - y) / 2, 0.24, 0, COL.face, COL.faceW, 0.07);
+    for (const s of [-1, 1]) B.box(cx + u0 - 0.05, (y + yc) / 2 + 0.008, cz + s * (bh - 0.17), 0.32, (yc - y) / 2, 0.17, 0, COL.face, COL.faceW, 0.07); // (clear of the seventh tomb's plinth)
   }
   // the ceiling: a flat stone disc and the bay's, the grate's square hole in the bay
   {
