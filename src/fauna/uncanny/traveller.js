@@ -424,3 +424,13 @@ export function buildTraveller(ctx, U) {
   const tris = (g) => (g.index ? g.index.count : g.attributes.position.count) / 3;
   return { drawCalls: 7, tris: tris(T.body) + tris(T.arm) + tris(T.head) + tris(Wg.wagon) + tris(Wg.wheel) * 4 + tris(Wg.lantern) + RS * RD * 2 };
 }
+
+// The study page (src/study/registry.js): the traveller on his cushion, his wagon behind him.
+export const study = [{
+  id: 'traveller', name: 'the traveller and his wagon', kind: 'figure', h: 4.4, at: [0, 0],
+  async build(ctx) {
+    const { makeRules } = await import('./kit.js'); const U = { rules: makeRules(ctx) };
+    buildTraveller(ctx, U); const p = ctx.traveller.position, w = ctx.traveller.wagonPosition, S = U.traveller.state;
+    return { at: (o) => o.set((p.x + w.x) / 2, 0, (p.z + w.z) / 2), face: () => S.yawT ?? 0 };
+  },
+}];

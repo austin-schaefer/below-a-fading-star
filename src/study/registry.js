@@ -11,6 +11,7 @@
 // (FIGURE_KITS), is neither here nor in NOT_FIGURES with its reason; and when a module here has no `study` export.
 export const STUDY_MODULES = [
   'src/fauna/grazers.js', 'src/fauna/wings.js', 'src/fauna/deodand.js', 'src/fauna/life.js', 'src/fauna/small.js', 'src/fauna/rooks.js', 'src/fauna/lamps.js', 'src/fauna/gutterbats.js', 'src/fauna/beetles.js',
+  'src/fauna/uncanny/cloak.js', 'src/fauna/uncanny/slinker.js', 'src/fauna/uncanny/biomesh.js', 'src/fauna/uncanny/traveller.js', 'src/fauna/uncanny/tarn.js', 'src/fauna/uncanny/wader.js',
   'src/v7/walkers/thurifer.js', 'src/v7/walkers/leerie.js', 'src/v7/walkers/linkboy.js',
 ];
 

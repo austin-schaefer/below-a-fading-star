@@ -368,3 +368,13 @@ export function buildCloak(ctx, U) {
   });
   return { drawCalls: 2, tris: (P.i.length / 3) + N * eyeGeo.index.count / 3 };
 }
+
+// The study page (src/study/registry.js): the man in the cloak of eyes, his eyes on the looker.
+export const study = [{
+  id: 'cloak', name: 'the man in the cloak of eyes', kind: 'figure', h: 3.2, at: [0, 0],
+  async build(ctx) {
+    const { makeRules } = await import('./kit.js'); const U = { rules: makeRules(ctx) };
+    buildCloak(ctx, U); const g = U.cloak.group;
+    return { at: (o) => o.set(g.position.x, 0, g.position.z), face: () => g.rotation.y };
+  },
+}];
