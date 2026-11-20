@@ -3,7 +3,7 @@
 // comes onto them, then open again somewhere else. Never a body. Kinds of spacing and height: something small, something
 // long and low, something up a trunk, and one with three.
 //
-// One Points draw, no light: each eye a point with a world size and a floor of 2 px, its lid (and its sinking) read from
+// One Points draw, no light: each eye a point with a world size and a floor of 5 px, its lid (and its sinking) read from
 // a uniform per watcher. A few watchers at a time (3 on low, 4 above), each a state: 'away' (waiting to open somewhere),
 // 'open' (blinking now and then), 'shut' (closing or sinking, then away). Placed only out of the view's middle; shut when
 // the look comes within SHUT of them or the visitor within 11 m; never within 4 m of a track's middle.
@@ -71,15 +71,15 @@ export function buildEyes(ctx, { leadAt = null, woodTrees = [] } = {}) {
       void main() {
         int w = int(aW + 0.5);
         float open = uOpen[w];
-        // the eyes apart by their gap, or by 3.5 px from their middle when that is more: a pair still reads as two at 40 m
+        // the eyes apart by their gap, or by 4.5 px from their middle when that is more: a pair still reads as two at 40 m
         float dc = max(-(modelViewMatrix * vec4(position, 1.0)).z, 0.1), lo = length(aOff);
-        float k = lo > 0.0 ? max(1.0, 3.5 * dc / uScale / lo) : 1.0;
+        float k = lo > 0.0 ? max(1.0, 4.5 * dc / uScale / lo) : 1.0;
         vec3 transformed = position + aOff * k - vec3(0.0, uSink[w] * 0.35, 0.0);
         vec4 mvPosition = modelViewMatrix * vec4(transformed, 1.0);
         gl_Position = projectionMatrix * mvPosition;
         float depth = -mvPosition.z;
         vOpen = open; vC = aC;
-        gl_PointSize = aS <= 0.0 || open <= 0.01 ? 0.0 : clamp(aS * 2.4 * uScale / max(depth, 0.1), 3.2, 9.0);
+        gl_PointSize = aS <= 0.0 || open <= 0.01 ? 0.0 : clamp(aS * 4.0 * uScale / max(depth, 0.1), 5.0, 14.0);
         #include <fog_vertex>
       }`,
     fragmentShader: /* glsl */`
@@ -87,9 +87,9 @@ export function buildEyes(ctx, { leadAt = null, woodTrees = [] } = {}) {
       #include <fog_pars_fragment>
       void main() {
         vec2 c = (gl_PointCoord - 0.5) * 2.0;
-        float h = max(vOpen * 0.62, 0.02);
+        float h = max(vOpen * 0.7, 0.02);
         float e = length(vec2(c.x, c.y / h));                // an almond, as tall as the lid lets it
-        float a = 1.0 - smoothstep(0.55, 1.0, e);
+        float a = 1.0 - smoothstep(0.72, 1.0, e);
         if (a <= 0.01) discard;
         vec3 col = vC * (0.6 + 0.4 * (1.0 - e));           // brighter at the middle: eyeshine
         gl_FragColor = vec4(col, a);

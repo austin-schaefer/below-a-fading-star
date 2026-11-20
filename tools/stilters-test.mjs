@@ -200,7 +200,14 @@ async function run(view, q, frames) {
     if (!E) return null;
     fp.controls.placeAt(-196, 150); p.yaw = 0; p.pitch = 0;
     await new Promise((r) => setTimeout(r, 800));
-    const a = p.yaw + 0.65, x = p.pos.x - Math.sin(a) * 25, z = p.pos.z - Math.cos(a) * 25;
+    // a spot 18 to 30 m off, 0.55 to 0.8 rad to one side, that no trunk stands in front of
+    const T = fp.woodTrees || [];
+    const clear = (x, z) => T.every((t) => { const ex = x - p.pos.x, ez = z - p.pos.z, l2 = ex * ex + ez * ez, k = Math.max(0, Math.min(1, ((t.x - p.pos.x) * ex + (t.z - p.pos.z) * ez) / l2)); return Math.hypot(t.x - p.pos.x - ex * k, t.z - p.pos.z - ez * k) > 1.6; });
+    let a = p.yaw + 0.65, x = p.pos.x - Math.sin(a) * 25, z = p.pos.z - Math.cos(a) * 25;
+    search: for (const d of [24, 20, 28, 18, 30]) for (const off of [0.65, -0.65, 0.75, -0.75, 0.55, -0.55, 0.8, -0.8]) {
+      const aa = p.yaw + off, xx = p.pos.x - Math.sin(aa) * d, zz = p.pos.z - Math.cos(aa) * d;
+      if (clear(xx, zz)) { a = aa; x = xx; z = zz; break search; }
+    }
     E.force(0, x, z, 1);
     for (const w of E.watchers.slice(1)) { w.mode = 'away'; w.t = 999; }
     await new Promise((r) => setTimeout(r, 500));
