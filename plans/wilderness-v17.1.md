@@ -31,6 +31,20 @@ Four briefs at once, `briefs/v17.1/`. A point release: the suite, a cold read of
 
 ## Status
 
+**2026-11-19, 23:59 PST. v17.1 is RELEASED and live.**
+
+- PR #84 merged to `main` (5f8f679); the GitHub release `v17.1` is published; the live site serves it (checked: `commit.json` names 5f8f679; `listen.html`, `src/gamepad.js` and a sample answer 200; `study.html` is 404 there, as meant). #70, #72 and #77 are closed with the release's link. #23 is open, back in the pool, waiting on the owner's ears. `main` is merged back into `next`. One merge to `main` today.
+- No agent is in flight. `next` is served on **8171** (8123 and 8160 belong to the owner's other project). `issue-1527-edges` (W3) is still paused, its worktree kept.
+- **Next: v18, the forest (#18)**, labelled `next` on the owner's word ("maybe #18 as a follow-on to that first batch of work"). It is a whole milestone and starts in a fresh session, as `autonomous-run` says ("After a release: start clean"). The study page exists for it: any figure, creature, plant or structure it makes is judged on a sheet first.
+
+**Looking back**
+
+- **What took longest, and did it need to:** the gate, twice (40 and 47 minutes), the first time against another project's server. Building took 80 minutes for all four; the wasted run cost half that again. The suite now checks its port.
+- **Found late:** nothing after release so far. Found by cold reviews, not tests: two pads at once, a resting trigger, and the service worker failing the listening page for anyone who had visited the walk. A page added beside the walk needs a test that visits the walk first; `sw` has that row now.
+- **Said more than once by the owner:** nothing; they were away.
+- **Worked:** four independent briefs at once with one named seam between two of them; resuming the author for round two (9 to 16 minutes each); a reviewer told where to spend its effort.
+- **Harness changes (two):** the suite's port preflight; the skills' line on whose server a port is. No milestone idea filed.
+
 **2026-11-19, 23:58 PST. The gate is green; releasing.**
 
 - **The first whole run was void.** Ports 8123 and 8160 are held by servers of the owner's other project, so 38 tests loaded another site and failed in under a second each. Those servers were left alone. `next` is served on **8171** for this session (not 8123). `tools/suite.sh` now refuses a port that does not serve its own checkout, and the `orchestrator` and `wilderness` skills say to check whose server a port is.
