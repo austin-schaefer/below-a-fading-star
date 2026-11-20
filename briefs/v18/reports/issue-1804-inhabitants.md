@@ -29,3 +29,17 @@
 - The eyes are hard to find in frames at 20 to 30 m (5 px floor); the frames show no pair clearly.
 - The moths' ring and plinth height are guesses until F2's house is in.
 - Untested until F1 merges: the stilters among real trunks, and the spur as a lead.
+
+## Round two (2026-11-20, the coordinator's notes)
+
+- **Body:** each stilter is now a close clump of two or three long thin boles (76 to 82% of its height, roots flared, a burl and a stub on each; `prop` is a thinner stay set wide). They meet under an ordinary crown grown from the tree recipe's branching. Under the crown hangs a small burl body, and one leafy bough droops out and down among the boles; the knot at its end carries the face, so turning toward the visitor is that bough turning. `lean` and the leg count vary per stilter, 10 to 13 m. The asleep one is sunk into a fork of its own roots, with a trunk going on up and the nest. The study page has a new subject, `stilter-lineup`: two of the wood's own deodand trees and three stilters at one scale.
+- **Seen moved:** each step leaves a mark at every foot it lifted (`stilter-marks`, 48 instances, one draw: pressed earth with root-holes). The "behind" step now goes into the way the visitor came (the trail of their last 14 s).
+- **Eyes:** 2 watchers on low, 3 above, larger (7 px floor, kept 6 px apart). Sites sit 3.5 to 9 m off the wood way and the spurs, so they are met 8 to 20 m away. They open only toward the frame's edge (0.55 to 0.9 of its half-width), and when centred they blink once slowly and shut, or sink, over half a second.
+- **Tests:** `stilters-test` with frames at low, medium and phone: 57/0. The sweep now walks 12 m down the spur. The nearest foot is measured where a stilter stepped to (6.6 m or more).
+- **Frames:** grove `shots/wip/v18-F4-s3-{low,medium}-desktop-00..08-*` and `v18-F4-s3-low-phone-*`; eyes `-09..12-*`. Study sheet `v18-F4-r2study3-only-{neutral-a,sun}`.
+- **Blind reader on the lineup:** the two wood trees at 85 to 90% "tree", the stilters at 55 to 60% "tree-like", but "their forked trunks read as legs", "walking tree".
+- **Weak:**
+  - The forked boles still read as legs to a reader who is looking for something.
+  - On the phone the test's eyes (0.65 rad off the look) fall outside the narrow frame, so the phone frame shows none. The live rule (frame edge in NDC) does place them inside it.
+  - In the frames the marks are faint.
+- **Waiting on F1 and F2:** stilters among the lobe's real trees, `paneColour` and the moth ring tied to F2's panes, then everything rerun.
