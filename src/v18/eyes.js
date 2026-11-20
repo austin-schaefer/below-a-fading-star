@@ -194,7 +194,7 @@ export const study = [{
   build(ctx) {
     const L = { ...ctx.landmarks, wood: { x: 0, z: 0, r: 60 } };
     const S = buildEyes(Object.assign(Object.create(ctx), { landmarks: L }), {});
-    [0, 1, 2, 4].forEach((k, i) => S.force(i, (i - 1.5) * 0.6, 0, k));
+    [1, 2, 4].forEach((k, i) => S.force(i, (i - 1) * 0.7, 0, k));
     ctx.registerUpdate(() => { for (const w of S.watchers) { w.mode = 'open'; w.blink = 99; w.lid = 1; } });
     return { at: (o) => o.set(0, 0, 0), h: 1.2 };
   },

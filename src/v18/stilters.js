@@ -89,7 +89,7 @@ export function growStilter(rng, spec) {
   const jy = asleep ? H * 0.3 : H * (0.76 + rng() * 0.06);
   const J = V(lx, jy, lz);
   const legR = asleep ? 0.5 + H * 0.02 : 0.24 + H * 0.013;
-  const spread = asleep ? 2.6 + H * 0.05 : 0.9 + H * 0.06;
+  const spread = asleep ? 2.6 + H * 0.05 : 0.55 + H * 0.04;
   const n = spec.legs;
   // the boles: long, thin, a close clump of trunks, each a little bowed, flared at the foot; with `prop` the last is a
   // thinner stay set further out and leaning in
@@ -101,7 +101,7 @@ export function growStilter(rng, spec) {
     const r0 = legR * (prop ? 0.6 : 0.9 + rng() * 0.25);
     sk.feet.push({ x: fx, z: fz, r: r0 * 1.6 });
     const foot = V(fx, -0.5, fz), top = J.clone().add(V(Math.cos(a) * 0.25, -0.4, Math.sin(a) * 0.25));
-    const mid = foot.clone().lerp(top, 0.45).add(V(Math.cos(a + 1.3) * (0.3 + rng() * 0.5), 0, Math.sin(a + 1.3) * (0.3 + rng() * 0.5)));
+    const mid = foot.clone().lerp(top, 0.45).add(V(Math.cos(a + 1.3) * (0.15 + rng() * 0.3), 0, Math.sin(a + 1.3) * (0.15 + rng() * 0.3)));
     const pts = bez(foot, mid, top, asleep ? 6 : 14, (t) => r0 * (1 - 0.45 * t) * (1 + 1.0 * Math.exp(-Math.max(t * jy, 0) * 1.4)), 0.16, rng, asleep ? 0.2 : 0.3);
     sk.limbs.push({ pts, level: 0 });
     // roots flared at the foot, as the trees' (the asleep one's many, its boles grown over)
@@ -147,6 +147,8 @@ export function growStilter(rng, spec) {
   const hang = bez(s0, s0.clone().add(V(0.15, 0.2, out * 1.05)), e, 10, (t) => legR * (0.9 - 0.45 * t), 0.12, rng, 0.12);
   sk.limbs.push({ pts: hang, level: 1 });
   for (let k = 0; k < 2; k++) { const q = hang[3 + k * 3]; sk.moss.push({ p: V(q.x, q.y - q.r, q.z), len: 0.8 + rng() * 1.4, w: 0.4, ang: rng() * 3 }); }
+  // twigs with leaves off its upper run, so it is a bough that droops and not a bare arm
+  for (let k = 0; k < 3; k++) { const q = hang[2 + k * 2]; branch(sk, rng, V(q.x, q.y, q.z), V((rng() - 0.5) * 1.4, 0.5, 0.6).normalize(), H * 0.09, q.r * 0.5, 2, 3); }
   const kr = legR * 0.75;
   sk.limbs.push({ pts: [{ x: e.x, y: e.y + 0.25, z: e.z - 0.1, r: kr * 0.9, wob: 0.15 }, { x: e.x, y: e.y - 0.05, z: e.z + 0.05, r: kr * 1.15, wob: 0.15 }, { x: e.x, y: e.y - 0.35, z: e.z + 0.05, r: kr * 0.6, wob: 0.12 }], level: 1, cap: true, burl: true });
   sk.face = { x: e.x, y: e.y - 0.02, z: e.z + kr * 1.05, tilt: 0.55, gap: kr * 0.42, eyeR: kr * 0.2, rim: kr * 0.12, closed: asleep };
