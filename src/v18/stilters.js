@@ -366,7 +366,7 @@ export function buildStilters(ctx, { leadAt = null, exitAt = null, trees = [] } 
   const faceYaw = (x, z) => Math.atan2(cam.x - x, cam.z - z);
   // never to where a foot of it would stand within 3.5 m of the visitor
   for (const st of list) st.reach = Math.max(...st.sk.feet.map((f) => hyp(f.x, f.z) + f.r));
-  const fine = (st, x, z) => inLeash(x, z) && hyp(x - cam.x, z - cam.z) >= Math.max(S.keep, st.reach + 3.5) && offTrack(x, z) && offTrees(x, z) && offGlade(x, z) && dry(x, z) && apart(x, z, st);
+  const fine = (st, x, z) => inLeash(x, z) && hyp(x - cam.x, z - cam.z) >= Math.max(S.keep, st.reach + 3.5) && offTrack(x, z) && offTrees(x, z) && hyp(x - GROVE.x, z - GROVE.z) > 5 && dry(x, z) && apart(x, z, st); // a follower may come to the glade's rim
 
   const ev = (st, kind, from) => {
     st.mesh.updateMatrixWorld();
@@ -374,6 +374,7 @@ export function buildStilters(ctx, { leadAt = null, exitAt = null, trees = [] } 
   };
 
   let cool = 0, ringHold = 0, ringed = false, clock = 0, pending = null, pendingT = 0;
+  const look = new THREE.Vector3();
   // where each stood: a ring of pressed bare earth with root-holes at every foot it lifted, so the ground shows a walk
   const MARKS = 48, markGeo = new THREE.PlaneGeometry(1, 1).rotateX(-Math.PI / 2);
   const markMat = new THREE.ShaderMaterial({
@@ -484,10 +485,16 @@ export function buildStilters(ctx, { leadAt = null, exitAt = null, trees = [] } 
     if (dark > 0.85 && inGrove && !ringed) { ringed = true; ring(); ringHold = 20; return; }
     if (dark < 0.3) ringed = false;
     if (ringHold > 0) { if (dark < 0.5) ringHold -= dt; if (hyp(vx - state.ring.x, vz - state.ring.z) > 6) ringHold = 0; return; }
-    // one mover a look: once one has moved, none moves again until the visitor has seen it where it now stands (or 25 s)
+    // one mover a look: once one has moved, none moves again until the visitor has seen it where it now stands (or 12 s)
     clock += dt; cool -= dt;
-    for (const st of list) if (st.inView) st.seenT = clock;
-    if (pending) { if (pending.inView || clock - pendingT > 25) pending = null; else return; }
+    // looked at: its middle within 0.35 rad of the look (the one a visitor remembers)
+    camera.getWorldDirection(look);
+    for (const st of list) {
+      if (!st.inView) continue;
+      const dx = st.x - vx, dz = st.z - vz, dy = ground(st.x, st.z) + st.h * 0.5 - cam.y, l = Math.hypot(dx, dy, dz) || 1;
+      if ((look.x * dx + look.y * dy + look.z * dz) / l > 0.94) st.seenT = clock;
+    }
+    if (pending) { if (pending.inView || clock - pendingT > 12) pending = null; else return; }
     if (cool > 0) return;
     // the mover: of those out of view and not close, the one the visitor saw last
     let mover = null;
