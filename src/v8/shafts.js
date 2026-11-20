@@ -7,6 +7,7 @@
 // at 13.5° a shaft is long and shallow and its top always ends, faded out, among leaves, never in open air. Both ends
 // stay inside the wood. ?shafts=0.
 import * as THREE from 'three';
+import { lobeSd } from '../v18/reach.js'; // v18-F1: the wood's north lobe
 import { LANDMARKS } from '../world.js';
 import { hyp } from '../noise.js';
 
@@ -80,9 +81,10 @@ export async function build(ctx) {
     mat.uniforms.uTime.value = t;
     // the camera's own place: in the wood they are there, at its fringe they thin, outside it they are gone
     let inWood = 1 - Math.min(1, Math.max(0, (hyp(ctx.camera.position.x - W.x, ctx.camera.position.z - W.z) - (W.r - 25)) / 30));
+    inWood = Math.max(inWood, 1 - Math.min(1, Math.max(0, (lobeSd(ctx.camera.position.x, ctx.camera.position.z) + 12) / 22))); // v18-F1: and in its north lobe
     inWood *= inWood * (3 - 2 * inWood);
     mat.uniforms.uAmt.value = near * ctx.sky.flicker.value * inWood;
     mesh.visible = inWood > 0;
-  }, { pos: new THREE.Vector3(W.x, 0, W.z), near: W.r + 40, hz: 0 });
+  }, { pos: new THREE.Vector3(W.x, 0, W.z), near: W.r + 60, hz: 0 }); // (v18-F1: out to the lobe's far edge, 150 m)
   ctx.log?.(`shafts: ${list.length} in the wood`);
 }

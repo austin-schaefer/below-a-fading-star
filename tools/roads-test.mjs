@@ -88,6 +88,7 @@ const res = await page.evaluate(async () => {
   };
   let samples = 0; const blind = [];
   for (const t of tracks) {
+    if (t.lead?.cls === 'spur') continue; // v18-F1: a spur is marked by its foxfire, never a gnomon (foxfire-test checks it)
     for (let i = 0; i < t.pts.length; i += 2) {
       const [x, z] = t.pts[i];
       if (Math.hypot(x - 200, z - 185) < 12) continue; // v14-D2: the causeway's line runs on over the Pit's hole, where no one walks it (its floor has its own way)
