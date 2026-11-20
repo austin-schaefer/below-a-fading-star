@@ -248,6 +248,15 @@ export async function build(ctx) {
   meshes.push(motes);
 
   // the stonechats --------------------------------------------------------
+  const { birds } = buildStonechats(ctx, rng, tops, low, meshes);
+
+  regions.stats[KEY] = () => ({ ...meshStats(meshes), creature: birds.length, at: birds.map((b) => [Math.round(b.x), Math.round(b.z)]), tors: TORS.length, pillows: pillows.length, clitter: clitter.length, gorse: gorse.length });
+  ctx.log(`region-high-ling: ${TORS.length} tors (${pillows.length} pillows), ${clitter.length} clitter, ${gorse.length} gorse, ${birds.length} stonechats`);
+}
+
+// The stonechats on the gorse's top sprigs (`tops`: { x, y, z, used }), flitting low to another bush when you come close.
+function buildStonechats(ctx, rng, tops, low, meshes) {
+  const { scene } = ctx;
   const sm = new Mesher();
   sm.blob(0, 0.05, 0, 0.035, 0.038, 0.06, 7, 5, 0);       // body
   sm.blob(0, 0.095, 0.045, 0.026, 0.026, 0.028, 6, 4, 0); // head
@@ -335,7 +344,21 @@ export async function build(ctx) {
     }
     sMesh.instanceMatrix.needsUpdate = true; flap.needsUpdate = true; fold.needsUpdate = true;
   }, { pos: { x: 255, z: -50 }, near: 90, hz: 0 });
-
-  regions.stats[KEY] = () => ({ ...meshStats(meshes), creature: birds.length, at: birds.map((b) => [Math.round(b.x), Math.round(b.z)]), tors: TORS.length, pillows: pillows.length, clitter: clitter.length, gorse: gorse.length });
-  ctx.log(`region-high-ling: ${TORS.length} tors (${pillows.length} pillows), ${clitter.length} clitter, ${gorse.length} gorse, ${birds.length} stonechats`);
+  return { birds, mesh: sMesh };
 }
+
+// The study page (src/study/registry.js): the stonechats on stand-in gorse (dark mounds a metre across, their top
+// sprigs the perches), flitting from the looker.
+export const study = [{
+  id: 'stonechat', name: 'stonechat', kind: 'creature', h: 1.6, at: [255, -50],
+  build(ctx) {
+    const tops = [], mat = new THREE.MeshStandardMaterial({ color: '#3a4426', roughness: 0.95 });
+    for (let i = 0; i < 9; i++) {
+      const a = i * 2.4, r = 2 + (i % 3) * 5, x = 255 + Math.cos(a) * r, z = -50 + Math.sin(a) * r;
+      const m = new THREE.Mesh(new THREE.SphereGeometry(0.5, 8, 6), mat); m.scale.y = 0.75; m.position.set(x, 0.2, z); m.castShadow = true; ctx.scene.add(m);
+      tops.push({ x, y: 0.58, z, used: false });
+    }
+    const { birds } = buildStonechats(ctx, ctx.makeRng(6100), tops, ctx.quality === 'low', []);
+    const b = birds[0]; return { at: (o) => o.set(b.x, b.y, b.z), face: () => b.yaw, floor: 0 };
+  },
+}];

@@ -20,6 +20,7 @@ export const STUDY_MODULES = [
   'src/v15/people/index.js',
   'src/v2/inhabitants/guest.js', 'src/v2/inhabitants/galley.js', 'src/v2/inhabitants/menology.js',
   'src/v2/riverlife.js', 'src/v8/twk/model.js', 'src/v8/house/folk.js',
+  'src/v4/regions/high-ling.js', 'src/v4/regions/outwash.js', 'src/v4/regions/lynchets.js', 'src/v4/regions/strandline.js', 'src/v4/regions/adust.js', 'src/v4/regions/peafowl.js',
   'src/v7/walkers/thurifer.js', 'src/v7/walkers/leerie.js', 'src/v7/walkers/linkboy.js',
 ];
 
