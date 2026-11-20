@@ -234,9 +234,10 @@ export function installGamepad(ctx) {
   const sroot = document.getElementById('settings');
   if (sroot) mo.observe(sroot, { attributes: true, attributeFilter: ['class'] });
 
-  // the focus ring a pad needs (a script's focus() shows no ring in some browsers) and the act's key on a touch device
+  // the focus ring a pad needs (a script's focus() shows no ring in some browsers; 2 px, a blind reader missed 1 px), the
+// pad's button names in their own case (lowercased, 'a' and 'x' read as keys to a blind reader) and the act's key on touch
   const st = document.createElement('style');
-  st.textContent = 'body.pad #settings-panel :focus { outline: 1px solid var(--ink, #ffd9b0); outline-offset: 3px; } body.touch.pad #act kbd { display: inline; } @media (max-width: 700px) { body.pad #card .keys { display: block; } }';
+  st.textContent = 'body.pad #settings-panel :focus { outline: 2px solid var(--ink, #ffd9b0); outline-offset: 3px; } body.pad #card .keys kbd, body.pad .set-keys kbd, body.pad #act kbd { text-transform: none; } body.touch.pad #act kbd { display: inline; } @media (max-width: 700px) { body.pad #card .keys { display: block; } }';
   document.head.appendChild(st);
 
   arm();
