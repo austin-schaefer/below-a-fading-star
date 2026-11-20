@@ -284,7 +284,7 @@ const shown = (page) => page.evaluate(() => document.getElementById('settings').
     });
     return out.filter(Boolean);
   });
-  const badView = view.filter((r) => r.deg > 40 || r.hit); // (v17.1: the sixteen marks; all but the Sunken Court, which looks at the sun, are checked)
+  const badView = view.filter((r) => r.deg > 40 || r.hit); // (v17.1: the sixteen marks; a mark that looks at the sun would be left out)
   check('teleport: every mark\'s place\'s centre is in view (within 40 degrees of the look) and no collider shuts the view within 3 m of the eye', view.length >= n - 2 && badView.length === 0, { checked: view.length, badView });
   // v16 critic: every stand on the map, the living and the stories too: the view's centre (the stand's yaw and pitch, from the
   // eye) meets no drawn mesh within 2 m (the Bather's old stand on the Span's rubble looked into a slab 1.98 m off; the

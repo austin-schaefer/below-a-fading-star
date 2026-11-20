@@ -10,23 +10,24 @@
 // the tools); only the map's marks are few. Which sixteen, and why the rest are not on it, is in MARKS' comment.
 import { CAUSEWAY_V4, SUN } from '../world.js';
 
-// Sixteen, spread over the valley, each something a visitor would walk to see. Not on the map: the tops of the ways up
+// Sixteen, spread over the valley, each something a visitor would walk to see (the owner's favourites among them: the
+// Span, seen from its bell, the Pomegranate House, the Arcature). Not on the map: the tops of the ways up
 // (the Bitter End, the Hanging Croft, Final Refuge, the Span's deck and its camp and splice, the Cyclopean Stairs,
 // Lonely Staircase): the climb is the thing; the rooms under the moor (the Noon Road, the Laid Sun, the Nadir, the
 // Meridian Garth): found by going down from the Nave, the Pit and the Swallow, which are on it; the seventeen living:
 // they wander and are met; the eight story ends: found by following the story; and the small places beside a mark
-// (the Wayside Shrine, the Smoking Saint, the Pomegranate House, the Leaning Yard, the Gradine, the Unfinished Prospect,
+// (the Wayside Shrine, the Smoking Saint, the Fountain of Noon, the Sunken Court, the Leaning Yard, the Gradine, the Unfinished Prospect,
 // the Speculum, the Cutting, the Wrong Colour, the Kept Fire, the Hawser, the Plinth Road, the Menology, Rest in
 // Starlight, the regions' cards and the rest), found from the mark beside them. `line` is what a stranger sees there,
-// in plain words; `glyph` the little drawing on the chart.
+// in plain words; `glyph` the little drawing on the chart; `at` where the mark sits when not where the stand looks.
 export const MARKS = [
   { name: 'Carcanet Keep', line: 'the keep at the valley’s heart, where you woke', glyph: 'keep' },
   { name: 'The Lantern Halt', line: 'a waymark slab by the west road, chalked with strokes', glyph: 'slab' },
-  { name: 'The Fountain of Noon', line: 'the village square under the keep, and its well of daylight', glyph: 'fountain' },
+  { name: 'The Pomegranate House', line: 'a cream house with turquoise domes, under coloured lamps', glyph: 'house' },
   { name: 'Circumbambulate Pool', line: 'a still black lake west of the keep', glyph: 'pool' },
   { name: 'The Cardinal Stones', line: 'four standing stones, each its own colour', glyph: 'stones' },
   { name: "The Armiger's Tower", line: 'a lone spire on a mound under the north-west cliffs', glyph: 'tower' },
-  { name: 'The Sunken Court', line: 'a paved court sunk into the moor, facing the sun', glyph: 'court' },
+  { name: 'The Arcature', line: 'a nest of tall stone arches, turned like an instrument', glyph: 'arches', at: { x: 160, z: 60 } },
   { name: 'The Lattice', line: 'great blue crystals at the glacier’s foot', glyph: 'crystal' },
   { name: 'The Collation', line: 'a table laid for twelve among the medlar trees', glyph: 'table' },
   { name: 'The Hypogeum', line: 'a bronze door at the bottom of a stair in the ground', glyph: 'door' },
@@ -48,14 +49,14 @@ const toU = (x) => (x - X0) / SPAN, toV = (z) => (z - Z0) / SPAN;
 const G = {
   keep: '<path d="M5 20V9h2.5V6.5H10V9h4V6.5h2.5V9H19v11z" class="f"/><path d="M10.5 20v-4a1.5 1.5 0 0 1 3 0v4"/>',
   slab: '<path d="M8.5 20.5V6l3.5-2.5L15.5 6v14.5z" class="f"/><path d="M10.5 9v6M12 9v6M13.5 9v6M10 13.5l4-2.5"/>',
-  fountain: '<path d="M4.5 15h15l-2.5 4.5h-10z" class="f"/><path d="M12 15V6.5M8.5 10c1-2.6 6-2.6 7 0" stroke="#ffbc72"/>',
+  house: '<path d="M4.5 20.5v-8h15v8z" class="f"/><path d="M8 12.5a4 4 0 0 1 8 0" fill="#1f9a92" stroke="#3fc0b4"/><path d="M12 8.5V6M10.5 20.5V17a1.5 1.5 0 0 1 3 0v3.5"/><circle cx="7" cy="15.5" r="0.9" fill="#ffbc72" stroke="none"/><circle cx="17" cy="15.5" r="0.9" fill="#b3263a" stroke="none"/>',
+  arches: '<path d="M3.5 20.5C3.5 5 20.5 5 20.5 20.5M7 20.5C7 9.5 17 9.5 17 20.5M10.3 20.5c0-6.5 3.4-6.5 3.4 0"/>',
   pool: '<path d="M3.5 9.5c2.5-2 4.5 2 7 0s4.5 2 7 0 2.5 1 3 0.5M3.5 14.5c2.5-2 4.5 2 7 0s4.5 2 7 0 2.5 1 3 0.5" stroke="#8fa6c8"/>',
   stones: '<path d="M4 20v-9l2-1.5 2 1.5v9z" fill="#ffb347" stroke="none"/><path d="M9 20V8.5l1.8-1.5 1.8 1.5V20z" fill="#6a8a6a" stroke="none"/><path d="M13.6 20V9.5l1.8-1.3 1.8 1.3V20z" fill="#5fb89a" stroke="none"/><path d="M18 20v-8l1.5-1.2L21 12v8z" fill="#b06ad4" stroke="none"/>',
   tower: '<path d="M12 2.5l2.8 7.5v8h-5.6v-8z" class="f"/><path d="M4 21.5c3.5-3.5 12.5-3.5 16 0"/>',
-  court: '<path d="M4.5 7.5h15v12h-15z" class="f"/><path d="M7.5 10.5h9v6h-9zM4.5 7.5l3 3M19.5 7.5l-3 3"/>',
   crystal: '<path d="M7.5 20.5L9.5 9l2 11.5zM12 20.5L15 4l3 16.5zM4 20.5l1.8-6.5 1.8 6.5z" fill="#2a4a63" stroke="#7ad7ff"/>',
   table: '<path d="M3.5 11.5h17M6 11.5v7M18 11.5v7"/><circle cx="7" cy="8.5" r="1" class="d"/><circle cx="12" cy="8.5" r="1" class="d"/><circle cx="17" cy="8.5" r="1" class="d"/>',
-  door: '<path d="M7.5 20V11a4.5 4.5 0 0 1 9 0v9z" class="f" stroke="#c98a4a"/><path d="M3.5 20h17M5 17.5h2.5M16.5 17.5H19"/>',
+  door: '<path d="M3.5 7.5h4v3.5h4v3.5h4v3.5h5"/><path d="M15.5 18v-3.5a2.5 2.5 0 0 1 5 0V18z" fill="#c98a4a" stroke="#c98a4a"/>',
   nave: '<path d="M6 16V9.5a6 6 0 0 1 12 0V16M9 16v-5.5a3 3 0 0 1 6 0V16"/><path d="M3.5 18.5c2.5-1.6 4.5 1.6 7 0s4.5 1.6 7 0 2.5 1 3 .5" stroke="#8fa6c8"/>',
   pit: '<circle cx="12" cy="12" r="7.5" class="f"/><circle cx="12" cy="12" r="4.5"/><circle cx="12" cy="12" r="1.8" fill="#000" stroke="none"/>',
   bell: '<path d="M7.5 16c0-6 1.5-9 4.5-9s4.5 3 4.5 9z" class="f"/><path d="M6 16h12M12 7V4.5M12 18v1.5M4 4.5h16"/>',
@@ -244,7 +245,7 @@ export function buildMap(ctx, host, places, { go, touch, shown }) {
   for (const M of MARKS) {
     const pl = places.find((p) => p.name === M.name);
     if (!pl) { console.warn('[fp] map: no stand named', M.name); continue; }
-    const at = pl.look && pl.look !== 'sun' ? { x: pl.look.x, z: pl.look.z } : { x: pl.x, z: pl.z };
+    const at = M.at || (pl.look && pl.look !== 'sun' ? { x: pl.look.x, z: pl.look.z } : { x: pl.x, z: pl.z }); // the thing: the mark's own, or where the stand looks
     const b = document.createElement('button');
     b.type = 'button'; b.className = 'map-mark'; b.tabIndex = -1;
     b.setAttribute('aria-label', `${M.name}: ${M.line}`);
