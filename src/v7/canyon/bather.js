@@ -211,7 +211,7 @@ export function stoneMaterial(shared, flip) {
 // The study page (src/study/registry.js): the Bather in her pool (the ground drawn at the water's face, the pool level),
 // washing her arm; the stones she becomes beside her, faded out as the walk keeps them until you climb down.
 export const study = [{
-  id: 'bather', name: 'the Bather', kind: 'figure', h: 7, el: 0.5, at: [0, 0],
+  id: 'bather', name: 'the Bather', kind: 'figure', h: 7, el: 0.5, mid: 0.3, at: [0, 0],
   async build(ctx) {
     const { SITES } = await import('../../world.js');
     const s = SITES.bather, frame = { U: [1, 0], V: [0, 1] }, toWorld = (u, y, v) => [u, y, v];

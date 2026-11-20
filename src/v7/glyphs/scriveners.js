@@ -363,3 +363,16 @@ export function buildScriveners(ctx) {
     tris: () => (geo.index.count / 3) * N + 2 * NM,
   };
 }
+
+// The study page (src/study/registry.js): the Scriveners' shoal in its shallows (the ground drawn at the water's face),
+// wandering and forming the door's last glyph by turns.
+export const study = [{
+  id: 'scriveners', name: 'the Scriveners', kind: 'creature', h: 3, el: 0.7, mid: 0, at: [SITE.x, SITE.z],
+  build(ctx) {
+    const y = ctx.water.tarn.y;
+    ctx.terrain = { ...ctx.terrain, heightAt: () => y - 0.5, waterLevelAt: () => y, waterDepthAt: () => 0.5 };
+    const S = buildScriveners(ctx); let k = 6;
+    ctx.registerUpdate((dt) => { if ((k -= dt) <= 0) { k = 18; S.form(6, { hold: 6 }); } });
+    return { at: (o) => o.set(S.centre.x, y, S.centre.z), floor: y - 0.5, face: () => Math.atan2(S.facing.x, S.facing.z) };
+  },
+}];

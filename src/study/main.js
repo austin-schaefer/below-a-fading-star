@@ -136,7 +136,7 @@ async function buildSubjects() {
         const r = (await def.build(S.ctx)) || {};
         sub.at = r.at || ((out) => out.set(guess[0], 0, guess[1]));
         sub.face = r.face || null; sub.floor = r.floor; sub.fly = !!def.fly || !!r.fly;
-        sub.ground = r.ground !== false; sub.el = r.el ?? def.el;
+        sub.ground = r.ground !== false; sub.el = r.el ?? def.el; sub.mid = r.mid ?? def.mid;
         if (r.h) sub.h = r.h;
         sub.ok = true;
       } catch (e) {
@@ -233,7 +233,7 @@ function aim(s) {
   s.at(T0);
   let span, mid;
   if (s.kind === 'recipe') { span = Math.max(s.fitH, s.fitSpan * 0.75); mid = s.fitH * 0.45; }
-  else { span = s.h; mid = s.fly ? 0 : s.h * 0.52; }
+  else { span = s.h; mid = s.mid ?? (s.fly ? 0 : s.h * 0.52); }
   const fovV = THREE.MathUtils.degToRad(cam.fov), fit = Math.max(span / (2 * Math.tan(fovV / 2)), span / (2 * Math.tan(fovV / 2) * cam.aspect));
   const dist = fit * 1.25 * view.zoom * FAR + (s.kind === 'recipe' ? 0 : 0.25);
   const face = s.face ? s.face() : 0.7;

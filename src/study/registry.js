@@ -16,6 +16,7 @@ export const STUDY_MODULES = [
   'src/v7/still/sleeper.js', 'src/v7/still/stylite.js', 'src/v7/still/accrescent.js',
   'src/v7/small/repetend.js', 'src/v7/small/simulacrum.js',
   'src/v7/canyon/bather.js', 'src/v7/canyon/toad.js',
+  'src/v7/glyphs/scriveners.js', 'src/v7/glyphs/moles.js',
   'src/v7/walkers/thurifer.js', 'src/v7/walkers/leerie.js', 'src/v7/walkers/linkboy.js',
 ];
 
