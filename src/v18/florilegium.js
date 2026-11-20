@@ -24,8 +24,8 @@ export function tubsOf() {
   const F = FLORILEGIUM;
   return LIKENESSES.map((L, i) => {
     if (L.id === 'graffer') return { id: L.id, x: F.sprout.x - GLASSHOUSE.x, z: F.sprout.z - GLASSHOUSE.z, yaw: Math.PI / 2 };
-    const a = ((30 + 60 * i) * Math.PI) / 180;
-    return { id: L.id, x: Math.cos(a) * F.ring, z: Math.sin(a) * F.ring, yaw: Math.atan2(Math.cos(a), Math.sin(a)) };
+    const a = ((30 + 60 * i) * Math.PI) / 180, r = L.id === 'cup' ? F.ring + 1.0 : F.ring; // the magnate back by the wall: out of the door's view of the rest
+    return { id: L.id, x: Math.cos(a) * r, z: Math.sin(a) * r, yaw: Math.atan2(Math.cos(a), Math.sin(a)) };
   });
 }
 
@@ -59,6 +59,7 @@ export function makeTurner(heads, flask, uTurn, { stillAfter = STILL_AFTER } = {
       const base = angDiff(heading, h.yaw);
       s.aim += angDiff(base, s.aim) * ease(dt, 0.3 * s.tau * k);       // a little late: the turn itself follows an eased aim
       s.yaw += angDiff(s.aim, s.yaw) * ease(dt, 0.7 * s.tau * k);
+      s.aim = angDiff(s.aim, 0); s.yaw = angDiff(s.yaw, 0); // kept in -pi..pi: the shader's turn is periodic
       s.err = mode === 'visitor' ? Math.abs(angDiff(base, s.yaw)) : 0;
       s.pitch += (pitch - s.pitch) * ease(dt, s.tau * k);
       uTurn[h.slot].set(s.yaw, h.slot === 7 ? s.pitch * 0.3 : s.pitch, h.yaw, 1.2 * Math.sin(s.yaw));

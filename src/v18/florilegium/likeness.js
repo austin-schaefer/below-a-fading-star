@@ -205,16 +205,18 @@ function child(P, low) {
 
 function magnate(P, low) {
   const B = BLOOMS.cup, pod = '#5a5a22', podD = '#3a2a14';
-  turned(P, [[0.2, 0.6], [0.4, 0.82], [0.56, 1.2], [0.55, 1.55], [0.44, 1.82], [0.33, 1.98], [0.13, 2.05], [0.075, 2.1]], { sz: 0.86, ribs: 9, amp: 0.07, sides: low ? 18 : 27, col: (t, a, rb) => P.paint(rb > 0.2 ? (t > 0.55 ? '#7a2a26' : pod) : podD, 0, 0.6, 0.12) });
-  skirt(P, { y: 1.98, r0: 0.2, n: 9, len: 0.62, wid: 0.44, flare: 1.1, cup: -0.45, curl: -0.35, vm: 0.6, sz: 0.86, c0: B.c0, c1: B.c1, emit: 0.42 }); // a cape of petals over the shoulders
+  turned(P, [[0.2, 0.6], [0.4, 0.82], [0.56, 1.2], [0.56, 1.55], [0.54, 1.8], [0.5, 1.94], [0.3, 2.03], [0.13, 2.07], [0.075, 2.1]], { sz: 0.86, ribs: 9, amp: 0.07, sides: low ? 18 : 27, col: (t, a, rb) => P.paint(rb > 0.2 ? (t > 0.55 ? '#7a2a26' : pod) : podD, 0, 0.6, 0.12) });
+  for (const sx of [-1, 1]) ball(P, [sx * 0.5, 1.9, 0], 0.21, 0.17, 0.2, '#7a2a26', 0.12, 8, 5); // the shoulders
+  skirt(P, { y: 2.0, r0: 0.3, n: 9, len: 0.5, wid: 0.44, flare: 1.1, cup: -0.45, curl: -0.35, vm: 0.6, sz: 0.86, c0: B.c0, c1: B.c1, emit: 0.42 }); // a cape of petals over the shoulders
   skirt(P, { y: 2.04, r0: 0.1, n: 8, len: 0.26, wid: 0.24, flare: 2.2, cup: -0.3, curl: -0.4, phase: 0.3, c0: '#2a4a20', c1: '#5a7a34', emit: 0.15 }); // the collar
-  // the cup: a goblet of a bloom, raised in his right hand
-  const hand = [0.72, 2.62, 0.2];
-  arm(P, [[0.33, 1.9, 0.02], [0.66, 2.0, 0.14], hand], 0.085, B);
-  arm(P, [[-0.33, 1.9, 0.02], [-0.6, 1.58, 0.2], [-0.42, 1.36, 0.46]], 0.085, B);
-  P.paint('#8a6a1e', 0.2, 0.5, 0.3); P.loft([hand, [hand[0], hand[1] + 0.14, hand[2]]], [0.03, 0.026], 6, 0, false);
-  turned(P, [[0.03, hand[1] + 0.13], [0.13, hand[1] + 0.2], [0.185, hand[1] + 0.36], [0.2, hand[1] + 0.5]], { cx: hand[0], cz: hand[2], sides: 10, capA: false, capB: false, col: (t) => P.paint(t > 0.5 ? '#f0b83a' : '#b8801e', 0.2, 0.4, 0.9) });
-  for (let i = 0; i < 6; i++) { const a = (i / 6) * Math.PI * 2, c = Math.cos(a), s = Math.sin(a); petal(P, { at: [hand[0] + c * 0.19, hand[1] + 0.48, hand[2] + s * 0.19], dir: [c * 0.5, 1, s * 0.5], nrm: [c, -0.3, s], len: 0.2, wid: 0.2, curl: 0.5, c0: '#d89a2a', c1: '#ffd870', emit: 0.95, nu: 2, nv: 3 }); }
+  // the cup: a dark goblet, a seed-pod on its stalk, lifted clear of the head on one thick arm (a shape against the
+  // lit glass, not a second light)
+  const hand = [1.02, 2.66, 0.16];
+  arm(P, [[0.52, 1.92, 0.02], [0.98, 2.06, 0.12], hand], 0.15, B);
+  ball(P, hand, 0.13, 0.12, 0.13, B.green ?? '#3a5a2a', 0.1, 7, 5);
+  arm(P, [[-0.52, 1.9, 0.02], [-0.74, 1.56, 0.2], [-0.5, 1.34, 0.46]], 0.11, B);
+  turned(P, [[0.15, hand[1] - 0.12], [0.04, hand[1] - 0.07], [0.035, hand[1] + 0.14], [0.075, hand[1] + 0.19], [0.04, hand[1] + 0.24], [0.2, hand[1] + 0.36], [0.27, hand[1] + 0.56], [0.25, hand[1] + 0.72], [0.29, hand[1] + 0.76]],
+    { cx: hand[0], cz: hand[2], sides: 10, col: (t) => P.paint(t > 0.92 ? '#0c0806' : t > 0.45 ? '#3a2410' : '#5a4016', 0.3, 0.5, 0.04) });
   return [{ slot: 3, pivot: [0, 2.1, 0], bodyW: 0.16, scale: 1.1, head: (P) => bloomHead(P, B, { fr: 0.115, fw: 1.15, fy: 0.2, throat: { r: 0.02, d: 0.02 }, marks: [{ a: 0.5, r: 0.085, sx: 0.05, sy: 0.034, c: '#12040a' }, { a: 2.2, r: 0.08, sx: 0.034, sy: 0.024, c: '#12040a' }, { a: 3.9, r: 0.09, sx: 0.055, sy: 0.03, c: '#12040a' }, { a: 5.3, r: 0.085, sx: 0.03, sy: 0.04, c: '#12040a' }], extra: (P, F) => { turnedZ(P, F, [[0.045, 0.02], [0.05, 0.07], [0.058, 0.1], [0.02, 0.115]], '#9aa860', '#5a6a30'); }, layers: [
     { n: 4, len: 0.3, wid: 0.36, open: 0.3, curl: 0.3, cup: 0.5, vm: 0.62, tip: 0.45, phase: 0.6 },
     { n: 3, len: 0.24, wid: 0.3, open: 0.5, curl: 0.4, cup: 0.5, phase: 1.5, vm: 0.6, tip: 0.5, c0: B.c0, c1: '#e0444a' },
@@ -257,20 +259,20 @@ function falconer(P, low) {
   turned(P, [[0.105, 1.66], [0.1, 1.78], [0.13, 1.92], [0.17, 2.06], [0.16, 2.11], [0.06, 2.16], [0.045, 2.22]], { sz: 0.72, ribs: 6, amp: 0.05, sides: 12, col: (t, a, rb) => P.paint(rb > 0.2 ? '#4a6a50' : B.green, 0, 0.8, 0.08) });
   skirt(P, { y: 2.13, r0: 0.08, n: 5, len: 0.34, wid: 0.2, flare: 1.4, cup: -0.5, curl: -0.3, c0: B.c0, c1: B.c1, emit: 0.4 }); // a shoulder cape
   // the lifted wrist, its glove a sheathing bract, and the bird: a fat bud with a beak, two sepals for wings, a leaf for a tail
-  const wrist = [-1.02, 2.08, 0.14];
-  arm(P, [[-0.16, 2.08, 0], [-0.58, 1.98, 0.08], wrist], 0.055, B);
+  const wrist = [-1.04, 1.56, 0.16];
+  arm(P, [[-0.16, 2.08, 0], [-0.62, 1.84, 0.1], wrist], 0.06, B);
   arm(P, [[0.16, 2.08, 0], [0.3, 1.8, 0.05], [0.27, 1.52, 0.12]], 0.05, B);
-  P.paint('#a89050', 0, 0.8, 0.2); P.loft([[-0.72, 2.0, 0.1], [-0.88, 2.04, 0.12], [-1.05, 2.09, 0.14]], [0.08, 0.075, 0.065], 7, 0, true);
+  P.paint('#a89050', 0, 0.8, 0.2); P.loft([[-0.76, 1.76, 0.12], [-0.9, 1.67, 0.14], [-1.07, 1.57, 0.16]], [0.08, 0.075, 0.065], 7, 0, true);
   // (its back to the falconer, its head turned out: a hooked beak, a dark cap, folded wings, a tail hanging below the fist)
-  const by = wrist[1] + 0.05, bx = wrist[0] - 0.02, bz = 0.14, P0 = P.m;
-  P.xf(P0.clone().multiply(new THREE.Matrix4().makeTranslation(bx, by, bz)).multiply(new THREE.Matrix4().makeRotationY(-0.9)).multiply(new THREE.Matrix4().makeScale(1.45, 1.45, 1.45)).multiply(new THREE.Matrix4().makeTranslation(-bx, -by, -bz)));
+  const by = wrist[1] + 0.05, bx = wrist[0] - 0.02, bz = 0.16, P0 = P.m;
+  P.xf(P0.clone().multiply(new THREE.Matrix4().makeTranslation(bx, by, bz)).multiply(new THREE.Matrix4().makeRotationY(-0.15)).multiply(new THREE.Matrix4().makeScale(1.5, 1.5, 1.5)).multiply(new THREE.Matrix4().makeTranslation(-bx, -by, -bz)));
   ball(P, [bx, by + 0.2, bz], 0.1, 0.2, 0.11, '#d8c49a', 0.45, 10, 7);
   for (const s of [-1, 1]) ball(P, [bx + 0.03, by + 0.19, bz + s * 0.095], 0.07, 0.17, 0.03, '#4a3c5c', 0.25, 8, 5);
   ball(P, [bx - 0.03, by + 0.43, bz], 0.07, 0.07, 0.07, '#d8c49a', 0.45, 8, 6);
   ball(P, [bx - 0.02, by + 0.47, bz], 0.066, 0.045, 0.066, '#2e2240', 0.2, 8, 4);
-  P.paint('#e8b040', 0, 0.5, 0.7); P.loft([[bx - 0.085, by + 0.43, bz], [bx - 0.15, by + 0.41, bz], [bx - 0.165, by + 0.36, bz]], [0.028, 0.018, 0.003], 5, 0, true);
+  P.paint('#e8b040', 0, 0.5, 0.7); P.loft([[bx - 0.08, by + 0.44, bz], [bx - 0.17, by + 0.43, bz], [bx - 0.215, by + 0.38, bz], [bx - 0.2, by + 0.32, bz]], [0.036, 0.03, 0.018, 0.003], 5, 0, true);
   for (const s of [-1, 1]) ball(P, [bx - 0.075, by + 0.45, bz + s * 0.045], 0.012, 0.012, 0.01, '#100808', 0, 5, 3);
-  petal(P, { at: [bx + 0.06, by + 0.08, bz], dir: [0.35, -1, 0], nrm: [1, 0.35, 0], len: 0.34, wid: 0.13, vm: 0.6, tip: 0.4, c0: '#4a3c5c', c1: '#8a7a9a', emit: 0.3, nu: 2, nv: 3 });
+  petal(P, { at: [bx + 0.07, by + 0.12, bz], dir: [0.6, -1, 0], nrm: [0, 0, 1], len: 0.46, wid: 0.15, vm: 0.6, tip: 0.4, c0: '#4a3c5c', c1: '#8a7a9a', emit: 0.3, nu: 2, nv: 3 });
   P.xf(P0);
   return [{ slot: 6, pivot: [0, 2.22, 0], bodyW: 0.28, scale: 1.15, head: (P) => bloomHead(P, B, { fr: 0.095, throat: { r: 0.07, d: 0.1, c: '#0c0618' }, marks: [{ a: -2.0, r: 0.07, sx: 0.014, sy: 0.009, c: '#e8dcf8', e: 0.6 }, { a: -0.7, r: 0.085, sx: 0.008, sy: 0.006, c: '#e8dcf8', e: 0.6 }, { a: -1.5, r: 0.13, sx: 0.006, sy: 0.03, rot: 0, c: '#e8dcf8', e: 0.4 }], layers: [
     { n: 2, len: 0.2, wid: 0.2, open: 0.3, curl: 0.2, cup: 0.4, phase: Math.PI }, // the side petals
