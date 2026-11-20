@@ -140,7 +140,7 @@ export function startBed(a) {
       w.bp.frequency.setTargetAtTime((300 + 900 * w.lag) * w.ratio * dark, now, 0.4);
       w.pn.pan.setTargetAtTime(clamp(w.pan + 0.25 * ctx.noise.noise2(t * 0.05 + w.ph, 2.5), -0.6, 0.6), now, 1);
     }
-    canG.gain.setTargetAtTime(BED_LVL * CANOPY_LVL * wood * (0.25 + 0.75 * g) * duck, now, 0.4);
+    canG.gain.setTargetAtTime(BED_LVL * CANOPY_LVL * wood * (0.25 + 0.75 * g) * duck * (1 - 0.3 * (ctx.woodSound?.grove || 0)), now, 0.4); // v18-F5: the grove's canopy a little quieter (the birds keep away)
     windBus.gain.setTargetAtTime(WIND_BUS, now, 1.5);
     f.wood = wood; f.inKeep = inKeep; f.swellSm = swellSm; f.gust = g;
   }

@@ -23,6 +23,7 @@ import { startLiftSound } from '../v12/lift-sound.js'; // v12-H4: the lift (act-
 import { startPitSound } from '../v14/pit-sound.js'; // v14-D2: the Pit's breath and the sounding (act-pit-*)
 import { startLappetSound } from '../v15/sound.js'; // v15-L1: the Lappet's own sound by quarter, its steps and its shelter (no cues)
 import { startWaterSound } from '../v17/sound.js'; // v17-A1: the water heard (act-water-*)
+import { startWoodSound } from '../v18/sound.js'; // v18-F5: the wood heard (act-wood-*)
 
 export function startActsSound(a, ctx) {
   const { ac, voice, filt, chain, pink } = a;
@@ -33,6 +34,7 @@ export function startActsSound(a, ctx) {
   startPassageSound(a, ctx); // v14-D1: its own rng
   startLappetSound(a, ctx); // v15-L1: its own rng
   const water = startWaterSound(a, ctx); // v17-A1: its own rng
+  const wood = startWoodSound(a, ctx); // v18-F5: its own rng
 
   function offer(pos) {
     const v = voice(pos, { ref: 2.5, roll: 1, range: 20, dur: 1.6, verb: 0.3, air: 60, gain: 4 }); if (!v) return;
@@ -105,6 +107,7 @@ export function startActsSound(a, ctx) {
   const pit = startPitSound(a, ctx); // v14-D2: its own rng
   function cue(name, pos, opts) {
     if (name.startsWith('act-water') && water.cue(name, pos, opts)) return; // v17-A1
+    if (name.startsWith('act-wood') && wood.cue(name, pos, opts)) return; // v18-F5
     if (name.startsWith('act-lift') && lift.cue(name, pos, opts)) return; // v12-H4
     if (name.startsWith('act-pit') && pit.cue(name, pos, opts)) return; // v14-D2
     if (central.cue(name, pos, opts)) return; // v10-A1
