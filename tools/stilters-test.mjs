@@ -179,7 +179,7 @@ async function run(view, q, frames) {
   check(!!R, `${view}: the gutter made a ring`);
   if (R) {
     console.log(`[ring] ${R.placed}/${R.n} placed; ${R.at.map((a) => `d ${a.d.toFixed(1)} foot ${a.foot.toFixed(1)} facing off ${a.off.toFixed(2)}`).join('; ')}; gap ${(R.gap * 57.3).toFixed(0)} deg, ${(R.gapOff * 57.3).toFixed(0)} deg off the way out`);
-    check(R.round === R.n && R.placed >= 1, `${view}: every waking stilter stands round the visitor (those not already near went there unseen)`, `${R.placed} went, ${R.round}/${R.n} round`);
+    check(R.placed === R.n, `${view}: every waking stilter went to its place in the ring, unseen`, `${R.placed} went, ${R.round}/${R.n} round`);
     check(R.at.every((a) => a.d > 4 && a.d < 12), `${view}: the ring stands round the visitor (4 to 12 m)`);
     check(R.at.every((a, k) => !R.faced[k] || a.off < 0.35), `${view}: those that went face in`);
     check(R.at.every((a) => a.foot >= 3), `${view}: none of the ring within 3 m`);

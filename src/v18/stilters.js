@@ -176,15 +176,19 @@ export function growStilter(rng, spec) {
   return sk;
 }
 
-// what it occupies, as a few dozen spheres in its own frame: one round each limb, each leaf cluster, each hank of moss,
+// what it occupies, as spheres in its own frame: a run along each limb, one each leaf cluster and hank of moss,
 // the face and the nest. The test of whether it can be seen is these against the view (stilters can be seen past their
 // arms' reach: a box round them is most of a clearing)
 function boundSpheres(sk) {
   const out = [];
+  // a limb as a run of spheres, one each two or three of its points (a long bole as one sphere would be seen from
+  // beside it, behind the visitor's shoulder)
   for (const L of sk.limbs) {
-    let x0 = Infinity, y0 = Infinity, z0 = Infinity, x1 = -Infinity, y1 = -Infinity, z1 = -Infinity, r = 0;
-    for (const p of L.pts) { x0 = Math.min(x0, p.x); x1 = Math.max(x1, p.x); y0 = Math.min(y0, p.y); y1 = Math.max(y1, p.y); z0 = Math.min(z0, p.z); z1 = Math.max(z1, p.z); r = Math.max(r, p.r * (1 + (p.wob || 0))); }
-    out.push([(x0 + x1) / 2, (y0 + y1) / 2, (z0 + z1) / 2, Math.hypot(x1 - x0, y1 - y0, z1 - z0) / 2 + r * 1.6]);
+    const P = L.pts, step = P.length > 6 ? 2 : P.length - 1 || 1;
+    for (let k = 0; k < P.length - 1; k += step) {
+      const a = P[k], b = P[Math.min(P.length - 1, k + step)], r = Math.max(a.r * (1 + (a.wob || 0)), b.r * (1 + (b.wob || 0)));
+      out.push([(a.x + b.x) / 2, (a.y + b.y) / 2, (a.z + b.z) / 2, Math.hypot(b.x - a.x, b.y - a.y, b.z - a.z) / 2 + r * 1.6]);
+    }
   }
   for (const L of sk.leaves) out.push([L.p.x, L.p.y + L.s * 0.2, L.p.z, L.s * 0.85]);
   for (const M of sk.moss) out.push([M.p.x, M.p.y - M.len / 2, M.p.z, M.len / 2 + M.w]);
