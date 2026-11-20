@@ -198,14 +198,37 @@ const shown = (page) => page.evaluate(() => document.getElementById('settings').
     check('api: focusNext(dx, dy) moves among the marks and the controls, steps a slider; activate() goes; back() shuts', r.first && r.moved && r.slider && r.down && r.act && r.d < 1 && r.shut && r.back, r);
     await page.evaluate(() => window.__fp.audio.setVolume(0.6));
   }
+  // (round two) a slider at its end stop: a further press sideways moves focus on; moving up from a narrow button onto a
+  // wide slider above it is not skipped; a touch press cancelled by a scroll leaves the next Enter a key's (it goes)
+  {
+    const r = await page.evaluate(() => {
+      const S = window.__fp.settings, out = {}; S.open();
+      const v = document.getElementById('set-level-ambience'); v.value = v.max; v.dispatchEvent(new Event('input', { bubbles: true })); v.focus();
+      out.endStop = S.focusNext(1, 0) && S.focused() !== v && +v.value === +v.max;
+      document.querySelector('#set-music button').focus(); S.focusNext(0, -1); out.up = S.focused()?.id;
+      return out;
+    });
+    check('focus: past a slider\'s end stop a sideways press moves focus on; up from the music buttons reaches the music slider', r.endStop && r.up === 'set-level-music', r);
+    const pre = await page.evaluate(() => { const S = window.__fp.settings, m = S.marks[4]; m.el.focus(); m.el.dispatchEvent(new PointerEvent('pointerdown', { pointerType: 'touch', bubbles: true })); m.el.dispatchEvent(new PointerEvent('pointercancel', { pointerType: 'touch', bubbles: true })); return m.name; });
+    await page.keyboard.press('Enter');
+    const went = await page.evaluate(() => { const fp = window.__fp, pl = fp.settings.marks[4].place, p = fp.player.pos; return { shut: !fp.settings.shown, d: Math.hypot(p.x - pl.x, p.z - pl.z) }; });
+    check('touch: a press on a mark cancelled by a scroll, then Enter: it goes (the stale touch is forgotten)', went.shut && went.d < 1, { pre, went });
+    // off the chart (the lift's gallery, 135 m up on the west wall) "you are here" is an arrow on the edge, pointing out
+    const off = await page.evaluate(() => { const fp = window.__fp; fp.controls.placeAt(-377, -50, 135.2); fp.settings.open(); return new Promise((res) => setTimeout(() => { const y = document.querySelector('.map-you'), f = document.querySelector('.map-frame').getBoundingClientRect(), r = y.getBoundingClientRect(); res({ off: y.classList.contains('map-you-off'), u: +((r.left - f.left) / f.width).toFixed(3), x: fp.player.pos.x }); }, 400)); });
+    check('map: off the chart "you are here" is an arrow at the edge pointing out', off.off && off.u < 0.05, off);
+    await page.evaluate(() => { window.__fp.settings.close(); window.__fp.controls.placeAt(2, 35); });
+  }
   let allNear = true, allClosed = true, allGround = true, noCue = true, facing = true;
   const detail = [];
-  for (let i = 0; i < n; i++) {
+  // every stand in PLACES (the map's sixteen by a click on their mark, the rest by settings.teleport, as cards-walk, perf and the tools go)
+  const nAll = await page.evaluate(() => window.__fp.settings.places.length);
+  for (let i = 0; i < nAll; i++) {
     const r = await page.evaluate((i) => {
-      const fp = window.__fp, mk = fp.settings.marks[i], pl = mk.place;
+      const fp = window.__fp, pl = fp.settings.places[i], mk = fp.settings.marks.find((m) => m.place === pl);
       if (!fp.settings.shown) fp.settings.open();
       let cues = 0; const orig = fp.audio.cue; fp.audio.cue = (...a) => { cues++; return orig.apply(fp.audio, a); };
-      mk.el.click(); // a click (no touch): goes
+      if (pl.thread && !fp.threads?.[pl.thread]) return null; // a story's end only when its thread was built
+      if (mk) mk.el.click(); else fp.settings.teleport(i); // a click on a mark (no touch): goes
       fp.audio.cue = orig; // restored in the same task: the click handler is synchronous
       const p = fp.player, T = fp.terrain;
       const sa = 160 * Math.PI / 180, sun = { x: Math.cos(sa), z: Math.sin(sa) }; // SUN.azimuth: from +x toward +z
@@ -220,6 +243,7 @@ const shown = (page) => page.evaluate(() => document.getElementById('settings').
       const under = pl.y !== undefined && (pl.y < T.heightAt(p.pos.x, p.pos.z) - 3 || pl.name === 'The Nadir'); // v14-D0: a stand under the ground (the Noon Road) is measured from its own floor; v14-D2: so is the Nadir's, on the Pit's bowl, a little under the old ground
       return { name: pl.name, under, basin: +basin.toFixed(2), q: fp.quality, wet: wl !== null && wl - T.heightAt(p.pos.x, p.pos.z) > 1.15, inCol, d: Math.hypot(p.pos.x - pl.x, p.pos.z - pl.z), above: p.pos.y - (fp.span?.deckAt(p.pos.x, p.pos.z) ?? (pl.y !== undefined && (Math.abs(pl.y - T.heightAt(p.pos.x, p.pos.z)) > 3 || pl.name === 'The Nadir') ? pl.y : T.heightAt(p.pos.x, p.pos.z))) /* v8-04: a story end on the deck; v12-H3: a place in the air (the tender's deck) measured from its own y */, closed: !fp.settings.shown, cues, dot: (fx * tx + fz * tz) / l, pitch: p.pitch };
     }, i);
+    if (!r) continue;
     detail.push(r);
     if (r.d > 1) allNear = false;
     if (!r.closed) allClosed = false;
@@ -242,7 +266,7 @@ const shown = (page) => page.evaluate(() => document.getElementById('settings').
     rc.layers.enableAll(); rc.far = 1.5;
     const sides = new Map(); fp.scene.traverse((o) => { if (o.isMesh && o.material && !Array.isArray(o.material)) { sides.set(o.material, o.material.side); o.material.side = T.DoubleSide; } });
     try {
-      for (const pl of fp.settings.marks.map((m) => m.place)) {
+      for (const pl of fp.settings.places) {
         fp.settings.teleport(pl); fp.scene.updateMatrixWorld(true);
         rc.set(fp.player.pos.clone(), new T.Vector3(0, 1, 0));
         const h = rc.intersectObjects(fp.scene.children, true).find((h) => h.object.visible && h.object.isMesh && !h.object.isPoints && !/sky|meteor/.test(h.object.name));
@@ -261,7 +285,7 @@ const shown = (page) => page.evaluate(() => document.getElementById('settings').
   const view = await page.evaluate(() => {
     const fp = window.__fp, T = fp.terrain, out = [];
     const marks = Object.values(fp.landmarks).filter((L) => L.name);
-    fp.settings.marks.map((m) => m.place).forEach((pl, i) => {
+    fp.settings.places.forEach((pl, i) => {
       const L = marks.find((m) => m.name === pl.name || 'The moss light, ' + m.name === pl.name) || (pl.thing && { name: pl.name, x: pl.thing.x, z: pl.thing.z, r: 3 }); // (v15-N1: the village's three things with no card of their own)
       if (!L || pl.look === 'sun') { out.push(null); return; }
       if (pl.y !== undefined && pl.y < T.heightAt(pl.x, pl.z) - 1) { out.push(null); return; }
@@ -284,24 +308,24 @@ const shown = (page) => page.evaluate(() => document.getElementById('settings').
     });
     return out.filter(Boolean);
   });
-  const badView = view.filter((r) => r.deg > 40 || r.hit); // (v17.1: the sixteen marks; a mark that looks at the sun would be left out)
-  check('teleport: every mark\'s place\'s centre is in view (within 40 degrees of the look) and no collider shuts the view within 3 m of the eye', view.length >= n - 2 && badView.length === 0, { checked: view.length, badView });
+  const badView = view.filter((r) => r.deg > 40 || r.hit); // (v14-B5: more than 35 checked)
+  check('teleport: every named place\'s centre is in view (within 40 degrees of the look) and no collider shuts the view within 3 m of the eye (every stand in PLACES, the map\'s among them)', view.length > 35 && badView.length === 0, { checked: view.length, badView });
   // v16 critic: every stand on the map, the living and the stories too: the view's centre (the stand's yaw and pitch, from the
   // eye) meets no drawn mesh within 2 m (the Bather's old stand on the Span's rubble looked into a slab 1.98 m off; the
   // collider check above sees only colliders, and skips the living)
   const blind = await page.evaluate(() => {
     const fp = window.__fp, T = fp.THREE, rc = new T.Raycaster(), out = [];
     const shown = (o) => { for (; o; o = o.parent) if (!o.visible) return false; return true; };
-    for (const pl of fp.settings.marks.map((m) => m.place)) {
+    for (const pl of fp.settings.places) {
       fp.settings.teleport(pl);
       const P = fp.player, cp = Math.cos(P.pitch), dir = new T.Vector3(-Math.sin(P.yaw) * cp, Math.sin(P.pitch), -Math.cos(P.yaw) * cp);
       rc.set(P.pos, dir); rc.near = 0.05; rc.far = 2;
       const h = rc.intersectObjects(fp.scene.children, true).find((h) => h.object.isMesh && shown(h.object) && !/^sky/.test(h.object.name + (h.object.parent?.name || '')));
       if (h) out.push({ name: pl.name, hit: h.object.name || h.object.parent?.name, d: +h.distance.toFixed(2) });
     }
-    return { n: fp.settings.marks.length, out };
+    return { n: fp.settings.places.length, out };
   });
-  check('teleport: from every mark\'s stand the view\'s centre meets nothing drawn within 2 m of the eye', blind.n === n && blind.out.length === 0, blind);
+  check('teleport: from every stand in PLACES (the map\'s among them) the view\'s centre meets nothing drawn within 2 m of the eye', blind.n > 70 && blind.out.length === 0, blind);
   // v10-F1: the five places with an act land 8 to 11 m from it, facing it (the act's spot within 25 degrees of the look)
   const actLand = await page.evaluate(() => {
     const fp = window.__fp, out = {};

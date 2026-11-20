@@ -320,26 +320,31 @@ export function buildSettings(ctx) {
     const cur = focused();
     const go = (el) => { el.focus({ preventScroll: true }); el.scrollIntoView?.({ block: 'nearest' }); return true; };
     if (!cur) { const m = map?.selected?.el || placesEl.querySelector('.map-mark'); return go(m && m.offsetParent ? m : focusables()[0]); }
-    if (cur.type === 'range' && Math.abs(dx) >= Math.abs(dy)) {
-      const v = +cur.value, step = (+cur.max - +cur.min) / 20;
-      cur.value = String(Math.min(+cur.max, Math.max(+cur.min, v + Math.sign(dx) * step)));
-      cur.dispatchEvent(new Event('input', { bubbles: true }));
-      return +cur.value !== v;
+    if (cur.type === 'range' && Math.abs(dx) >= Math.abs(dy)) { // sideways steps a slider; at its end stop the press moves focus on (to the map's column, say)
+      const v = +cur.value, step = (+cur.max - +cur.min) / 20, nv = Math.min(+cur.max, Math.max(+cur.min, v + Math.sign(dx) * step));
+      if (nv !== v) { cur.value = String(nv); cur.dispatchEvent(new Event('input', { bubbles: true })); return true; }
     }
     const mk = map?.markOf(cur);
     if (mk && map.moveAmongMarks(mk, dx, dy)) return true;
-    const r = cur.getBoundingClientRect(), cx = r.left + r.width / 2, cy = r.top + r.height / 2, l = Math.hypot(dx, dy), ux = dx / l, uy = dy / l;
+    // the nearest control that way by edges: the gap along the move, then how far it lies off the column (or row) the
+    // control stands in, then a little for the centres' offset, so a wide slider under a narrow button is not skipped
+    const r = cur.getBoundingClientRect(), vert = Math.abs(dy) > Math.abs(dx), fw = vert ? dy > 0 : dx > 0;
     let best = null, bs = Infinity;
     for (const el of focusables()) {
       if (el === cur || (mk && map.markOf(el))) continue; // off a mark's edge: out of the map, not to another mark
-      const q = el.getBoundingClientRect(), vx = q.left + q.width / 2 - cx, vy = q.top + q.height / 2 - cy;
-      const gap = Math.abs(uy) > Math.abs(ux) ? (uy > 0 ? q.top - r.bottom : r.top - q.bottom) : (ux > 0 ? q.left - r.right : r.left - q.right);
-      const along = vx * ux + vy * uy;
-      if (along <= 1 || gap < -4) continue;
-      const s = Math.max(0, gap) + 2 * Math.abs(vx * uy - vy * ux);
+      const q = el.getBoundingClientRect();
+      const gap = vert ? (fw ? q.top - r.bottom : r.top - q.bottom) : (fw ? q.left - r.right : r.left - q.right);
+      if (gap < -4) continue;
+      const overlap = vert ? Math.min(r.right, q.right) - Math.max(r.left, q.left) : Math.min(r.bottom, q.bottom) - Math.max(r.top, q.top);
+      const off = vert ? Math.abs(q.left + q.width / 2 - r.left - r.width / 2) : Math.abs(q.top + q.height / 2 - r.top - r.height / 2);
+      const s = Math.max(0, gap) + 2 * Math.max(0, -overlap) + 0.05 * off;
       if (s < bs) { bs = s; best = el; }
     }
-    return best ? go(best) : false;
+    if (best) return go(best);
+    // off the end of the settings' column with nothing further that way: into the map (its chosen mark), so a pad that
+    // only presses down still reaches it beside the column on a wide screen
+    const m = !mk && (map?.selected?.el || map?.marks[0]?.el);
+    return m && m.offsetParent ? go(m) : false;
   }
   function activate() {
     const el = focused();

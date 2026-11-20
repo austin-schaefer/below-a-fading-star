@@ -35,3 +35,14 @@ Blind read (sonnet, frames only): it said a settings panel with an illustrated t
 - Some glyphs need their line: the falls, the ringed pit, the Swallow's arch against the Nave's.
 - The marks are pushed apart on a phone with lines back to their spot; the middle (the keep, the Halt, the house) is busy.
 - Defaults I took: sixteen marks as listed; the keep's mark goes to its old stand west of the gate, not to Spawn; a gamepad's `activate()` on a mark goes at once, with no second press.
+
+## Round two
+
+- **Long tasks:** the chart's slices are about 12 ms (the fill pass, each 16 rows of the raster, each contour level, each shore, the wood in bands of rows on one path, the grain every 8 rows; a yield before the read-back and the write; the canvas is `willReadFrequently`, so the read is cheap; the draw starts a task after the marks are built). Measured at 390 by 844 with CDP `Emulation.setCPUThrottlingRate`: the map's own slices are 30 ms at most at 6x. The longest task while the map loads is 70 to 140 ms, about 100 ms after the open. With the map's file blocked, the panel's first open alone at 6x has a 117 ms task, so that one is the panel's first paint, not new. The draw takes 2.3 to 2.9 s at 4x and 2.9 to 4.2 s at 6x.
+- **pointercancel** resets the touch state, so after a scroll that starts on a mark, Enter goes. New row.
+- **Off the chart**, "you are here" is an arrow on the edge pointing out. New row (the lift's gallery).
+- **Stand checks** run on every `PLACES` entry again (the sixteen by a click on their mark, the rest by `teleport(i)`; in view over 35, the 2 m check over 70). The map's rows stay on the sixteen.
+- **focusNext** scores by the edge gap along the move, twice any lack of overlap across it, and 0.05 of the centres' offset. My choice for sliders: past a slider's end stop, a sideways press moves focus on (at 100, right leaves the volume for the map's column). Off the end of the settings' column with nothing further that way, a press goes into the map's chosen mark. The gamepad test's "d-pad down reaches a place" needed that, because the map is beside the column on a wide screen. New row (end stop; up from the music buttons to the music slider).
+- **Lines:** the Keep "a great walled keep in the middle of the valley; you start here"; the Pool "a still, dark lake west of the keep"; the Arcature "tall stone arches set one inside another, like a giant’s globe"; the Nave "a sunken church, flooded to its broken roof"; the Swallow "where a lake pours into a pale doorway in the hill".
+- **Tests:** `ONLY=settings,touch,loading,gamepad tools/suite.sh 8161`: settings 103, touch 45, loading 29; gamepad 38/39 against the real map, before the fallback into the map. After it, `ONLY=gamepad,settings`: gamepad 39, settings 103, 0 failed.
+- **Frames:** `shots/wip/v17.1-Q1-r2-{open,hover,after,keys,keys-after}-desktop.png`, `-{open,tap1,after}-phone.png`.

@@ -265,6 +265,8 @@
   .map-you svg { position: absolute; left: -14px; top: -14px; width: 28px; height: 28px; overflow: visible; }
   .map-you circle { fill: #ff9a5c; stroke: #1a0d0a; stroke-width: 1.6; }
   .map-you .map-you-dir { fill: #ffe9db; stroke: #1a0d0a; stroke-width: 1; }
+  .map-you-off circle { display: none; } /* off the chart: only the arrow, on the edge, pointing out toward the walker */
+  .map-you-off .map-you-dir { fill: #ff9a5c; transform: scale(1.5); }
   .map-say { display: flex; align-items: center; gap: 12px; min-height: 3.6em; margin: 8px 0 0; }
   .map-text { flex: 1; min-width: 0; }
   .map-line { display: block; font-size: 1rem; line-height: 1.25; color: rgba(255, 233, 219, 0.62); font-style: italic; }

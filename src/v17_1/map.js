@@ -21,21 +21,21 @@ import { CAUSEWAY_V4, SUN } from '../world.js';
 // Starlight, the regions' cards and the rest), found from the mark beside them. `line` is what a stranger sees there,
 // in plain words; `glyph` the little drawing on the chart; `at` where the mark sits when not where the stand looks.
 export const MARKS = [
-  { name: 'Carcanet Keep', line: 'the keep at the valley’s heart, where you woke', glyph: 'keep' },
+  { name: 'Carcanet Keep', line: 'a great walled keep in the middle of the valley; you start here', glyph: 'keep' },
   { name: 'The Lantern Halt', line: 'a waymark slab by the west road, chalked with strokes', glyph: 'slab' },
   { name: 'The Pomegranate House', line: 'a cream house with turquoise domes, under coloured lamps', glyph: 'house' },
-  { name: 'Circumbambulate Pool', line: 'a still black lake west of the keep', glyph: 'pool' },
+  { name: 'Circumbambulate Pool', line: 'a still, dark lake west of the keep', glyph: 'pool' },
   { name: 'The Cardinal Stones', line: 'four standing stones, each its own colour', glyph: 'stones' },
   { name: "The Armiger's Tower", line: 'a lone spire on a mound under the north-west cliffs', glyph: 'tower' },
-  { name: 'The Arcature', line: 'a nest of tall stone arches, turned like an instrument', glyph: 'arches', at: { x: 160, z: 60 } },
+  { name: 'The Arcature', line: 'tall stone arches set one inside another, like a giant’s globe', glyph: 'arches', at: { x: 160, z: 60 } },
   { name: 'The Lattice', line: 'great blue crystals at the glacier’s foot', glyph: 'crystal' },
   { name: 'The Collation', line: 'a table laid for twelve among the medlar trees', glyph: 'table' },
   { name: 'The Hypogeum', line: 'a bronze door at the bottom of a stair in the ground', glyph: 'door' },
-  { name: 'The Foundered Nave', line: 'a drowned church, its roof open over black water', glyph: 'nave' },
+  { name: 'The Foundered Nave', line: 'a sunken church, flooded to its broken roof', glyph: 'nave' },
   { name: 'The Pit', line: 'a deep shaft by the old east road', glyph: 'pit' },
   { name: 'The Tocsin', line: 'a bell on a post at the great bridge’s foot', glyph: 'bell' },
   { name: 'The Tumbling Water', line: 'waterfalls in the canyon to the south-east', glyph: 'falls' },
-  { name: 'The Swallow', line: 'where the mere drains away into the hill', glyph: 'portal' },
+  { name: 'The Swallow', line: 'where a lake pours into a pale doorway in the hill', glyph: 'portal' },
   { name: 'Corpse-Candle Fen', line: 'a marsh of pale lights south of the keep', glyph: 'candles' },
 ];
 
@@ -69,11 +69,14 @@ const hash = (i, j) => { let h = (i * 374761393 + j * 668265263) | 0; h = (h ^ (
 let awake = () => true; // the panel is open: the chart is drawn only then, so a panel shut mid-draw costs the walk nothing
 const yieldNow = async () => { await new Promise((r) => setTimeout(r, 0)); while (!awake()) await new Promise((r) => setTimeout(r, 250)); };
 
-// The chart, sampled from the terrain and drawn on a canvas; sliced into ~10 ms pieces
+// The chart, sampled from the terrain and drawn on a canvas; sliced into pieces of about 12 ms (a 6x-throttled CPU's
+// longest task is measured in tools/settings-test.mjs's notes: see runtime.md)
 async function drawChart(ctx, canvas) {
   const T = ctx.terrain, cell = SPAN / (N - 1);
   const H = new Float32Array(N * N), WL = new Float32Array(N * N), WOOD = new Float32Array(N * N), ICE = new Float32Array(N * N), ROCK = new Float32Array(N * N), MOSS = new Float32Array(N * N);
+  await yieldNow(); // not in the task that built the marks and laid the panel out
   let t = performance.now();
+  const tick = async () => { if (performance.now() - t > 12) { await yieldNow(); t = performance.now(); } };
   for (let j = 0; j < N; j++) {
     const z = Z0 + j * cell;
     for (let i = 0; i < N; i++) {
@@ -82,16 +85,19 @@ async function drawChart(ctx, canvas) {
       const wl = T.waterLevelAt(x, z); WL[k] = wl === null ? -1e9 : wl;
       if (!(i & 1) && !(j & 1)) { const b = T.biomeAt(x, z); WOOD[k] = b.wood || 0; ICE[k] = Math.max(b.ice || 0, b.crystal || 0); ROCK[k] = Math.max(b.rock || 0, b.slope || 0); MOSS[k] = Math.max(b.heath || 0, b.marsh || 0, b.orchard || 0); } // the cover at every other sample (it is the slow query, and smooth)
     }
-    if (performance.now() - t > 24) { await yieldNow(); t = performance.now(); }
+    await tick();
   }
   for (const F of [WOOD, ICE, ROCK, MOSS]) { // fill the odd samples from their even neighbours (N is odd: the last row and column are even)
     for (let j = 0; j < N; j += 2) for (let i = 1; i < N; i += 2) F[j * N + i] = (F[j * N + i - 1] + F[j * N + i + 1]) / 2;
     for (let j = 1; j < N; j += 2) for (let i = 0; i < N; i++) F[j * N + i] = (F[(j - 1) * N + i] + F[(j + 1) * N + i]) / 2;
+    await tick();
   }
   // the raster: hillshade lit from the sun's side, the ground's colour by its cover, water flat slate
   const img = new ImageData(N, N), d = img.data;
   const lx = Math.cos(SUN.azimuth), lz = Math.sin(SUN.azimuth), le = Math.sin(0.62), lh = Math.cos(0.62);
-  for (let j = 0; j < N; j++) for (let i = 0; i < N; i++) {
+  for (let j = 0; j < N; j++) {
+  if (!(j & 15)) await tick();
+  for (let i = 0; i < N; i++) {
     const k = j * N + i, h = H[k];
     const hx = (H[j * N + Math.min(N - 1, i + 1)] - H[j * N + Math.max(0, i - 1)]) / (2 * cell);
     const hz = (H[Math.min(N - 1, j + 1) * N + i] - H[Math.max(0, j - 1) * N + i]) / (2 * cell);
@@ -114,11 +120,12 @@ async function drawChart(ctx, canvas) {
     }
     d[k * 4] = r; d[k * 4 + 1] = g; d[k * 4 + 2] = b; d[k * 4 + 3] = 255;
   }
+  }
   await yieldNow();
   const small = document.createElement('canvas'); small.width = small.height = N;
   small.getContext('2d').putImageData(img, 0, 0);
   canvas.width = canvas.height = W;
-  const c = canvas.getContext('2d');
+  const c = canvas.getContext('2d', { willReadFrequently: true }); // read back once for the grain: kept on the CPU, so the read is cheap
   c.imageSmoothingEnabled = true; c.imageSmoothingQuality = 'high';
   c.drawImage(small, 0, 0, W, W);
   const P = (i) => i / (N - 1) * W; // a sample index to canvas pixels
@@ -150,22 +157,29 @@ async function drawChart(ctx, canvas) {
     c.beginPath(); iso(H, L, dry);
     c.strokeStyle = L % 40 === 0 ? 'rgba(255,154,92,0.26)' : 'rgba(255,154,92,0.11)';
     c.stroke();
-    if (performance.now() - t > 24) { await yieldNow(); t = performance.now(); }
+    await tick();
   }
   // shores: a firm line and a fainter one off it, as old charts draw water
   const WD = new Float32Array(N * N); for (let k = 0; k < N * N; k++) WD[k] = WL[k] - H[k];
+  await tick();
   c.beginPath(); iso(WD, 0.05); c.strokeStyle = 'rgba(190,206,228,0.7)'; c.lineWidth = 1.4; c.stroke();
+  await tick();
   c.beginPath(); iso(WD, 1.2); c.strokeStyle = 'rgba(160,180,210,0.28)'; c.lineWidth = 0.8; c.stroke();
-  // the wood: little trees stippled where the cover is wood
-  c.lineWidth = 0.9;
-  for (let j = 1; j < N - 1; j += 2) for (let i = 1; i < N - 1; i += 2) {
-    const k = j * N + i;
-    if (WOOD[k] < 0.42 || WD[k] > 0) continue;
-    if (hash(i, j) > WOOD[k] * 0.95) continue;
-    const x = P(i + hash(j, i) * 1.6 - 0.8), y = P(j + hash(i + 7, j) * 1.6 - 0.8), r = 2.6 + hash(i, j + 3) * 1.4;
-    c.beginPath(); c.arc(x, y, r, 0, Math.PI * 2); c.fillStyle = 'rgba(18,24,16,0.85)'; c.fill();
-    c.strokeStyle = 'rgba(120,150,96,0.55)'; c.stroke();
+  // the wood: little trees stippled where the cover is wood, a band of rows to one path (filled, then outlined)
+  c.lineWidth = 0.9; c.fillStyle = 'rgba(18,24,16,0.85)'; c.strokeStyle = 'rgba(120,150,96,0.55)';
+  for (let j0 = 1; j0 < N - 1; j0 += 24) {
+    await tick();
+    c.beginPath();
+    for (let j = j0; j < Math.min(N - 1, j0 + 24); j += 2) for (let i = 1; i < N - 1; i += 2) {
+      const k = j * N + i;
+      if (WOOD[k] < 0.42 || WD[k] > 0) continue;
+      if (hash(i, j) > WOOD[k] * 0.95) continue;
+      const x = P(i + hash(j, i) * 1.6 - 0.8), y = P(j + hash(i + 7, j) * 1.6 - 0.8), r = 2.6 + hash(i, j + 3) * 1.4;
+      c.moveTo(x + r, y); c.arc(x, y, r, 0, Math.PI * 2);
+    }
+    c.fill(); c.stroke();
   }
+  await tick();
   // ice: short strokes across it, cold
   c.beginPath();
   for (let j = 1; j < N - 1; j += 2) for (let i = 1; i < N - 1; i += 2) {
@@ -199,16 +213,18 @@ async function drawChart(ctx, canvas) {
     c.fillStyle = '#ff7030'; c.beginPath(); c.arc(sx, sy, 22, 0, Math.PI * 2); c.fill();
   }
   // wear: grain, foxed patches, the edges burnt dark, a double rule
+  await yieldNow(); t = performance.now();
   const grain = c.getImageData(0, 0, W, W), gd = grain.data;
   t = performance.now();
   for (let p = 0, n = W * W; p < n; p++) {
     const x = p % W, y = (p / W) | 0, nx = x / W - 0.5, ny = y / W - 0.5;
-    if (x === 0 && performance.now() - t > 24) { await yieldNow(); t = performance.now(); }
+    if (x === 0 && !(y & 7)) await tick();
     const edge = Math.max(0, Math.hypot(nx, ny) * 1.6 - 0.55);
     const fox = hash((x >> 5) + 11, (y >> 5) + 3) > 0.86 ? 0.9 : 1;
     const k = 1 - edge * 0.9, gr = (hash(x, y) - 0.5) * 14;
     gd[p * 4] = gd[p * 4] * k * fox + gr; gd[p * 4 + 1] = gd[p * 4 + 1] * k * fox + gr; gd[p * 4 + 2] = gd[p * 4 + 2] * k * fox + gr;
   }
+  await yieldNow();
   c.putImageData(grain, 0, 0);
   c.strokeStyle = 'rgba(255,154,92,0.5)'; c.lineWidth = 2; c.strokeRect(9, 9, W - 18, W - 18);
   c.lineWidth = 0.8; c.strokeRect(15, 15, W - 30, W - 30);
@@ -276,6 +292,7 @@ export function buildMap(ctx, host, places, { go, touch, shown }) {
   for (const m of marks) {
     const b = m.el;
     b.addEventListener('pointerdown', (e) => { ptr = e.pointerType; had = selected; });
+    b.addEventListener('pointercancel', () => { ptr = ''; had = null; }); // a scroll begun on a mark: the next Enter is a key's, not a tap's
     b.addEventListener('pointerenter', (e) => { if (e.pointerType === 'mouse') { hovered = m; show(); } });
     b.addEventListener('pointerleave', (e) => { if (e.pointerType === 'mouse' && hovered === m) { hovered = null; show(); } });
     b.addEventListener('focus', () => select(m));
@@ -341,8 +358,12 @@ export function buildMap(ctx, host, places, { go, touch, shown }) {
   function here() {
     const p = ctx.player, w = frame.clientWidth;
     if (!p || !w) return;
-    const u = Math.min(1, Math.max(0, toU(p.pos.x))), v = Math.min(1, Math.max(0, toV(p.pos.z)));
-    you.style.transform = `translate(${(u * w).toFixed(1)}px, ${(v * w).toFixed(1)}px) rotate(${(-p.yaw * 180 / Math.PI).toFixed(1)}deg)`;
+    const u0 = toU(p.pos.x), v0 = toV(p.pos.z), off = u0 < 0.02 || u0 > 0.98 || v0 < 0.02 || v0 > 0.98;
+    // off the chart (the far wall, the lift's gallery, the icefall's top): an arrow on the edge, pointing out toward them
+    const u = Math.min(0.97, Math.max(0.03, u0)), v = Math.min(0.97, Math.max(0.03, v0));
+    const deg = off ? Math.atan2(v0 - 0.5, u0 - 0.5) * 180 / Math.PI + 90 : -p.yaw * 180 / Math.PI;
+    you.classList.toggle('map-you-off', off);
+    you.style.transform = `translate(${(u * w).toFixed(1)}px, ${(v * w).toFixed(1)}px) rotate(${deg.toFixed(1)}deg)`;
   }
   const ro = typeof ResizeObserver === 'function' ? new ResizeObserver(() => layout()) : null;
   ro?.observe(frame);
