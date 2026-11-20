@@ -49,7 +49,7 @@ G minor, 3 in a bar at 72, weight on the second beat; solo violin, violas, cello
 ```
 Bar 1 is the theme; it returns exactly at bar 5 (then turns up, C to F, where bar 2 went down) and at bar 10 over a new bass, before the close. Bar 3 is bar 1 a step higher; bar 9 is its shape at the top (G5). The bass walks down G F Eb D under bars 1-4 and climbs Bb B C under 7-9. Non-chord notes: the eighths only, plus the C in bar 4 (the seventh of D7) and F in bar 8 (the seventh of G7, which falls to Eb as it should). The last chord has B natural after a piece of B flats: intended.
 
-### The gardens: "A music box left running: a lullaby on bells over plucked strings, sweet with one shadow in it, winding down at the end."
+### The gardens (as first written in G; moved up a fourth in round two, below): "A music box left running: a lullaby on bells over plucked strings, sweet with one shadow in it, winding down at the end."
 G major, a rocking 6 (the eighth at 180), slowing to 104 over the last two bars; glockenspiel over pizzicato cellos. Opens with two bars of plucking.
 
 ```
@@ -62,7 +62,7 @@ G major, a rocking 6 (the eighth at 180), slowing to 104 over the last two bars;
 ```
 Bar 3 (up the chord and back) returns at 7 and 11. Second time its answer's last note leaps an octave to E6, the top, and comes down by step; third time it is answered in C minor (the E flat is the shadow) and runs down. Leaning notes on the beat that resolve by step: A in bars 4 and 8, D and B in bar 9, B in bar 13.
 
-### The dry country: "A drum song for a road through dust: a hand drum and wooden bars under a reed pipe, on a bent scale that sounds far from home."
+### The dry country (round one's version, replaced: see Round two): "A drum song for a road through dust: a hand drum and wooden bars under a reed pipe, on a bent scale that sounds far from home."
 D with a flat second and a raised third (D Eb F# G A Bb C), 4 in a bar at 100; oboe, hand drum, shaker, marimba, a low cello drone. Opens with the drum alone, then the marimba, then the pipe.
 
 ```
@@ -108,3 +108,37 @@ A blind reader (haiku, frames only) named the page, the six things to play and t
 - The tape's lowpass at 5 kHz for sketches (the walk's tracks keep 3 kHz) and a made room on the page's bus.
 - `listen.html` added to the Netlify copy, so it reaches the live site unlinked; drop the two lines in `netlify.toml` to keep it local.
 - Recorded instruments are gated at `sharp_db` < -10 per voice, not the tracks' -16.
+
+## Round two (2026-11-19, after the cold review)
+
+**The blocker, reproduced then fixed.** The walk's service worker controls every page in its scope and binds only the walk's. `listen.html`'s requests under `src/` and `vendor/` were `keepable`, found no binding and were refused ("from a page of unknown release"): a visitor who had opened the walk got the page with no script, type or samples. Reproduced two ways before the fix: `tools/sw-test.mjs` row 1b (2 FAIL, the trace showing `stale ... /src/other.js from a page of unknown release`) and `tools/listen-test.mjs`'s new "after the walk" row (0 buttons under the old `sw.js`).
+
+Exactly what changed in `sw.js`: in `file()`, in the branch for a client with no binding, after the existing dedicated-Worker case and before `sendRound`, five lines: the unbound window's own URL is read (`clients.get`, already fetched there), and when it is not the walk's page (`!isPage(new URL(c.url))`) the request is answered with `fetch(event.request)`: never the cache, never kept, never an error. The walk's own page with a lost binding still goes round as before; navigations are untouched. The header comment says so in three lines.
+
+**The dry country, rewritten**: "A drum song for a road through dust: a reed pipe calls, wooden bars answer, and a hand drum limps along in seven while the tune climbs out of sight."
+A with a flat second and raised third (A Bb C# D E F G), 7/8 as 2+2+3 (the eighth at 220), 15 bars, 27 s. Lengths in eighths. No chords: a drone of A and E throughout.
+
+```
+ 1-3: drum alone (two bars), then the drone, the rattle and the bars' pattern (A3 2, E4 2, A3 1, G3 1, A3 1)
+ 4: pipe   A4 1, C#5 1, D5 1, C#5 1, E5 3        the call (asks, on the fifth)
+ 5: bars   E4 1, F4 1, E4 1, D4 1, C#4 3         the answer, falling
+ 6: pipe   A4 1, C#5 1, D5 1, E5 1, F5 3         the call, a step further
+ 7: bars   F4 1, E4 1, D4 1, E4 1, A3 3          the answer, home
+ 8: pipe   A4 1, C#5 1, D5 1, C#5 1, E5 3        the call again
+ 9: pipe   E5 1, F5 1, E5 1, D5 1, C#5 3         the pipe takes the first answer, the bars under it an octave down
+10: pipe   C#5 1, D5 1, C#5 1, D5 1, E5 3        the climb: one figure,
+11: pipe   D5 1, E5 1, D5 1, E5 1, F5 3          a step higher each bar,
+12: pipe   E5 1, F5 1, E5 1, F5 1, G5 3          to the top, G5
+13: pipe   F5 2, E5 2, D5 1, C#5 1, D5 1
+14: pipe   E5 7                                  held on the fifth over the drum's fill
+15: drum, and the bars' A3 + E4
+```
+Against the moor: seven not four; A not D; A4 to G5 not D4 to D5; the head is four quick notes and a long one rising, not long-short falling; call and answer between two instruments and a climb, not a, a, b, a; the top is G5 in bar 12 over the drone, not D5 in bar 7 over a G chord; it ends held on the fifth, not falling to the tonic. Against the drone: the long notes are E (the fifth), C# (the third), F (the scale's tense flat sixth, bars 6 and 11, each resolved by the next bar) and G (the seventh, the peak).
+
+**The gardens** move up a fourth to C major so the bells never go under G5, the glockenspiel's lowest recording (no lower one exists in the library): `G5 C6 E6 C6 | D6 C6 A5 | A5 C6 F6 C6 | B5 A5 G5`, then `... | D6 C6 A6 | G6 F6 E6 D6 | C6`, coda `G5 C6 E6 C6 | Ab5 C6 F6 | E6 D6 B5 | C6`. One bar changed shape: bar 5 starts on the chord's third (A5) and rises to F6, because the old shape would have dipped to F5. The top is now A6 (1760 Hz) behind a lowpass at 2.2 kHz: it will sound softer than the notes under it.
+
+**Sampler** (`src/audio/music/sampler.js`): a load in flight is remembered and shared; a source gets exactly one `stop()` (its own note's; the voice's `stop` is now a no-op and an early stop is the player's stem fading and disconnecting); each decoded buffer's first sound (first sample over 1 % of its peak, less 2 ms) is measured at load and notes start from there, so a decoder's leading silence no longer delays them.
+
+**Tests**: `ONLY=sketches,listen,sw,music,music-live,loading tools/suite.sh 8164`: 6 tests, 0 failed, 4 min 38 s. PASS lines: sketches 44, listen 29 (3 new), sw 53 (3 new), music 207, music-live 32, loading 29.
+
+**Still weak, added to the list above**: the dry pipe plays quick eighths (0.27 s) from four oboe recordings, the likeliest place for the sampler to sound mechanical; its own 2-5 kHz share is the highest of the melody instruments. `--wav` and `--spectrogram` in round two wrote over round one's files of the same names in `shots/wip/` (my mistake; the tool should take a stage name).
