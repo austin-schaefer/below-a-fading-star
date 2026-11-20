@@ -408,3 +408,16 @@ export function buildThurifer(ctx, F, cue) {
   };
   return api;
 }
+
+// The study page (src/study/registry.js): the Thurifer alone on his lead, his censer and smoke with him.
+export const study = [{
+  id: 'thurifer', name: 'the Little Thurifer', kind: 'figure', h: 1.7, at: [0, 0],
+  async build(ctx) {
+    const { buildFlames } = await import('./flames.js'), { leads } = await import('../../v4/paths/routes.js');
+    ctx._walkerLeads = leads().list;
+    const F = buildFlames(ctx, ctx.makeRng(7001)); F.U.uOn.value.y = 0;
+    const T = buildThurifer(ctx, F, () => {});
+    ctx.scene.add(F.points, T.root, T.train); ctx.registerUpdate((dt, t) => F.frame(t));
+    return { at: (o) => o.copy(T.root.position), face: () => T.root.rotation.y };
+  },
+}];

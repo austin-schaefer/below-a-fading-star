@@ -450,11 +450,8 @@ function meshMound(rng, detail) {
   return g;
 }
 
-export function buildTrees(ctx, ground, mats) {
-  const rng = ctx.makeRng(4101);
-  const { landmarks: L, quality } = ctx;
-  const low = quality === 'low';
-  const P = ctx.palette;
+// Each kind of tree's colours (bark, moss, leaf, fruit) from the palette.
+function treeColours(P) {
   const barkC = lin(P.bark);
   const base = { fruit: [0, 0, 0], inner: lin('#120c0a'), shelf: lin('#6a6048'), shelfRim: lin('#b8c8a0'), mossHang: lin('#3a4028') };
   const colorsFor = {
@@ -466,6 +463,15 @@ export function buildTrees(ctx, ground, mats) {
     medlar: { ...base, bark: lin('#32261e'), barkTop: lin('#4a3a2e'), mossCol: lin('#4a4a30'), moss: 0.5, leaf: lin('#5a3418'), leafAlt: lin('#4a2a12'), fruit: lin('#2a0e10') },
     dead: { ...base, bark: lin('#3a3029'), barkTop: lin('#4a4038'), mossCol: lin('#2a3420'), moss: 0.6, leaf: [0, 0, 0], leafAlt: [0, 0, 0], shelf: lin('#7a6a4a'), shelfRim: lin('#c0d4a8'), inner: lin('#0e0806') },
   };
+  return colorsFor;
+}
+
+export function buildTrees(ctx, ground, mats) {
+  const rng = ctx.makeRng(4101);
+  const { landmarks: L, quality } = ctx;
+  const low = quality === 'low';
+  const P = ctx.palette;
+  const colorsFor = treeColours(P);
 
   // Variants: each with three detail levels
   const variants = []; // {hi, lo, far, height, trunkR}
@@ -966,3 +972,21 @@ export function makeTreeMaterials(ctx, atlas) {
   fungus.customProgramCacheKey = () => 'fp-veg-fungus';
   return { tree, fungus, glow };
 }
+
+// The study page's seed rows (src/study/recipes.js): each kind of tree grown from a seed, as buildTrees grows its
+// variants (the near mesh, the kind's colours, the shelves the deodands and giants carry).
+let studyMat = null;
+const studyTree = (kind) => ({
+  id: `tree-${kind}`, name: `${kind} tree`,
+  build(rng, seed, ctx) {
+    studyMat ||= makeTreeMaterials(ctx, makeAtlas(ctx.makeRng(4101))).tree;
+    const sk = growTree(rng, SPECIES[kind]);
+    if (kind === 'deodand') addShelves(sk, rng, 1 + (seed % 3), [0.4, 3.2]);
+    if (kind === 'giant') addShelves(sk, rng, 5, [1, 6]);
+    const m = new THREE.Mesh(meshSkeleton(sk, 'hi', treeColours(ctx.palette)[kind], rng), studyMat);
+    m.castShadow = m.receiveShadow = true; return m;
+  },
+});
+export const studyRecipes = ['deodand', 'lone', 'crooked', 'thorn', 'medlar', 'giant'].map(studyTree).concat([
+  { id: 'tree-fallen', name: 'fallen trunk', build(rng, seed, ctx) { studyMat ||= makeTreeMaterials(ctx, makeAtlas(ctx.makeRng(4101))).tree; const m = new THREE.Mesh(meshSkeleton(growFallen(rng), 'hi', treeColours(ctx.palette).dead, rng), studyMat); m.castShadow = true; return m; } },
+]);

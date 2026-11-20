@@ -166,3 +166,16 @@ export function buildToad(ctx, spot, heightAt, low) {
   glow.renderOrder = 14;
   return { mesh, glow, gemWorld: gemLocal.clone().add(mesh.position), tris: geo.index.count / 3, uScale: pm.uniforms.uScale };
 }
+
+// The study page (src/study/registry.js): the Toadstone on its ledge, its gem glowing as in a gutter.
+export const study = [{
+  id: 'toadstone', name: 'the Toadstone', kind: 'creature', h: 0.35, at: [0, 0],
+  async build(ctx) {
+    const { SITES } = await import('../../world.js');
+    const s = SITES.toadstone, spot = { x: s.x, z: s.z, y: 0, yaw: 0.6, lift: 0.004 };
+    const T = buildToad(ctx, spot, () => 0, ctx.quality === 'low');
+    ctx.scene.add(T.mesh, T.glow); T.mesh.receiveShadow = true;
+    ctx.registerUpdate(() => { T.uScale.value = (ctx.renderer.domElement.height || 720) / (2 * Math.tan(ctx.camera.fov * Math.PI / 360)); });
+    return { at: (o) => o.set(s.x, 0, s.z), face: () => Math.PI / 2 - 0.6 };
+  },
+}];

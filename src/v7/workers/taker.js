@@ -189,3 +189,13 @@ export function buildTaker(ctx, seat) {
     onLine: (d) => ({ x: eyeW.x + Math.sin(sunH) * d, z: eyeW.z + Math.cos(sunH) * d }),
   };
 }
+
+// The study page (src/study/registry.js): the Taker of Altitudes on his seat, sighting and writing.
+export const study = [{
+  id: 'taker', name: 'the Taker of Altitudes', kind: 'figure', h: 2.0, at: [0, 0],
+  build(ctx) {
+    const s = SITES.taker, seat = { x: s.x, y: 0, z: s.z, slab: null, d: 0 };
+    const T = buildTaker(ctx, seat);
+    return { at: (o) => o.set(seat.x, 0, seat.z), face: () => SUN_YAW };
+  },
+}];

@@ -62,3 +62,9 @@ export function medlarGeometry(rng, toward, low) {
   }
   return P.geometry();
 }
+
+// The study page's seed rows (src/study/recipes.js): the Sleeper's medlar from a seed.
+export const studyRecipes = [{
+  id: 'medlar-sleeper', name: 'the Sleeper\'s medlar',
+  async build(rng, seed, ctx) { const { paintedMaterial } = await import('./kit.js'); const m = new THREE.Mesh(medlarGeometry(rng, [1, 0], ctx.quality === 'low'), paintedMaterial({ side: THREE.DoubleSide })); m.castShadow = true; return m; },
+}];

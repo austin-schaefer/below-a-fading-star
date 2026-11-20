@@ -207,3 +207,24 @@ export function stoneMaterial(shared, flip) {
   m.customProgramCacheKey = () => 'fp-canyon-stone';
   return m;
 }
+
+// The study page (src/study/registry.js): the Bather in her pool (the ground drawn at the water's face, the pool level),
+// washing her arm; the stones she becomes beside her, faded out as the walk keeps them until you climb down.
+export const study = [{
+  id: 'bather', name: 'the Bather', kind: 'figure', h: 7, el: 0.5, mid: 0.3, at: [0, 0],
+  async build(ctx) {
+    const { SITES } = await import('../../world.js');
+    const s = SITES.bather, frame = { U: [1, 0], V: [0, 1] }, toWorld = (u, y, v) => [u, y, v];
+    const forms = buildForms(toWorld, frame, ctx.quality === 'low');
+    const axis = new THREE.Vector3().crossVectors(new THREE.Vector3(...ARM.wrist).sub(new THREE.Vector3(...ARM.elbow)), new THREE.Vector3(...STROKE.travel)).normalize();
+    const shared = {
+      uTime: { value: 0 }, uStroke: { value: STROKE.angle }, uElbow: { value: new THREE.Vector3(...ARM.elbow) }, uAxis: { value: axis },
+      uWaterP: { value: new THREE.Vector4(s.x, s.z, 0, 0) }, uWaterD: { value: new THREE.Vector2(1, 0) },
+      uFoamCol: { value: new THREE.Color('#b8aea6') }, uSunView: { value: new THREE.Vector3(0, 1, 0) }, uWrapCol: { value: new THREE.Color(0, 0, 0) },
+    };
+    const mesh = new THREE.Mesh(forms.bather, stoneMaterial(shared, false));
+    mesh.position.set(s.x, 0, s.z); mesh.receiveShadow = true; ctx.scene.add(mesh);
+    ctx.registerUpdate((dt, t) => { shared.uTime.value = t; });
+    return { at: (o) => o.set(s.x + 0.6, 0, s.z), face: () => Math.PI / 2 - 0.4 };
+  },
+}];

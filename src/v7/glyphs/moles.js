@@ -259,3 +259,13 @@ export function buildMoles(ctx, { motif }) {
     count: NT,
   };
 }
+
+// The study page (src/study/registry.js): the Tesserine Moles' heaps on the lawn, one rising every few seconds.
+export const study = [{
+  id: 'moles', name: 'the Tesserine Moles', kind: 'creature', h: 2.5, el: 0.5, at: [SITE.x, SITE.z],
+  build(ctx) {
+    const M = buildMoles(ctx, { motif: true }); let k = 1;
+    ctx.registerUpdate((dt) => { if ((k -= dt) <= 0) { k = 6; M.rise(); } });
+    return { at: (o) => o.set(SITE.x, 0, SITE.z) };
+  },
+}];

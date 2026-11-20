@@ -212,3 +212,19 @@ export function buildPeafowl(ctx, rng, perches) {
   update(0, 0);
   return { meshes: [body, train], update, count: list.length, list };
 }
+
+// The study page (src/study/registry.js): the white peafowl on stand-in blocks of the keep's fall.
+export const study = [{
+  id: 'peafowl', name: 'white peafowl', kind: 'creature', h: 2.4, at: [75, -15],
+  build(ctx) {
+    const { THREE: T } = ctx, perches = [];
+    for (const [x, z, sy] of [[75, -15, 0.9], [77.5, -14, 0.7], [73, -17, 0.8]]) {
+      const m = new T.Mesh(new T.BoxGeometry(1.4, sy, 1.0), new T.MeshStandardMaterial({ color: '#9a9284', roughness: 0.9 }));
+      m.position.set(x, sy / 2, z); m.castShadow = m.receiveShadow = true; m.userData.studyProp = true; ctx.scene.add(m);
+      perches.push({ x, y: sy / 2, z, sy });
+    }
+    const B = buildPeafowl(ctx, ctx.makeRng(5200), perches);
+    ctx.scene.add(...B.meshes); ctx.registerUpdate((dt, t) => B.update(dt, t));
+    const b = B.list[0]; return { at: (o) => o.set(b.x, 0, b.z), face: () => b.yaw };
+  },
+}];

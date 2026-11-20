@@ -252,3 +252,15 @@ export function buildLeerie(ctx, F, cue) {
   };
   return api;
 }
+
+// The study page (src/study/registry.js): the Leerie alone with his pole.
+export const study = [{
+  id: 'leerie', name: 'the Leerie', kind: 'figure', h: 2.2, at: [0, 0],
+  async build(ctx) {
+    const { buildFlames } = await import('./flames.js');
+    const F = buildFlames(ctx, ctx.makeRng(7001)); F.U.uOn.value.x = 0; F.U.uOn.value.y = 0;
+    const L = buildLeerie(ctx, F, () => {});
+    ctx.scene.add(F.points, L.root); ctx.registerUpdate((dt, t) => F.frame(t));
+    return { at: (o) => o.copy(L.root.position), face: () => L.root.rotation.y };
+  },
+}];

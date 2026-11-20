@@ -181,3 +181,12 @@ export function buildSimulacrum(ctx, { face: faceOn }) {
     tris: () => 0,
   };
 }
+
+// The study page (src/study/registry.js): the gnat columns, one of them drawing into the face now and then.
+export const study = [{
+  id: 'simulacrum', name: 'the Simulacrum', kind: 'creature', h: 4, at: [SITE.x, SITE.z],
+  build(ctx) {
+    const S = buildSimulacrum(ctx, { face: true }); ctx.registerUpdate(S.update);
+    return { at: (o) => o.set(SITE.x, 0, SITE.z) };
+  },
+}];

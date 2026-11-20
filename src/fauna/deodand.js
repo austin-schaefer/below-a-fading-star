@@ -129,3 +129,9 @@ export function buildDeodand(ctx) {
   }
   ctx.registerUpdate(update, { at: () => g.position, near: 120, hz: 5 }); // v3: 5 Hz beyond 120 m
 }
+
+// The study page (src/study/registry.js): the deodand at the tree line.
+export const study = [{
+  id: 'deodand', name: 'the deodand', kind: 'creature', h: 2.5, looker: 'far', at: [0, 0],
+  build(ctx) { buildDeodand(ctx); const p = ctx.deodand.position; return { at: (o) => o.set(p.x, 0, p.z) }; },
+}];

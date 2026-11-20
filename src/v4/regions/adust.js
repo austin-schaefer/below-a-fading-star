@@ -515,3 +515,16 @@ function buildDust(ctx, rng, low) {
     },
   };
 }
+
+// The study page (src/study/registry.js): the beetles on a stand-in pavement, in their rows, heads down to the sun.
+export const study = [{
+  id: 'adust-beetles', name: 'beetles of the Adust', kind: 'creature', h: 0.5, el: 0.5, mid: 0.1, at: [0, 0],
+  build(ctx) {
+    const x = 230, z = 120; // (somewhere on the Adust)
+    const slab = new THREE.Mesh(new THREE.BoxGeometry(0.9, 0.12, 0.7), new THREE.MeshStandardMaterial({ color: '#8a5a3a', roughness: 0.9 }));
+    slab.position.set(x, 0.06, z); slab.receiveShadow = true; slab.userData.studyProp = true; ctx.scene.add(slab);
+    const B = buildBeetles(ctx, ctx.makeRng(5100), [{ x, z, top: 0.12, hx: 0.7, hz: 0.55, c: 1, s: 0, pave: 0 }], ctx.quality === 'low');
+    ctx.scene.add(...B.meshes);
+    return { at: (o) => o.set(x, 0, z), face: () => SUN_YAW };
+  },
+}];

@@ -217,6 +217,16 @@ export async function build(ctx) {
   meshes.push(motes);
 
   // the grouse ------------------------------------------------------------
+  const { birds } = buildGrouse(ctx, rng, erratics, inRegion, iceAt, G, meshes);
+
+  // the snout's face: the terrain draws its slope; nothing to add here (glacier.js colours it)
+  regions.stats[KEY] = () => ({ ...meshStats(meshes), creature: birds.length, at: birds.map((b) => [Math.round(b.x), Math.round(b.z)]), erratics: erratics.length, cobbles: cobbles.length, cushions: cushions.length });
+  ctx.log(`region-outwash: ${erratics.length} erratics, ${cobbles.length} cobbles, ${cushions.length} cushions, ${shards.length} shards, ${birds.length} grouse`);
+}
+
+// The grouse in the lee of the erratics, flushing with a whirr when you come close.
+function buildGrouse(ctx, rng, erratics, inRegion, iceAt, G, meshes) {
+  const { scene } = ctx;
   const gm = new Mesher();
   gm.blob(0, 0.15, 0, 0.13, 0.12, 0.19, 8, 6, 0);          // body, plump
   gm.blob(0, 0.27, 0.15, 0.06, 0.06, 0.07, 6, 4, 0);       // head
@@ -311,8 +321,16 @@ export async function build(ctx) {
     // a still bird keeps its small shadow; a flying one would lag the slow shadow clock, so none while any fly
     gMesh.castShadow = flying === 0 && hyp(px - 50, pz + 195) < 40 + 60;
   }, { pos: { x: 50, z: -195 }, near: 160, hz: 4 });
-
-  // the snout's face: the terrain draws its slope; nothing to add here (glacier.js colours it)
-  regions.stats[KEY] = () => ({ ...meshStats(meshes), creature: birds.length, at: birds.map((b) => [Math.round(b.x), Math.round(b.z)]), erratics: erratics.length, cobbles: cobbles.length, cushions: cushions.length });
-  ctx.log(`region-outwash: ${erratics.length} erratics, ${cobbles.length} cobbles, ${cushions.length} cushions, ${shards.length} shards, ${birds.length} grouse`);
+  return { birds, mesh: gMesh };
 }
+
+// The study page (src/study/registry.js): the grouse in the lee of two stand-in erratics, whirring off when close.
+export const study = [{
+  id: 'grouse', name: 'grouse', kind: 'creature', h: 1.4, at: [50, -195],
+  build(ctx) {
+    const erratics = [{ x: 50, z: -195, s: 0.7 }, { x: 56, z: -190, s: 0.6 }, { x: 44, z: -199, s: 0.65 }];
+    for (const e of erratics) { const m = new THREE.Mesh(new THREE.DodecahedronGeometry(e.s, 0), new THREE.MeshStandardMaterial({ color: '#8a877e', roughness: 0.9 })); m.position.set(e.x, e.s * 0.6, e.z); m.castShadow = m.receiveShadow = true; m.userData.studyProp = true; ctx.scene.add(m); }
+    const { birds } = buildGrouse(ctx, ctx.makeRng(7100), erratics, () => true, () => 0, { heightAt: () => 0 }, []);
+    const b = birds[0]; return { at: (o) => o.set(b.x, b.y ?? 0, b.z), face: () => b.yaw, floor: 0 };
+  },
+}];

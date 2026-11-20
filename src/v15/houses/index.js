@@ -77,3 +77,20 @@ export function makePlot(B, plot, o = {}) {
   }
   return R;
 }
+
+// The study page's seed rows (src/study/recipes.js): each maker at a seed, on the plot the contact sheet gives its kind
+// (src/v15/sheet.js), in the strata's materials.
+const studyHouse = (kind, w, d) => ({
+  id: `house-${kind}`, name: `${kind} house`,
+  async build(rng, seed, ctx) {
+    if (!ctx.strata) {
+      const { installKit } = await import('../../v4/kit/index.js'), { installStrata } = await import('../../v8/strata.js');
+      installKit(ctx); installStrata(ctx);
+    }
+    const { faceOf } = await import('./kit.js');
+    const B = ctx.strata.builder(), E = ctx.strata.builder(), low = ctx.quality === 'low';
+    make(kind, B, { x: 0, z: 0, y: 0, face: faceOf(180), w, d, kind, seed }, { seed, E, low, shop: kind === 'late' && seed % 3 === 1 });
+    const g = new ctx.THREE.Group(); g.add(ctx.strata.mesh(B, 'late'), ctx.strata.mesh(E, 'elder')); return g;
+  },
+});
+export const studyRecipes = [studyHouse('elder', 9, 7), studyHouse('undercroft', 8, 7), studyHouse('late', 7, 6), studyHouse('new', 8, 7), studyHouse('carrier', 14, 5)];

@@ -163,3 +163,9 @@ export function buildWings(ctx) {
   }
   ctx.registerUpdate(update);
 }
+
+// The study page (src/study/registry.js): one of the great wings over the tower, followed as it soars.
+export const study = [{
+  id: 'wing', name: 'wing over the tower', kind: 'creature', h: 9, fly: true, at: [0, 0],
+  build(ctx) { buildWings(ctx); const p = ctx.wings.positions[0]; return { at: (o) => o.copy(p) }; },
+}];

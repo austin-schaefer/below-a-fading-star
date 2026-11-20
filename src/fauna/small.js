@@ -271,3 +271,16 @@ export function buildFishRings(ctx) {
   }
   ctx.registerUpdate(update);
 }
+
+// The study page (src/study/registry.js): the moths at the tower's window, the keep's crows (their perches in the
+// air where the walls would be), the fish rings on the tarn (on the ground here).
+const _m4s = new THREE.Matrix4();
+const instanceAt = (mesh, i, o) => { mesh.getMatrixAt(i, _m4s); return o.setFromMatrixPosition(_m4s); };
+export const study = [
+  { id: 'moths', name: 'moths at the window', kind: 'creature', h: 2, fly: true, at: [0, 0],
+    build(ctx) { buildMoths(ctx); const mesh = ctx.scene.getObjectByName('moths'); const T = ctx.landmarks.tower, c = new THREE.Vector3(T.x, 22, T.z); return { at: (o) => o.copy(c), _mesh: mesh }; } },
+  { id: 'crow', name: 'crow on the keep', kind: 'creature', h: 1.2, fly: true, at: [40, 30],
+    build(ctx) { buildCrows(ctx); const mesh = ctx.scene.getObjectByName('crows'); return { at: (o) => instanceAt(mesh, 0, o) }; } },
+  { id: 'fishrings', name: 'fish rings', kind: 'creature', h: 9, at: [0, 0],
+    build(ctx) { buildFishRings(ctx); const T = ctx.landmarks.tarn; let k = 0; ctx.registerUpdate((dt) => { if ((k -= dt) <= 0) { k = 4; ctx.fauna.fishRing(T.x, T.z); } }); return { at: (o) => o.set(T.x, ctx.water.tarn.y, T.z), floor: ctx.water.tarn.y - 0.02 }; } },
+];

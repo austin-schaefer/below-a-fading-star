@@ -375,3 +375,13 @@ function buildStoats(ctx, rng, low) {
   update(0, 0);
   return { mesh, update, count: list.length, list };
 }
+
+// The study page (src/study/registry.js): the stoats along their wall's line.
+export const study = [{
+  id: 'stoat', name: 'stoat', kind: 'creature', h: 0.6, at: [-195, -112],
+  build(ctx) {
+    const S = buildStoats(ctx, ctx.makeRng(5300), ctx.quality === 'low');
+    ctx.scene.add(S.mesh); ctx.registerUpdate((dt, t) => S.update(dt, t));
+    const s = S.list[0]; return { at: (o) => o.set(s.x, 0, s.z), face: () => s.yaw };
+  },
+}];

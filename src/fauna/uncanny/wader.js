@@ -154,3 +154,15 @@ export function buildStiltWader(ctx, U) {
   });
   return { drawCalls: 1, tris: geo.index.count / 3 };
 }
+
+// The study page (src/study/registry.js): the stilted wader in its shallows (the ground drawn at the water's face).
+export const study = [{
+  id: 'stilt-wader', name: 'the stilted wader', kind: 'creature', h: 3.2, looker: 'far', at: [134, 211],
+  async build(ctx) {
+    const { makeRules } = await import('./kit.js'); const U = { rules: makeRules(ctx) };
+    ctx.terrain = { ...ctx.terrain, heightAt: () => -0.4, waterLevelAt: () => 0, waterDepthAt: () => 0.4 };
+    ctx.landmarks = { ...ctx.landmarks };
+    buildStiltWader(ctx, U); const p = ctx.wader2.position;
+    return { at: (o) => o.set(p.x, -0.4, p.z), face: () => U.wader.state.yaw ?? 0, floor: 0 };
+  },
+}];

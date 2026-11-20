@@ -233,3 +233,30 @@ export function buildEel(ctx) {
   }
   ctx.registerUpdate(update);
 }
+
+// The study page (src/study/registry.js): the covey flushed at the looker's feet every few seconds, the bats round
+// the keep, the wader in the shallows, the eel's back in the tarn (on the ground here: the study has no water).
+const _m4 = new THREE.Matrix4();
+const instanceAt = (mesh, i, o) => { mesh.getMatrixAt(i, _m4); return o.setFromMatrixPosition(_m4); };
+export const study = [
+  { id: 'flush', name: 'flushed covey', kind: 'creature', h: 5, fly: true, at: [0, 0],
+    build(ctx) {
+      buildFlush(ctx); const mesh = ctx.scene.getObjectByName('flush'); let k = 0;
+      ctx.registerUpdate((dt) => { if ((k -= dt) <= 0) { k = 6; ctx.fauna.flushBirds(); } });
+      const home = new THREE.Vector3(); return { at: (o) => (mesh.visible ? instanceAt(mesh, 0, o) : o.copy(home)) };
+    } },
+  { id: 'bat', name: 'bat at the keep', kind: 'creature', h: 2.5, fly: true, at: [40, 30],
+    build(ctx) { buildBats(ctx); const mesh = ctx.scene.getObjectByName('bats'); return { at: (o) => instanceAt(mesh, 0, o) }; } },
+  { id: 'wader', name: 'wader in the fen', kind: 'creature', h: 2.4, at: [0, 0],
+    build(ctx) {
+      const y = ctx.water.fen.y - 0.4; ctx.terrain = { ...ctx.terrain, heightAt: () => y }; // standing in the fen's shallows
+      buildWader(ctx); const s = ctx.wader; return { at: (o) => o.set(s.x, y, s.z), face: () => s.yaw, floor: y };
+    } },
+  { id: 'eel', name: 'eel', kind: 'creature', h: 2, at: [0, 0],
+    build(ctx) {
+      ctx.terrain = { ...ctx.terrain, heightAt: () => ctx.water.tarn.y - 2 }; // the tarn's bed; the ground drawn at its face
+      buildEel(ctx); const e = ctx.eelState; let k = 0;
+      ctx.registerUpdate((dt) => { if (!e.on && (k -= dt) <= 0) { k = 3; ctx.fauna.eel(); } });
+      return { at: (o) => o.set(e.x, ctx.water.tarn.y, e.z), face: () => e.yaw, floor: ctx.water.tarn.y };
+    } },
+];
