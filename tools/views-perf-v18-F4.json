@@ -1,0 +1,7 @@
+[
+ { "name": "grove", "x": -196, "z": 31, "yaw": 0.3, "pitch": 0.15 },
+ { "name": "grove-back", "x": -196, "z": 31, "yaw": 3.4, "pitch": 0.1 },
+ { "name": "glass", "x": -250, "z": 127, "yaw": 1.57, "pitch": 0.08 },
+ { "name": "wood", "x": -210, "z": 130, "yaw": 1.2, "pitch": 0 },
+ { "name": "road-mid", "x": -188, "z": 112, "yaw": 2.4, "pitch": 0 }
+]

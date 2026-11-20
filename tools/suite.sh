@@ -83,6 +83,7 @@ run audio tools/audio-test.mjs "$B/?q=low&only=audio"
 run loading tools/loading-test.mjs "$B/?q=low"
 run perf tools/perf-test.mjs "$B/?q=low&perf=1&bench=6"
 run study tools/study-test.mjs "$B" # v17.1-Q3 (#77): every figure and creature on study.html, the recipes at their seeds
+run stilters tools/stilters-test.mjs $B v18-F4-stilters none # v18-F4: the stilters move only unseen (desktop and phone), the ring after a gutter, the eyes shut when looked at (about 4 min)
 run grass tools/grass-flicker-test.mjs low $B
 run touch tools/touch-test.mjs "$B/?q=low"
 run gamepad tools/gamepad-test.mjs $B # v17.1 (#72): a faked pad goes out, walks, looks, hops, hurries, acts and works the panel; no pad, no polling
