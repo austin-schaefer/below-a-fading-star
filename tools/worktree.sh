@@ -2,7 +2,7 @@
 # One worktree per issue.
 #
 #   tools/worktree.sh new <issue> <slug>   .claude/worktrees/issue-<n>-<slug>, branch issue-<n>-<slug> from origin/next (the working branch; origin/main if next is gone)
-#   tools/worktree.sh rm <issue>           move its shots/wip files into the deploy worktree's, remove it; delete the branch if it's merged
+#   tools/worktree.sh rm <issue>           move its shots/wip files into the deploy worktree's, remove it; delete the branch if it's merged; print the wip budget
 #   tools/worktree.sh list
 #
 # Works from the main checkout or from inside another worktree.
@@ -47,9 +47,17 @@ case "${1:-}" in
       done < <(find "$dir/$wip" -type f -print0)
       echo "moved $moved wip file(s) into $deploy/$wip"
     fi
+    # A server left running in a removed worktree keeps its port and serves nothing (five were found in a day): stop
+    # any http-server whose working directory is this worktree; the node_modules link goes too (git refuses it).
+    for pid in $(pgrep -f "http-server" 2>/dev/null); do
+      cwd="$(lsof -a -p "$pid" -d cwd -Fn 2>/dev/null | sed -n 's/^n//p')"
+      [ "$cwd" = "$dir" ] && kill "$pid" 2>/dev/null && echo "stopped the server in $name (pid $pid)"
+    done
+    [ -L "$dir/node_modules" ] && rm "$dir/node_modules"
     git -C "$main_root" worktree remove "$dir"
     git -C "$main_root" branch -d "$name" 2>/dev/null || echo "branch $name kept (not merged)"
     echo "removed $name"
+    "$(dirname "$0")/wip-check.sh" --warn 2>/dev/null || true
     ;;
   list)
     git -C "$main_root" worktree list

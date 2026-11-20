@@ -198,3 +198,12 @@ export function buildCoheirs(ctx, groundAt) {
     release() { S.phase = 'back'; S.t = 0; },
   };
 }
+
+// The study page (src/study/registry.js): the Coheirs at their net, the pair of them.
+export const study = [{
+  id: 'coheirs', name: 'the Coheirs', kind: 'figure', h: 2.6, at: [0, 0],
+  build(ctx) {
+    const C = buildCoheirs(ctx, () => 0), s = SITES.coheirs;
+    return { at: (o) => o.set(s.x, 0, s.z), face: () => Math.atan2(C.axis[0], C.axis[1]) + Math.PI / 2 };
+  },
+}];

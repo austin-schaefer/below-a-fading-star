@@ -547,3 +547,16 @@ export function buildLinkBoy(ctx, F, cue) {
   };
   return { api, light, disc: disc.mesh };
 }
+
+// The study page (src/study/registry.js): the Link-Boy alone with his link.
+export const study = [{
+  id: 'linkboy', name: 'the Link-Boy', kind: 'figure', h: 1.5, at: [0, 0],
+  async build(ctx) {
+    const { buildFlames } = await import('./flames.js'), { leads } = await import('../../v4/paths/routes.js');
+    ctx._walkerLeads = leads().list;
+    const F = buildFlames(ctx, ctx.makeRng(7001)); F.U.uOn.value.x = 0;
+    const B = buildLinkBoy(ctx, F, () => {});
+    ctx.scene.add(F.points, B.api.root, B.light, B.disc); ctx.registerUpdate((dt, t) => F.frame(t));
+    return { at: (o) => o.copy(B.api.root.position), face: () => B.api.root.rotation.y };
+  },
+}];

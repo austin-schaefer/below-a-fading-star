@@ -212,3 +212,15 @@ export function buildTraveller(ctx, gy) {
   };
   return { meshes, ends, colliders: dk.cols.length, letters: lettersMesh };
 }
+
+// The study page (src/study/registry.js): the traveller who lies on the Span's deck, his hat, his pack and his letters
+// (the deck at its height, the ground drawn there).
+export const study = [{
+  id: 'span-traveller', name: 'the traveller on the Span', kind: 'figure', h: 2.0, el: 0.6, mid: 0.2, at: [0, 0],
+  build(ctx) {
+    const R = buildTraveller(ctx, () => T.deckY); for (const m of R.meshes) if (!m.parent) ctx.scene.add(m);
+    const body = R.meshes.find((m) => m.name === 'threads-traveller-body'); body.geometry.computeBoundingBox();
+    const c = body.geometry.boundingBox.getCenter(new THREE.Vector3());
+    return { at: (o) => o.set(c.x, T.deckY, c.z), floor: T.deckY, face: () => T.yaw + Math.PI / 2 };
+  },
+}];

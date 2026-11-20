@@ -9,6 +9,14 @@ You cannot hear, and the owner will. So the music is written as data, judged as 
 
 Why it is built this way: the sound harness (`sound-design`) renders in a browser in real time and costs minutes a change; the owner asked that music not repeat that (`plans/wilderness-v9.md`). Here the loop is a Node command that answers in milliseconds, in text. No image is opened, no browser runs, until a track is green on paper and is rendered once (`tools/music-render.mjs`, v9-M1).
 
+## Music v2 (v17.1, issue #23): read this first
+
+The owner listened to v9's nine tracks and would not ship them: not melodic, samey, a piercing flute, listless. v2 goes by ear, a round at a time: sketches, then one track finished, then the rest. Round one is `src/audio/music/sketches/` on `listen.html`: four 30-second pieces written note by note in a text notation (`sketches/notation.js`), played by recorded instruments (`sampler.js`), checked by `tools/sketch-render.mjs`. For that work the composing rules and score gates below are history, not law (they produced v9); what stays is the plumbing (player, patches, tape, director) and the tripwires for broken output. What the sketches taught:
+
+- **Write the tune on paper first**: metre, key, a harmony a bar, phrases that answer each other, where the theme returns and what changes; then check every melody note against its bar's chord before rendering anything.
+- **A sample's file name is not its pitch.** The library names several instruments an octave low, a soft string note swells for a second before it speaks (use the loud layer, cut to where the note has arrived, and darken it), and a vibrato note's pitch is its mean over seconds. Measure, then let `sketch-render`'s "the tune sounds its written notes" gate prove it.
+- **Harshness is per instrument**: a forte solo violin read `sharp_db` -3 alone; two lowpasses at 1.6 kHz brought it to -15. Read the per-voice rows before the owner does.
+
 ## What good is here
 
 - **The genre: dungeon synth, not high fantasy.** Slow (50-80 BPM, the moor at 52), modal, plain. A pad of open fifths, a monophonic melody of few notes with long rests, perhaps a second voice moving in parallel fourths or fifths under it (the old organum sound), a bell or two far off. Old, a little sad, never sweet: no major thirds over the tonic, no runs, no ornament, no build to a climax, no drums or pulse you could tap to. A phrase is a breath: four to nine notes, then silence you notice.

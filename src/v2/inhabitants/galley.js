@@ -290,3 +290,14 @@ export function buildGalley(ctx) {
     drawCalls: 2, tris: geo.index.count / 3 + (K - 1) * 3 * 4,
   };
 }
+
+// The study page (src/study/registry.js): the Sable Galley on its round of the tarn (the ground drawn at the water's face).
+export const study = [{
+  id: 'galley', name: 'the Sable Galley', kind: 'figure', h: 12, at: [-90, 110],
+  build(ctx) {
+    const y = ctx.water.tarn.y;
+    ctx.terrain = { ...ctx.terrain, heightAt: () => y - 3, waterLevelAt: () => y, isUnderwater: () => true, waterDepthAt: () => 3 };
+    const r = buildGalley(ctx), m = r.api.mesh;
+    return { at: (o) => o.set(m.position.x, y, m.position.z), face: () => m.rotation.y, floor: y };
+  },
+}];

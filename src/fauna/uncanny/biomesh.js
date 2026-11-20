@@ -657,3 +657,13 @@ export function buildBiomesh(ctx, U) {
   const tiles = colonies.reduce((a, C) => a + C.n, 0);
   return { drawCalls: colonies.length + 1, tris: tiles * 12 + MAXR * SEG * 2 };
 }
+
+// The study page (src/study/registry.js): the biomesh's colony nearest the Lattice, creeping.
+export const study = [{
+  id: 'biomesh', name: 'the biomesh', kind: 'creature', h: 3, at: [0, 0],
+  async build(ctx) {
+    const { makeRules } = await import('./kit.js'); const U = { rules: makeRules(ctx) };
+    buildBiomesh(ctx, U); const C = U.biomesh.colonies[0];
+    const c = C.center; return { at: (o) => o.set(c.x ?? c[0], 0, c.z ?? c[1]), h: Math.min(12, C.radius * 1.2) };
+  },
+}];

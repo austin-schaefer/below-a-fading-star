@@ -251,3 +251,16 @@ export function buildSlinker(ctx, U) {
   });
   return { drawCalls: 1, tris: geo.index.count / 3 };
 }
+
+// The study page (src/study/registry.js): the slinker held where the looker can see it, lurking.
+export const study = [{
+  id: 'slinker', name: 'the slinker', kind: 'creature', h: 3, at: [0, 0],
+  async build(ctx) {
+    const { makeRules } = await import('./kit.js'); const U = { rules: makeRules(ctx) };
+    buildSlinker(ctx, U);
+    const p = ctx.slinker.position, S = U.slinker.state;
+    let k = 0;
+    ctx.registerUpdate((dt) => { if ((k -= dt) <= 0) { k = 4; S.x = 0; S.z = 0; S.hold = true; S.mode = 'lurk'; S.fade = 1; S.flat = 0; S.speed = 1.4; } });
+    return { at: (o) => o.set(p.x, 0, p.z), face: () => S.heading };
+  },
+}];

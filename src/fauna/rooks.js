@@ -217,3 +217,17 @@ function buildFlock(ctx, opts) {
   pub.advance = (sec, step = 0.05) => { for (let k = 0; k < sec; k += step) update(step, ctx.time.t + k); };
   return pub;
 }
+
+// The study page (src/study/registry.js): the rooks of the Leaning Yard and the gibbet's crows, on perches standing
+// in for the stones and the beam (a ring of points 1 to 3 m up), lifting when the looker is close.
+function studyFlock(ctx, name, n, salt) {
+  const home = { x: 0, z: 0 }, perches = [];
+  for (let i = 0; i < n + 3; i++) { const a = (i / (n + 3)) * Math.PI * 2; perches.push({ x: Math.cos(a) * 2.5, y: 1 + (i % 3), z: Math.sin(a) * 2.5 }); }
+  buildFlock(ctx, { name, n, salt, home, liftR: 4, cue: 'crows', orbit: [5, 9], height: [6, 10], findPerches: () => perches });
+  const B = ctx.flocks[name].birds;
+  return { at: (o) => o.copy(B[0].pos), face: () => B[0].yaw };
+}
+export const study = [
+  { id: 'rook', name: 'rook of the Leaning Yard', kind: 'creature', h: 1.2, fly: true, at: [0, 0], build: (ctx) => studyFlock(ctx, 'rooks', ctx.quality === 'low' ? 9 : 12, 1212) },
+  { id: 'gibbet-crow', name: 'crow on the gibbet', kind: 'creature', h: 1.2, fly: true, at: [0, 0], build: (ctx) => studyFlock(ctx, 'gibbet-crows', 3, 1313) },
+];

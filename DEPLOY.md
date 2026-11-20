@@ -7,14 +7,14 @@ Below a Fading Star is a static site: one `index.html`, ES modules under `src/`,
 - Netlify site `below-a-fading-star` (team `austin-schaefer`): https://below-a-fading-star.netlify.app.
 - Linked to GitHub `austin-schaefer/below-a-fading-star` through the Netlify GitHub App. No base directory (Build & deploy → Build settings): the site is the repository root. Production branch: `main`.
 - Production builds only. Branch deploys and PR deploy previews are off (Build & deploy → Continuous deployment: `allowed_branches = [main]`, `skip_prs = true`, set 2026-11-08 after one day of agent work ran 100 builds, 71 of them branch deploys of the working branch, and used half the month's build minutes). To look at a branch, serve it locally (`tools/serve.sh`) or build the single-file artifact (`tools/build-artifact.mjs`). To re-enable a branch deploy for a demo, add the branch under Branches and deploy contexts and remove it afterwards.
-- To deploy, push to `main`. Pushes that touch only docs, briefs, tools, tests or `shots/` skip the build: `netlify.toml`'s `ignore` command builds only when `index.html`, `sw.js`, `src/`, `vendor/`, `netlify.toml` or the icons changed since the last built commit.
+- To deploy, push to `main`. Pushes that touch only docs, briefs, tools, tests or `shots/` skip the build: `netlify.toml`'s `ignore` command builds only when `index.html`, `listen.html`, `sw.js`, `src/`, `vendor/`, `netlify.toml` or the icons changed since the last built commit.
 - Build minutes: Netlify bills each build by the started minute, so the count of builds matters more than their length (these take about 11 s). Batch merges to `main`; one release PR per batch of fixes, not one build per commit.
 - Not indexed: `netlify.toml` sends `X-Robots-Tag: noindex, nofollow` on every path, and `index.html` carries a robots meta tag.
 - HTTPS only; Netlify provisions the certificate.
 
 ## What ships
 
-- Only what the page loads: `index.html`, `sw.js`, `src/`, `vendor/`, the two icons, a generated `commit.json` (`{"commit":"<short hash>"}`) and a generated `_headers` that stamps every response with the same hash (`X-Fp-Commit`). The build command in `netlify.toml` copies them into `_site/` (gitignored) and publishes that. Docs, briefs, tools, skills and `shots/` never reach the CDN.
+- Only what the page loads: `index.html`, `listen.html` (the music sketches' listening page, linked from nowhere; its samples are `vendor/samples/`, fetched only there), `sw.js`, `src/`, `vendor/`, the two icons, a generated `commit.json` (`{"commit":"<short hash>"}`) and a generated `_headers` that stamps every response with the same hash (`X-Fp-Commit`). The build command in `netlify.toml` copies them into `_site/` (gitignored) and publishes that. Docs, briefs, tools, skills and `shots/` never reach the CDN.
 - The page loads Three.js from `./vendor/three/` through an import map in `index.html`; nothing is fetched from a CDN. The type is vendored too (`vendor/fonts/`, SIL OFL faces with their licences), so the page makes no third-party request.
 - No environment variables, no secrets, no functions, no forms. Keep it that way: the repository is public and so is every build log.
 - Headers on every path (`netlify.toml`): `X-Robots-Tag: noindex, nofollow`, `X-Content-Type-Options: nosniff`, a `Referrer-Policy` and a `Permissions-Policy` that turns off camera, microphone, geolocation, payment and USB; `X-Fp-Commit` from the build's `_headers`; `Cache-Control: no-cache` on `/sw.js` and `/commit.json`, so both are asked again on every visit.
@@ -58,7 +58,7 @@ The site is on Netlify's free plan, and a run of agents can spend a month's allo
 A manual deploy uploads the directory as given and ignores the build command and the `netlify.toml` headers, so build the folder and add the headers by hand:
 
 ```sh
-rm -rf _site && mkdir _site && cp -R index.html sw.js src vendor favicon-32.png apple-touch-icon.png _site/
+rm -rf _site && mkdir _site && cp -R index.html listen.html sw.js src vendor favicon-32.png apple-touch-icon.png _site/
 printf '{"commit":"%s"}' "$(git rev-parse --short HEAD)" > _site/commit.json
 printf '/*\n  X-Robots-Tag: noindex, nofollow\n  X-Content-Type-Options: nosniff\n  X-Fp-Commit: %s\n/sw.js\n  Cache-Control: no-cache\n/commit.json\n  Cache-Control: no-cache\n' "$(git rev-parse --short HEAD)" > _site/_headers
 netlify deploy --prod --no-build --dir _site --site below-a-fading-star

@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// The settings panel (v7-08), which is also the pause (v14-B1): the gear, open and close, Escape, volume, mute, quality, mouse capture and teleport, on a
+// The settings panel (v7-08), which is also the pause (v14-B1): the gear, open and close, Escape, volume, mute, quality, mouse capture and the map's marks (v17.1), on a
 // desktop viewport; then the gear and a finger-sized panel on a phone, and (v13) its Measure row's reload. Usage: node tools/settings-test.mjs [url]
 // SHOTS=1 also writes shots/wip/settings-01-desktop.png (1280x720, panel open) and settings-01-touch.png (390x844);
 // SHOTS_TAG=v9-M6 names them v9-M6-desktop.png and v9-M6-touch.png.
@@ -35,6 +35,10 @@ const shown = (page) => page.evaluate(() => document.getElementById('settings').
   const g = await rect(page, '#gear');
   check('gear: visible, in the corner', g && g.w > 0 && g.r <= 1280 && g.t >= 0 && g.l > 1200 && g.t < 40, g);
   check('gear: panel starts closed', !(await shown(page)));
+  // v17.1-Q1 (#70): nothing fetched or built for the map until the panel first opens
+  const fetchedMap = () => page.evaluate(() => performance.getEntriesByType('resource').some((e) => /\/v17_1\/map\.js/.test(e.name)));
+  const pre = { fetched: await fetchedMap(), built: await page.evaluate(() => document.getElementById('set-places').childElementCount) };
+  check('map: nothing fetched or built for it before the panel first opens', !pre.fetched && pre.built === 0, pre);
 
   await page.click('#gear');
   check('open: the gear opens the panel', await shown(page));
@@ -135,20 +139,96 @@ const shown = (page) => page.evaluate(() => document.getElementById('settings').
   check('quality: carries pos and yaw', nu && Math.abs(nx - nav.x) < 0.06 && Math.abs(nz - nav.z) < 0.06 && Math.abs(Number(nu.searchParams.get('yaw')) - nav.yaw) < 0.001, nav);
   check('quality: keeps the other params', nu && nu.searchParams.get('shadows') === '0' && nu.searchParams.get('bloom') === '0', nav.nav);
 
-  // teleport: every place, within 1 m of its stand point, on the ground, facing, no cue, panel closed
-  const n = await page.evaluate(() => window.__fp.settings.places.length);
-  // v14-B3: the places of v9 to v12 (the Lantern Halt, the bell, the Span's ways and camp, the ways up and their tops, the passes) are named landmarks now
-  check('teleport: the whole map (spawn, every named landmark but the Sexton\'s graves, the Escarpment Lamps and the two stands kept where the owner cut the card (#52), the three region cards, the two village places (the Fountain of Noon, the Smoking Saint; their cards are `map: false`), the seventeen living with the Taker standing for the Adust, the eight story ends)', n === 1 + (await page.evaluate(() => Object.values(window.__fp.landmarks).filter((L) => L.name && L.map !== false).length)) - 1 + 3 + 3 + 2 + 17 + 8, n);
-  check('teleport: Places, The living and Stories headings', await page.evaluate(() => [...document.querySelectorAll('#set-places h4')].map((h) => h.textContent).join('|')) === 'Places|The living|Stories');
-  check('teleport: a button for each place', await page.evaluate(() => document.querySelectorAll('#set-places button').length) === n);
+  // v17.1-Q1 (#70): the panel's places are a drawn map: sixteen marks or fewer, each a stand from PLACES (the whole list
+  // stays for the debug panel and the tools) with a plain line and its name; the rows below check every mark's stand
+  // as they checked every entry of the old list
+  await page.evaluate(() => window.__fp.settings.open());
+  const mapInfo = await page.evaluate(async () => {
+    const S = window.__fp.settings, map = await S.mapReady(), c = document.querySelector('#set-places canvas');
+    const px = c.getContext('2d').getImageData(0, 0, c.width, c.height).data; let lit = 0, sum = 0;
+    for (let i = 0; i < px.length; i += 4 * 97) { const v = px[i] + px[i + 1] + px[i + 2]; sum++; if (v > 60) lit++; }
+    return { n: S.marks.length, ms: map.ms, inPlaces: S.marks.every((m) => S.places.includes(m.place)), lines: S.marks.map((m) => m.line), names: S.marks.map((m) => m.name), buttons: document.querySelectorAll('#set-places .map-mark').length, w: c.width, lit: +(lit / sum).toFixed(2), fetched: performance.getEntriesByType('resource').some((e) => /\/v17_1\/map\.js/.test(e.name)) };
+  });
+  const n = mapInfo.n;
+  check(`map: fetched and drawn on the first open (${mapInfo.ms} ms), a chart with something on it`, mapInfo.fetched && mapInfo.w >= 400 && mapInfo.lit > 0.5, mapInfo);
+  check('map: sixteen marks (twelve at the least), each a button, each a stand in the whole list (PLACES)', n >= 12 && n <= 16 && n === (await page.evaluate(async () => (await import('./src/v17_1/map.js')).MARKS.length)) && mapInfo.buttons === n && mapInfo.inPlaces, mapInfo);
+  check('map: each mark has a plain line (short, not a quotation) and a name', mapInfo.lines.every((l) => l.length >= 12 && l.length <= 64 && !/[\u201c\u201d"]/.test(l)) && new Set(mapInfo.names).size === n, mapInfo.lines);
+  check('map: the whole list (PLACES) still holds every place, the cut ones too (the Bitter End, the Long Wait, the living, the story ends)', await page.evaluate(() => { const P = window.__fp.settings.places; return P.length > 70 && ['The Bitter End', 'The Long Wait', 'The Hanging Croft'].every((k) => P.some((p) => p.name === k)) && P.filter((p) => p.group === 'Stories').length === 8 && P.filter((p) => p.group === 'The living').length === 17; }));
+  // the mouse: pointing at a mark says what it is, its name second; leaving it puts the line back
+  {
+    const m = await page.evaluate(() => { const k = window.__fp.settings.marks.find((q) => q.name === 'The Swallow'), r = k.el.getBoundingClientRect(); return { x: r.left + r.width / 2, y: r.top + r.height / 2, line: k.line }; });
+    await page.mouse.move(m.x, m.y); await page.waitForTimeout(150);
+    const say = await page.evaluate(() => ({ line: document.querySelector('.map-line').textContent, name: document.querySelector('.map-name').textContent }));
+    await page.mouse.move(5, 5); await page.waitForTimeout(150);
+    const off = await page.evaluate(() => document.querySelector('.map-name').textContent);
+    check('map: the mouse on a mark says its plain line, then its name; off it, not', say.line.toLowerCase().startsWith(m.line.slice(0, 12).toLowerCase()) && say.name === 'The Swallow' && off === '', { say, off });
+  }
+  // the player's mark: where they stand on the chart
+  {
+    const y = await page.evaluate(() => { const fp = window.__fp, you = document.querySelector('.map-you'), f = document.querySelector('.map-frame').getBoundingClientRect(), r = you.getBoundingClientRect(); return { u: (r.left - f.left) / f.width, v: (r.top - f.top) / f.height, x: fp.player.pos.x, z: fp.player.pos.z }; });
+    check('map: "you are here" sits where the walker stands', Math.abs(y.u - (y.x + 370) / 740) < 0.02 && Math.abs(y.v - (y.z + 355) / 740) < 0.02, y);
+  }
+  // the keyboard: a mark focused, an arrow moves to the nearest mark that way, Enter goes there
+  {
+    const k = await page.evaluate(() => { const S = window.__fp.settings, m = S.marks.find((q) => q.name === 'Carcanet Keep'); m.el.focus(); return { x: m.px, y: m.py }; });
+    await page.keyboard.press('ArrowUp');
+    const up = await page.evaluate(() => { const S = window.__fp.settings, m = S.marks.find((q) => q.el === document.activeElement); return m && { name: m.name, x: m.px, y: m.py, say: document.querySelector('.map-name').textContent }; });
+    await page.keyboard.press('ArrowLeft');
+    const left = await page.evaluate(() => { const m = window.__fp.settings.marks.find((q) => q.el === document.activeElement); return m && { name: m.name, x: m.px, y: m.py }; });
+    check('keys: on the map an arrow moves to the nearest mark that way, and the line says it', up && up.y < k.y && up.say === up.name && left && left.x < up.x, { k, up, left });
+    await page.keyboard.press('Enter');
+    const went = await page.evaluate((name) => { const fp = window.__fp, pl = fp.settings.places.find((p) => p.name === name), p = fp.player.pos; return { shut: !fp.settings.shown, d: Math.hypot(p.x - pl.x, p.z - pl.z) }; }, left?.name);
+    check('keys: Enter on a mark goes there and shuts the panel', went.shut && went.d < 1, went);
+  }
+  // the panel's focus api (for a gamepad): focusNext(dx, dy) moves by direction, on a slider dx steps it, activate() does it
+  {
+    const r = await page.evaluate(() => {
+      const S = window.__fp.settings; S.open();
+      const out = {};
+      out.first = S.focusNext(0, 1) && !!S.marks.find((m) => m.el === S.focused());
+      const a = S.focused(); out.moved = S.focusNext(1, 0) && S.focused() !== a && !!S.marks.find((m) => m.el === S.focused());
+      document.getElementById('set-volume').focus(); const v0 = +document.getElementById('set-volume').value;
+      S.focusNext(-1, 0); out.slider = +document.getElementById('set-volume').value < v0 && window.__fp.audio.volume < v0 / 100 + 1e-6;
+      S.focusNext(0, 1); out.down = S.focused() && S.focused().id !== 'set-volume';
+      const pl = S.marks[2]; pl.el.focus(); out.act = S.activate();
+      const p = window.__fp.player.pos; out.d = Math.hypot(p.x - pl.place.x, p.z - pl.place.z); out.shut = !S.shown;
+      S.open(); out.back = S.back() && !S.shown;
+      return out;
+    });
+    check('api: focusNext(dx, dy) moves among the marks and the controls, steps a slider; activate() goes; back() shuts', r.first && r.moved && r.slider && r.down && r.act && r.d < 1 && r.shut && r.back, r);
+    await page.evaluate(() => window.__fp.audio.setVolume(0.6));
+  }
+  // (round two) a slider at its end stop: a further press sideways moves focus on; moving up from a narrow button onto a
+  // wide slider above it is not skipped; a touch press cancelled by a scroll leaves the next Enter a key's (it goes)
+  {
+    const r = await page.evaluate(() => {
+      const S = window.__fp.settings, out = {}; S.open();
+      const v = document.getElementById('set-level-ambience'); v.value = v.max; v.dispatchEvent(new Event('input', { bubbles: true })); v.focus();
+      out.endStop = S.focusNext(1, 0) && S.focused() !== v && +v.value === +v.max;
+      document.querySelector('#set-music button').focus(); S.focusNext(0, -1); out.up = S.focused()?.id;
+      return out;
+    });
+    check('focus: past a slider\'s end stop a sideways press moves focus on; up from the music buttons reaches the music slider', r.endStop && r.up === 'set-level-music', r);
+    const pre = await page.evaluate(() => { const S = window.__fp.settings, m = S.marks[4]; m.el.focus(); m.el.dispatchEvent(new PointerEvent('pointerdown', { pointerType: 'touch', bubbles: true })); m.el.dispatchEvent(new PointerEvent('pointercancel', { pointerType: 'touch', bubbles: true })); return m.name; });
+    await page.keyboard.press('Enter');
+    const went = await page.evaluate(() => { const fp = window.__fp, pl = fp.settings.marks[4].place, p = fp.player.pos; return { shut: !fp.settings.shown, d: Math.hypot(p.x - pl.x, p.z - pl.z) }; });
+    check('touch: a press on a mark cancelled by a scroll, then Enter: it goes (the stale touch is forgotten)', went.shut && went.d < 1, { pre, went });
+    // off the chart (the lift's gallery, 135 m up on the west wall) "you are here" is an arrow on the edge, pointing out
+    const off = await page.evaluate(() => { const fp = window.__fp; fp.controls.placeAt(-377, -50, 135.2); fp.settings.open(); return new Promise((res) => setTimeout(() => { const y = document.querySelector('.map-you'), f = document.querySelector('.map-frame').getBoundingClientRect(), r = y.getBoundingClientRect(); res({ off: y.classList.contains('map-you-off'), u: +((r.left - f.left) / f.width).toFixed(3), x: fp.player.pos.x }); }, 400)); });
+    check('map: off the chart "you are here" is an arrow at the edge pointing out', off.off && off.u < 0.05, off);
+    await page.evaluate(() => { window.__fp.settings.close(); window.__fp.controls.placeAt(2, 35); });
+  }
   let allNear = true, allClosed = true, allGround = true, noCue = true, facing = true;
   const detail = [];
-  for (let i = 0; i < n; i++) {
+  // every stand in PLACES (the map's sixteen by a click on their mark, the rest by settings.teleport, as cards-walk, perf and the tools go)
+  const nAll = await page.evaluate(() => window.__fp.settings.places.length);
+  for (let i = 0; i < nAll; i++) {
     const r = await page.evaluate((i) => {
-      const fp = window.__fp, pl = fp.settings.places[i];
+      const fp = window.__fp, pl = fp.settings.places[i], mk = fp.settings.marks.find((m) => m.place === pl);
       if (!fp.settings.shown) fp.settings.open();
       let cues = 0; const orig = fp.audio.cue; fp.audio.cue = (...a) => { cues++; return orig.apply(fp.audio, a); };
-      document.querySelectorAll('#set-places button')[i].click();
+      if (pl.thread && !fp.threads?.[pl.thread]) return null; // a story's end only when its thread was built
+      if (mk) mk.el.click(); else fp.settings.teleport(i); // a click on a mark (no touch): goes
       fp.audio.cue = orig; // restored in the same task: the click handler is synchronous
       const p = fp.player, T = fp.terrain;
       const sa = 160 * Math.PI / 180, sun = { x: Math.cos(sa), z: Math.sin(sa) }; // SUN.azimuth: from +x toward +z
@@ -163,6 +243,7 @@ const shown = (page) => page.evaluate(() => document.getElementById('settings').
       const under = pl.y !== undefined && (pl.y < T.heightAt(p.pos.x, p.pos.z) - 3 || pl.name === 'The Nadir'); // v14-D0: a stand under the ground (the Noon Road) is measured from its own floor; v14-D2: so is the Nadir's, on the Pit's bowl, a little under the old ground
       return { name: pl.name, under, basin: +basin.toFixed(2), q: fp.quality, wet: wl !== null && wl - T.heightAt(p.pos.x, p.pos.z) > 1.15, inCol, d: Math.hypot(p.pos.x - pl.x, p.pos.z - pl.z), above: p.pos.y - (fp.span?.deckAt(p.pos.x, p.pos.z) ?? (pl.y !== undefined && (Math.abs(pl.y - T.heightAt(p.pos.x, p.pos.z)) > 3 || pl.name === 'The Nadir') ? pl.y : T.heightAt(p.pos.x, p.pos.z))) /* v8-04: a story end on the deck; v12-H3: a place in the air (the tender's deck) measured from its own y */, closed: !fp.settings.shown, cues, dot: (fx * tx + fz * tz) / l, pitch: p.pitch };
     }, i);
+    if (!r) continue;
     detail.push(r);
     if (r.d > 1) allNear = false;
     if (!r.closed) allClosed = false;
@@ -227,8 +308,8 @@ const shown = (page) => page.evaluate(() => document.getElementById('settings').
     });
     return out.filter(Boolean);
   });
-  const badView = view.filter((r) => r.deg > 40 || r.hit); // (v14-B5: more than 35 checked: the owner cut nine cards on #52, about 41 stands remain)
-  check('teleport: every named place\'s centre is in view (within 40 degrees of the look) and no collider shuts the view within 3 m of the eye', view.length > 35 && badView.length === 0, { checked: view.length, badView });
+  const badView = view.filter((r) => r.deg > 40 || r.hit); // (v14-B5: more than 35 checked)
+  check('teleport: every named place\'s centre is in view (within 40 degrees of the look) and no collider shuts the view within 3 m of the eye (every stand in PLACES, the map\'s among them)', view.length > 35 && badView.length === 0, { checked: view.length, badView });
   // v16 critic: every stand on the map, the living and the stories too: the view's centre (the stand's yaw and pitch, from the
   // eye) meets no drawn mesh within 2 m (the Bather's old stand on the Span's rubble looked into a slab 1.98 m off; the
   // collider check above sees only colliders, and skips the living)
@@ -244,7 +325,7 @@ const shown = (page) => page.evaluate(() => document.getElementById('settings').
     }
     return { n: fp.settings.places.length, out };
   });
-  check('teleport: from every stand on the map the view\'s centre meets nothing drawn within 2 m of the eye', blind.n > 70 && blind.out.length === 0, blind);
+  check('teleport: from every stand in PLACES (the map\'s among them) the view\'s centre meets nothing drawn within 2 m of the eye', blind.n > 70 && blind.out.length === 0, blind);
   // v10-F1: the five places with an act land 8 to 11 m from it, facing it (the act's spot within 25 degrees of the look)
   const actLand = await page.evaluate(() => {
     const fp = window.__fp, out = {};
@@ -329,7 +410,7 @@ const shown = (page) => page.evaluate(() => document.getElementById('settings').
 
   // the debug panel survives a teleport from either panel, and the quality reload keeps every parameter
   await page.evaluate(() => { window.__fp.debug.toggle(true); window.__fp.settings.open(); });
-  await page.locator('#set-places button').nth(3).click();
+  await page.locator('#set-places .map-mark').nth(3).click();
   check('debug: stays shown through a teleport from the settings panel', await page.evaluate(() => window.__fp.debug.shown && document.getElementById('dbg').classList.contains('shown')));
   await page.evaluate(() => window.__fp.debug.teleport('castle'));
   check('debug: stays shown through its own teleport', await page.evaluate(() => window.__fp.debug.shown));
@@ -422,9 +503,28 @@ const shown = (page) => page.evaluate(() => document.getElementById('settings').
   await page.touchscreen.tap(8, 400);
   const t1 = await page.evaluate(() => ({ yaw: window.__fp.player.yaw, move: window.__fp.controls.touch.moveId, look: window.__fp.controls.touch.lookId }));
   check('touch: the scrim keeps taps off the canvas', await shown(page) && t1.yaw === y0 && t1.move === null && t1.look === null, t1);
-  await page.locator('#set-places button').nth(5).tap();
-  const near = await page.evaluate(() => { const pl = window.__fp.settings.places[5], p = window.__fp.player.pos; return Math.hypot(p.x - pl.x, p.z - pl.z); });
-  check('touch: a tap on a place teleports and closes', !(await shown(page)) && near < 1, near);
+  // v17.1-Q1: the map on a phone: every mark a thumb's width (44 px), inside the chart and the screen, none on another
+  const lay = await page.evaluate(async () => {
+    const S = window.__fp.settings; await S.mapReady();
+    const f = document.querySelector('.map-frame').getBoundingClientRect(), R = S.marks.map((m) => m.el.getBoundingClientRect());
+    let close = 1e9; for (let a = 0; a < R.length; a++) for (let b = a + 1; b < R.length; b++) close = Math.min(close, Math.hypot(R[a].left - R[b].left, R[a].top - R[b].top)); // the marks are round: centre to centre
+    return { frame: [Math.round(f.width), Math.round(f.height)], small: R.filter((r) => r.width < 43.9 || r.height < 43.9).length, out: R.filter((r) => r.left < f.left - 1 || r.right > f.right + 1 || r.top < f.top - 1 || r.bottom > f.bottom + 1 || r.right > innerWidth).length, overlap: +(44 - close).toFixed(1) };
+  });
+  check('touch: the map\'s marks are 44 px, inside the chart and the screen, none over another by more than 4 px', lay.small === 0 && lay.out === 0 && lay.overlap <= 4 && lay.frame[0] >= 280, lay);
+  const mk = await page.evaluate(() => { const m = window.__fp.settings.marks[5], r = m.el.getBoundingClientRect(); return { i: 5, name: m.name, line: m.line, x: r.left + r.width / 2, y: r.top + r.height / 2 }; });
+  const pos0 = await page.evaluate(() => { const p = window.__fp.player.pos; return [p.x, p.z]; });
+  await page.touchscreen.tap(mk.x, mk.y); await page.waitForTimeout(200);
+  const t1st = await page.evaluate(() => { const p = window.__fp.player.pos; return { pos: [p.x, p.z], name: document.querySelector('.map-name').textContent, go: !document.querySelector('.map-go').hidden, open: window.__fp.settings.shown }; });
+  check('touch: a first tap on a mark says what it is (its line, its name, "Go there") and goes nowhere', t1st.open && t1st.name === mk.name && t1st.go && Math.hypot(t1st.pos[0] - pos0[0], t1st.pos[1] - pos0[1]) < 0.05, { mk, t1st });
+  await page.touchscreen.tap(mk.x, mk.y); await page.waitForTimeout(200);
+  const near = await page.evaluate((i) => { const pl = window.__fp.settings.marks[i].place, p = window.__fp.player.pos; return Math.hypot(p.x - pl.x, p.z - pl.z); }, mk.i);
+  check('touch: a second tap on it goes there and closes', !(await shown(page)) && near < 1, near);
+  await page.touchscreen.tap(g.l + g.w / 2, g.t + g.h / 2);
+  const mk2 = await page.evaluate(() => { const m = window.__fp.settings.marks[9], r = m.el.getBoundingClientRect(); return { x: r.left + r.width / 2, y: r.top + r.height / 2 }; });
+  await page.touchscreen.tap(mk2.x, mk2.y); await page.waitForTimeout(150);
+  await page.locator('.map-go').tap(); await page.waitForTimeout(150);
+  const near2 = await page.evaluate(() => { const pl = window.__fp.settings.marks[9].place, p = window.__fp.player.pos; return Math.hypot(p.x - pl.x, p.z - pl.z); });
+  check('touch: or a tap and "Go there"', !(await shown(page)) && near2 < 1, near2);
   await page.touchscreen.tap(g.l + g.w / 2, g.t + g.h / 2);
   // v13: Measure reloads into the bench at the tier in use, its params taken off again when it is done (src/perf.js)
   await page.evaluate(() => { window.__nav = null; window.__fp.settings.navigate = (u) => { window.__nav = u; }; });

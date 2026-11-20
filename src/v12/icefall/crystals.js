@@ -97,3 +97,9 @@ export function crystalMesh(ctx, list, mat, rng) {
   mesh.name = 'icefall-crystals';
   return { mesh, tris: n * geo.attributes.position.count / 3 };
 }
+
+// The study page's seed rows (src/study/recipes.js): a crystal shard from a seed (2 m).
+export const studyRecipes = [{
+  id: 'crystal-shard', name: 'crystal shard',
+  build(rng) { const m = new THREE.Mesh(shardGeo(rng), new THREE.MeshStandardMaterial({ color: '#9ad0e4', roughness: 0.2, metalness: 0.1, flatShading: true })); m.scale.setScalar(2); m.castShadow = true; return m; },
+}];

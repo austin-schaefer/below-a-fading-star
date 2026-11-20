@@ -258,3 +258,13 @@ export async function buildAccrescent(ctx, G) {
   api.stats = () => ({ calls: 2, tris: Math.round(tg.index.count / 3 + bg.index.count / 3) });
   return api;
 }
+
+// The study page (src/study/registry.js): the Accrescent, half crystal, at his step an hour.
+export const study = [{
+  id: 'accrescent', name: 'the Accrescent', kind: 'figure', h: 2.0, at: [0, 0],
+  async build(ctx) {
+    const { makeGround } = await import('../../fauna/uncanny/kit.js');
+    const s = await buildAccrescent(ctx, makeGround(ctx)); ctx.registerUpdate(s.update);
+    return { at: (o) => o.set(s.pos.x, 0, s.pos.z), face: () => s.yaw };
+  },
+}];

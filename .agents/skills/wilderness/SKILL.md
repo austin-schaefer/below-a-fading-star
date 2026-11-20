@@ -13,10 +13,10 @@ The repository is a static Three.js r170 site with no build step and no package.
 
 ## Serve and walk
 
-- **Ports:** 8123 is the working branch's server, the owner's view (the `orchestrator` skill keeps it up). Every other agent takes its own port from 8160 up and serves its own worktree, never the deploy worktree.
+- **Ports:** 8123 is the working branch's server, the owner's view (the `orchestrator` skill keeps it up). Every other agent takes its own port from 8160 up, one that `lsof -ti:PORT` shows free (the owner's other projects serve on some of them) and serves its own worktree, never the deploy worktree.
 - In a fresh worktree: `npm install --no-save --silent playwright@1.63.0` (keep it without a package.json).
 - Serve: `nohup nice -n 10 tools/serve.sh PORT > /tmp/serve-PORT.log 2>&1 &`. Kill it when you hand back. Below, `B=http://localhost:PORT`.
-- **Controls:** WASD walk, mouse look, Shift hurry, Space hop; on touch, the stick bottom right, the hop ring left of it, drag to look; holding the speaker 1.2 s opens the debug panel. Where an act is offered (v10), `E`, a click with the mouse captured, or a tap on the offer does it. The gear opens the settings panel, whose map teleports to every named place.
+- **Controls:** WASD walk, mouse look, Shift hurry, Space hop; on touch, the stick bottom right, the hop ring left of it, drag to look; holding the speaker 1.2 s opens the debug panel. Where an act is offered (v10), `E`, a click with the mouse captured, or a tap on the offer does it. The gear opens the settings panel, whose map (v17.1) goes to sixteen places; `settings.teleport(name)` reaches any stand.
 - **URL params:** `?pos=x,z&yaw=&pitch=` to stand somewhere, `?q=low|medium|high`, `?debug=1`, `?perf=1`, and every module's switch: `world-code/runtime.md`.
 
 - **Waiting on a run:** never `until ! pgrep -f "tools/suite.sh"` (or any `pgrep -f` loop): the waiting shell's own command line holds the pattern, two such waiters match each other and neither ever ends. Fifty of them were found polling on the owner's machine on 2026-11-16, hours after their runs had finished. Wait on the process id (`while kill -0 $PID 2>/dev/null; do sleep 20; done`) or on a line in the log (`until grep -q '^=== [0-9]' "$LOG"; do sleep 20; done`).
@@ -27,7 +27,7 @@ The repository is a static Three.js r170 site with no build step and no package.
 - Several views from one load (the scene build is the slow part): `node tools/views.mjs views.json shots/wip <prefix> low`, where `views.json` lists `{ name, x, z, yaw, pitch, dy, js, pre }`. It holds the sun's guttering off so before/after pairs match.
 - `FP_BROWSER=chromium|firefox|webkit` picks the engine for both (default chromium; the ANGLE flags are Chromium's). Headless Firefox and WebKit on this Mac draw on the real GPU (Firefox through Apple's OpenGL, points clamped at 64 px), so they are the Firefox and Safari GPU paths, not software.
 - **Where they go:** 1280×720 into `shots/wip/`, named `<module>-<stage>-<view>.png`. `shots/wip/` is gitignored and never committed; only the curator commits, as WebP keepers into `shots/`, and the pre-commit hook rejects any staged PNG under `shots/` (so `git add -f` fails) and any image over 1.25 MB. Ignored files die with their worktree, so `tools/worktree.sh rm` first moves a worktree's `shots/wip/` into the deploy worktree's (`.claude/worktrees/deploy`), where the curator reads them; it refuses if the deploy worktree is missing.
-- Never delete or overwrite a render, yours or anyone's; the curator decides.
+- Never delete or overwrite a render, yours or anyone's; the curator decides. The inbox has a budget (`tools/wip-check.sh`, in the gate): render the views that answer your question, not every frame of a walk.
 - Look at every render you take (the Read tool shows images) before you name it in a report.
 
 ## Hand-back

@@ -1,7 +1,7 @@
 // The settings panel (v7-08), which is also the pause (v14-B1, #46: Escape opens it, as the gear does; "Back to the
 // moor" shuts it and takes the mouse again): a gear beside the speaker opens volume, mute (and under them, v9-M6, the sound's three
-// parts: sound effects, ambience, music, with the music's off / how often), quality, mouse capture and a list of
-// places to teleport to, and (v13) Measure, which reloads into the bench. UI only: it builds no world, draws nothing and registers no per-frame update; with the
+// parts: sound effects, ambience, music, with the music's off / how often), quality, mouse capture, a map of the
+// valley to go to its places by (v17.1, src/v17_1/map.js, loaded on the first open), and (v13) Measure, which reloads into the bench. UI only: it builds no world, draws nothing and registers no per-frame update; with the
 // panel closed it is a handful of listeners. The markup and CSS are in index.html. Reads ctx.audio (audio.js),
 // ctx.controls (controls.js), ctx.quality (tier.js) and ctx.terrain lazily, because those build after the hud.
 import { LANDMARKS, REGION_CARDS, SITES, SPAWN, SUN } from './world.js';
@@ -9,7 +9,7 @@ import { THREAD_PLACES } from './v8/threads/plan.js'; // v8-04: both ends of eac
 
 const TIERS = ['low', 'medium', 'high'];
 
-// Where the panel puts you: the whole map, grouped. Spawn; Places (every LANDMARKS entry with a name: its own `at`, a
+// Every stand point a place has (the map's marks are sixteen of them, src/v17_1/map.js MARKS), grouped. Spawn; Places (every LANDMARKS entry with a name: its own `at`, a
 // hand-picked stand point from the v4-v6 renders, or a point r + 6 m from its centre toward spawn, looking at it); and
 // The living (the v7 figures by their SITES names, each from the pose of its v7 render in tools/views-v7-*.json).
 // Names are LANDMARKS' and SITES' [Proposed] placeholders. An entry is { name, group, x, z, yaw | look, pitch? }.
@@ -239,7 +239,7 @@ export function buildSettings(ctx) {
   try { showPos = localStorage.getItem('fp-showpos') === '1'; } catch (e) { /* ignore */ }
   function tickPos() {
     const line = positionLine(ctx.player);
-    if (open_) posEl.textContent = line;
+    if (open_) { posEl.textContent = line; map?.here(); }
     if (showPos) posHud.textContent = line;
   }
   function syncPos() {
@@ -285,18 +285,20 @@ export function buildSettings(ctx) {
   api.measureUrl = measureUrl;
   $('set-measure')?.addEventListener('click', () => api.navigate(measureUrl()));
 
-  // --- teleport: the whole map under small headings
-  let group;
-  PLACES.forEach((pl, i) => {
-    if (pl.group && pl.group !== group) { group = pl.group; const h = document.createElement('h4'); h.textContent = group; placesEl.appendChild(h); }
-    const b = document.createElement('button');
-    b.type = 'button'; b.textContent = pl.name;
-    b.addEventListener('click', () => teleport(i));
-    if (pl.thread) { b.dataset.thread = pl.thread; b.hidden = true; } // v8-04: shown once the thread has built (open())
-    placesEl.appendChild(b);
-  });
+  // --- go to (v17.1-Q1, #70): a drawn map of the valley with sixteen marks, src/v17_1/map.js, loaded and drawn on the
+  // panel's first open and never before. PLACES stays whole (the debug panel, the tools, the ground's clearings);
+  // only the marks are few. Story ends are not on the map (their thread's own walk finds them).
+  const touchy = () => ('ontouchstart' in window) || navigator.maxTouchPoints > 0 || matchMedia?.('(pointer: coarse)').matches;
+  let map = null, mapLoad = null;
+  function mapReady() {
+    if (!mapLoad) mapLoad = import('./v17_1/map.js').then((m) => { map = m.buildMap(ctx, placesEl, PLACES, { go: teleport, touch: touchy(), shown: () => open_ }); api.marks = map.marks; return map; });
+    return mapLoad;
+  }
+  api.mapReady = () => mapReady().then((m) => m.drawn).then(() => map);
+  api.marks = [];
   function teleport(pl) {
     if (typeof pl === 'number') pl = PLACES[pl];
+    else if (typeof pl === 'string') pl = PLACES.find((q) => q.name === pl); // by name: any stand, on the map or not
     if (!pl || (pl.thread && !ctx.threads?.[pl.thread])) return false; // v8-04: a story's end only when its thread was built
     const p = ctx.player;
     const at = ctx.controls.placeAt(pl.x, pl.z, pl.y); // y (v8-04, v12): the floor at that height there (the Span's deck, a gallery), else the ground
@@ -308,6 +310,52 @@ export function buildSettings(ctx) {
     return true;
   }
 
+  // --- focus by direction (v17.1, for a gamepad's d-pad or stick, and any caller): focusNext(dx, dy) moves to the nearest
+  // control that way (among the map's marks while on one, by where they are drawn); dx on a slider steps it. activate()
+  // does the focused thing (a mark goes there at once: focusing it already said what it is). back() shuts the panel.
+  const focusables = () => [...panel.querySelectorAll('button, input')].filter((e) => !e.disabled && !e.hidden && e.offsetParent && e.getClientRects().length);
+  const focused = () => (open_ && panel.contains(document.activeElement) && document.activeElement !== panel ? document.activeElement : null);
+  function focusNext(dx = 0, dy = 0) {
+    if (!open_ || (!dx && !dy)) return false;
+    const cur = focused();
+    const go = (el) => { el.focus({ preventScroll: true }); el.scrollIntoView?.({ block: 'nearest' }); return true; };
+    if (!cur) { const m = map?.selected?.el || placesEl.querySelector('.map-mark'); return go(m && m.offsetParent ? m : focusables()[0]); }
+    if (cur.type === 'range' && Math.abs(dx) >= Math.abs(dy)) { // sideways steps a slider; at its end stop the press moves focus on (to the map's column, say)
+      const v = +cur.value, step = (+cur.max - +cur.min) / 20, nv = Math.min(+cur.max, Math.max(+cur.min, v + Math.sign(dx) * step));
+      if (nv !== v) { cur.value = String(nv); cur.dispatchEvent(new Event('input', { bubbles: true })); return true; }
+    }
+    const mk = map?.markOf(cur);
+    if (mk && map.moveAmongMarks(mk, dx, dy)) return true;
+    // the nearest control that way by edges: the gap along the move, then how far it lies off the column (or row) the
+    // control stands in, then a little for the centres' offset, so a wide slider under a narrow button is not skipped
+    const r = cur.getBoundingClientRect(), vert = Math.abs(dy) > Math.abs(dx), fw = vert ? dy > 0 : dx > 0;
+    let best = null, bs = Infinity;
+    for (const el of focusables()) {
+      if (el === cur || (mk && map.markOf(el))) continue; // off a mark's edge: out of the map, not to another mark
+      const q = el.getBoundingClientRect();
+      const gap = vert ? (fw ? q.top - r.bottom : r.top - q.bottom) : (fw ? q.left - r.right : r.left - q.right);
+      if (gap < -4) continue;
+      const overlap = vert ? Math.min(r.right, q.right) - Math.max(r.left, q.left) : Math.min(r.bottom, q.bottom) - Math.max(r.top, q.top);
+      const off = vert ? Math.abs(q.left + q.width / 2 - r.left - r.width / 2) : Math.abs(q.top + q.height / 2 - r.top - r.height / 2);
+      const s = Math.max(0, gap) + 2 * Math.max(0, -overlap) + 0.05 * off;
+      if (s < bs) { bs = s; best = el; }
+    }
+    if (best) return go(best);
+    // off the end of the settings' column with nothing further that way: into the map (its chosen mark), so a pad that
+    // only presses down still reaches it beside the column on a wide screen
+    const m = !mk && (map?.selected?.el || map?.marks[0]?.el);
+    return m && m.offsetParent ? go(m) : false;
+  }
+  function activate() {
+    const el = focused();
+    if (!el) return false;
+    const mk = map?.markOf(el);
+    if (mk) return teleport(mk.place);
+    if (el.tagName === 'BUTTON') { el.click(); return true; }
+    return false;
+  }
+  Object.assign(api, { focusNext, activate, back: () => { const was = open_; close(); return was; }, focused });
+
   // --- open and close
   function open(o) {
     if (open_) return;
@@ -316,10 +364,10 @@ export function buildSettings(ctx) {
     document.getElementById('card')?.classList.add('hidden'); // the one panel: never the old paused card behind it
     ctx.controls.release(); // the mouse is free for the panel; the view is clicked to take it back
     syncSound(); syncMusic(); syncQuality(); syncCapture(); syncPos(); syncFall();
-    for (const b of placesEl.querySelectorAll('button[data-thread]')) b.hidden = !ctx.threads?.[b.dataset.thread]; // v8-04
     root.classList.add('shown');
     gear.setAttribute('aria-expanded', 'true');
     panel.focus({ preventScroll: true });
+    mapReady().then((m) => { if (open_) { m.layout(); m.clear(); } });
   }
   function close() {
     if (!open_) return;

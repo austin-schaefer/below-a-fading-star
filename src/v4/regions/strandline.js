@@ -469,3 +469,24 @@ function buildSandpipers(ctx, rng, low) {
   return { meshes: [bodies, legs], update, count: n, centre: { x: centre.x, z: centre.z } };
 }
 const _up = new THREE.Vector3(0, 1, 0);
+
+// The study page (src/study/registry.js): the sandpipers at the margin (the lap's swash still), and the midges'
+// columns over it.
+export const study = [
+  { id: 'sandpiper', name: 'sandpiper', kind: 'creature', h: 0.5, at: [-80, 180],
+    build(ctx) {
+      ctx.regions = { ...ctx.regions, creatures: {} };
+      ctx.terrain = { ...ctx.terrain, heightAt: (x, z) => WY + 0.12 * tarnShoreDistance(x, z) }; // a shelving shore into the tarn
+      const B = buildSandpipers(ctx, ctx.makeRng(5600), ctx.quality === 'low');
+      ctx.scene.add(...B.meshes); ctx.registerUpdate((dt, t) => B.update(dt, t, WY + 0.05 * Math.sin(t * 0.8)));
+      const M = new THREE.Matrix4();
+      return { at: (o) => { B.meshes[0].getMatrixAt(0, M); return o.setFromMatrixPosition(M); }, floor: WY };
+    } },
+  { id: 'midges', name: 'midges', kind: 'creature', h: 3, at: [-80, 170],
+    build(ctx) {
+      const M = buildMidges(ctx, ctx.makeRng(5601), () => 1, ctx.quality === 'low');
+      ctx.scene.add(M.mesh); ctx.registerUpdate((dt, t) => M.update(t));
+      const P = M.mesh.geometry.attributes.position.array, c = { x: P[0], y: P[1], z: P[2] };
+      return { at: (o) => o.set(c.x, c.y - 1, c.z), floor: c.y - 1.2 };
+    } },
+];

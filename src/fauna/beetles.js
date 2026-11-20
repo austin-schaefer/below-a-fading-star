@@ -170,3 +170,18 @@ export function buildBeetles(ctx) {
   ctx.registerUpdate(update);
   pub.advance = (sec, step = 0.1) => { for (let k = 0; k < sec; k += step) update(step, ctx.time.t + k); };
 }
+
+// The study page (src/study/registry.js): the beetles on the Hypogeum's door, on a stand-in door (a slab 1 by 2 m
+// facing west, as the real one).
+export const study = [{
+  id: 'beetles', name: 'beetles on the door', kind: 'creature', h: 0.7, fly: true, at: [0, 0],
+  build(ctx) {
+    const door = { x: 0, z: 0, y: 1.27, width: 1.1, height: 2.1 };
+    const slab = new THREE.Mesh(new THREE.BoxGeometry(0.12, door.height, door.width), new THREE.MeshStandardMaterial({ color: '#4a4136', roughness: 0.9 }));
+    slab.position.set(door.x + 0.07, door.height / 2, door.z); slab.receiveShadow = true; slab.userData.studyProp = true;
+    ctx.scene.add(slab);
+    ctx.hypogeum = { door, floor: 0 };
+    buildBeetles(ctx);
+    return { at: (o) => o.set(door.x, 0.9, door.z), face: () => -Math.PI / 2 - 0.6 };
+  },
+}];

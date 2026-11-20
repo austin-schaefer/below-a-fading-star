@@ -19,6 +19,13 @@ if [ -z "$(lsof -ti:"$PORT")" ]; then
   for i in {1..40}; do curl -s -o /dev/null "$B/" && break; sleep 0.5; done
 fi
 
+# The port must serve this checkout: another project's server on it answers 200 and every test then loads the wrong
+# site (v17.1's first gate ran 40 minutes against the owner's other project on 8123 and failed 38 tests).
+if ! curl -s "$B/tools/suite.sh" | cmp -s - tools/suite.sh; then
+  echo "FAIL port $PORT does not serve this checkout ($(pwd)): something else is listening there. Pick a free port: tools/suite.sh <port>"
+  exit 2
+fi
+
 typeset -a names codes passes secs
 t_all=$SECONDS
 log="$(mktemp)"
@@ -37,11 +44,14 @@ run() {
 }
 
 if [ -z "$ONLY" ] || [[ ",$ONLY," == *",releases,"* ]]; then echo "=== releases"; tools/release-check.sh | tee "$log"; codes+=("${pipestatus[1]}"); names+=("releases"); passes+=("$(grep -c '^PASS' "$log")"); secs+=(0); fi
+if [ -z "$ONLY" ] || [[ ",$ONLY," == *",wip,"* ]]; then echo "=== wip"; tools/wip-check.sh | tee "$log"; codes+=("${pipestatus[1]}"); names+=("wip"); passes+=("$(grep -c '^PASS' "$log")"); secs+=(0); fi # the render inbox within its budget: over it, dispatch the curator (tools/curate-shots.md)
 run music tools/music-score.mjs all
 run music-selftest tools/music-score-selftest.mjs
 run music-render tools/music-render.mjs all
 run music-director tools/music-director-sim.mjs
 run music-live tools/music-test.mjs $B
+run sketches tools/sketch-render.mjs all
+run listen tools/listen-test.mjs $B
 run settings tools/settings-test.mjs "$B/?q=low&shadows=0&bloom=0"
 run dressing tools/dressing-test.mjs $B
 run threads tools/threads-test.mjs $B
@@ -70,8 +80,10 @@ run mountains tools/mountains-test.mjs $B
 run audio tools/audio-test.mjs "$B/?q=low&only=audio"
 run loading tools/loading-test.mjs "$B/?q=low"
 run perf tools/perf-test.mjs "$B/?q=low&perf=1&bench=6"
+run study tools/study-test.mjs "$B" # v17.1-Q3 (#77): every figure and creature on study.html, the recipes at their seeds
 run grass tools/grass-flicker-test.mjs low $B
 run touch tools/touch-test.mjs "$B/?q=low"
+run gamepad tools/gamepad-test.mjs $B # v17.1 (#72): a faked pad goes out, walks, looks, hops, hurries, acts and works the panel; no pad, no polling
 run acts tools/acts-test.mjs $B
 run gutter tools/gutter-test.mjs $B
 run treelod tools/tree-lod-test.mjs $B

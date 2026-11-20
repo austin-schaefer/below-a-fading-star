@@ -11,7 +11,7 @@ Load the `wilderness` skill too (serving, renders), and `world-code` when you re
 
 ## The working branch
 
-- The working branch is `next`, checked out in the deploy worktree `.claude/worktrees/deploy` (`git worktree add .claude/worktrees/deploy next`, creating `next` from `origin/main` if it is gone). It is served on 8123, the owner's view: `nohup nice -n 10 tools/serve.sh 8123 > /tmp/serve-8123.log 2>&1 &` from there, again whenever `lsof -ti:8123` is empty. Files update live. Merge there; never run agents there.
+- The working branch is `next`, checked out in the deploy worktree `.claude/worktrees/deploy` (`git worktree add .claude/worktrees/deploy next`, creating `next` from `origin/main` if it is gone). It is served on 8123, the owner's view: `nohup nice -n 10 tools/serve.sh 8123 > /tmp/serve-8123.log 2>&1 &` from there, again whenever `lsof -ti:8123` is empty. A listener on 8123 is not proof it is ours: the owner's other projects use 8123 and the 8160s too. If `curl -s localhost:8123/tools/suite.sh | cmp - tools/suite.sh` differs, leave that server alone, serve `next` on a free port (8171 up), say the port in Status, and pass it to `tools/suite.sh` (which refuses a port that serves another checkout). Files update live. Merge there; never run agents there.
 - `main` is the live site: every push that touches what the site serves starts a Netlify build (`DEPLOY.md`). Work reaches it only as a release PR from `next`.
 
 ## Start of session
@@ -91,7 +91,7 @@ Each merge to `main` is a release and a Netlify build. Before opening the PR, ad
 
 ## Screenshots are the record
 
-The owner tells the story of the build from its renders, so renders are part of the deliverable and are curated, not dumped. Every agent writes every render into `shots/wip/` (gitignored); before each merge to `main` you dispatch `tools/curate-shots.md` to a mid-tier subagent, which keeps roughly one in five as WebP under `shots/` and updates `shots/README.md`. The `wilderness` skill's Renders has the naming and the rules.
+The owner tells the story of the build from its renders, so renders are part of the deliverable and are curated, not dumped. Every agent writes every render into `shots/wip/` (gitignored); before each merge to `main` you dispatch `tools/curate-shots.md` to a mid-tier subagent, which keeps roughly one in five as WebP under `shots/`, updates `shots/README.md` and deletes the rest of what it looked at. `shots/wip/` is an inbox with a budget, not an archive: on 2026-11-18 it held 26 GB of raw PNGs, curated from and never cleared, and the owner's disk was full. `tools/wip-check.sh` is a line of the gate and fails when the inboxes of all worktrees together pass 1000 MB or hold a file older than four days (`tools/worktree.sh rm` prints where the budget stands), so a point release that skips the curator cannot skip it for long: when the line fails, dispatch the curator then, and check its hand-back with `tools/wip-check.sh` before committing its keepers. Never raise the budget to get past the gate. The `wilderness` skill's Renders has the naming and the rules.
 
 ## Growing the craft skills
 

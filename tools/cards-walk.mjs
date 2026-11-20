@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // The place cards walked into (v14-B5, #52): a judge's tool, not a gate. One page, "Go out", the view clicked; for each
-// named place: the settings map's go-to button clicked, then walked on W toward the card's place (steering with the
+// named place: gone to by the settings panel's teleport (by name), then walked on W toward the card's place (steering with the
 // mouse) until the card comes up, and a frame of the whole screen once it has faded in. With `phone` the page is a
 // touch phone (390 by 844, the stick on screen) and the walk is the touch stick held forward. For Titan's Causeway the
 // walk starts on the west stair's last flight, below the card's height, and climbs to the top.
@@ -61,10 +61,8 @@ for (const [goto, want, to, start] of PLACES) {
   if (only && !only.some((o) => want.toLowerCase().includes(o.toLowerCase()))) continue;
   n++;
   await page.evaluate(() => { window.__fp.controls.placeAt(0, 0); window.__fp.hud.update(0.1); });
-  await page.evaluate(() => window.__fp.settings.open()); await sleep(300);
-  const btn = page.locator('#set-places button', { hasText: goto }).first();
-  if (!(await btn.count())) { console.log(`MISSING go-to: ${goto}`); continue; }
-  if (phone) await btn.tap(); else await btn.click();
+  // (v17.1: the panel's map has sixteen marks; every stand is still in settings.places, gone to by name)
+  if (!(await page.evaluate((n) => window.__fp.settings.teleport(n), goto))) { console.log(`MISSING go-to: ${goto}`); continue; }
   await sleep(400);
   if (!phone) await page.mouse.click(640, 360).catch(() => {});
   if (start === 'west-last-flight') { // the last flight's foot, 14 m below the deck: climbed from there on the stair
