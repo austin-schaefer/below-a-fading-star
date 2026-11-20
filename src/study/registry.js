@@ -18,6 +18,7 @@ export const STUDY_MODULES = [
   'src/v7/canyon/bather.js', 'src/v7/canyon/toad.js',
   'src/v7/glyphs/scriveners.js', 'src/v7/glyphs/moles.js',
   'src/v15/people/index.js',
+  'src/v2/inhabitants/guest.js', 'src/v2/inhabitants/galley.js', 'src/v2/inhabitants/menology.js',
   'src/v7/walkers/thurifer.js', 'src/v7/walkers/leerie.js', 'src/v7/walkers/linkboy.js',
 ];
 
