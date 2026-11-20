@@ -24,6 +24,21 @@ export const BEDS = {
 
 // F4: the stilters' grove, in the lobe.
 export const GROVE = { x: -198, z: 22, r: 22 };
+// F4: the stilters: where each starts (bearing in radians from north toward east, metres from the grove's middle), how
+// tall, how many legs; the asleep one never moves. `leash`: none strays further than this from the grove's middle.
+export const STILTERS = {
+  leash: 34, near: 7, keep: 6, ring: 7.5, gap: 1.6,
+  list: [
+    { a: 0.6, d: 12, h: 12.5, legs: 2 },
+    { a: 2.3, d: 15, h: 10.5, legs: 3 },
+    { a: 3.6, d: 10, h: 11.5, legs: 2 },
+    { a: 5.0, d: 16, h: 9.5, legs: 2 },
+    { a: 4.3, d: 19, h: 13, legs: 3, asleep: true },
+  ],
+};
+// F4: the moths at the glass, against a stand-in for the glasshouse until F2's is in: a ring of glass of radius r round
+// its middle, its panes from y0 to y1 over the ground there (the plinth's top at y0)
+export const MOTHS = { x: -265, z: 126, r: 7.2, y0: 1.0, y1: 6.0 };
 
 // The likenesses: the same six people, in the same order, as flowers in the glasshouse (F2) and as effigies on the
 // tomb lids below (F3); the seventh is the Graffer's own. `prop` is what makes each read at 15 m.

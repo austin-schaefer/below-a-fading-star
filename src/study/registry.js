@@ -23,6 +23,7 @@ export const STUDY_MODULES = [
   'src/v4/regions/high-ling.js', 'src/v4/regions/outwash.js', 'src/v4/regions/lynchets.js', 'src/v4/regions/strandline.js', 'src/v4/regions/adust.js', 'src/v4/regions/peafowl.js',
   'src/v8/threads/painter.js', 'src/v8/threads/traveller.js',
   'src/v7/walkers/thurifer.js', 'src/v7/walkers/leerie.js', 'src/v7/walkers/linkboy.js',
+  'src/v18/stilters.js', 'src/v18/eyes.js', 'src/v18/moths.js',
 ];
 
 // where figures and creatures are built: every .js file directly in these is one, or is in NOT_FIGURES
