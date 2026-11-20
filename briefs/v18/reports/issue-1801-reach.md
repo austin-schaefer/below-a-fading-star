@@ -97,3 +97,47 @@
 
 ### Frames
 `shots/wip/v18-F1-r6-{low,med}-j-*`
+
+## Round three: the junctions' shape
+
+### What changed
+- **Heads moved along P32** to straight, level stretches: P57 (-199.4, 126.8), P58 (-213.8, 162), P59 (-169.7, 93.6).
+  - P59's new head is off the crest of the rise.
+  - Each spur leaves the road square to it for 7 m, then twists to the same `to` doorstep as before.
+  - The rows were changed in place, so index and seed are kept. `SPURS.from` and `SPUR_MOUTHS` are updated.
+- **P33** now leaves P32 at (-212.4, 146), so the Beds' spur has its stretch of road alone.
+- **Thresholds**, a different one at each mouth:
+  - P57: two short fallen trunks lining the mouth like kerbs. They were first laid along the road's edge, but the reader read that as a wall.
+  - P59: a log along the road on its left, a rotten post on its right.
+  - P58: two posts.
+- **The worn surface**: each spur's first 3.5 to 9 m is worn out of the road's own pale surface, wider, then darkens to its own.
+- **Foxfire**:
+  - Nothing by the road except small clumps on the threshold.
+  - The knot is 6 to 7 m in, with its light there.
+  - The colour is greener-white, off the moss light's teal, and its halo is a cluster of small points rather than one glow.
+
+### Tests (after merging origin/next)
+- `ONLY=paths,roads,foxfire,threads,seams,geometry,settings,dressing,walk`:
+  - PASS lines: paths 91, roads 68, foxfire 24, threads 25, seams 3, geometry 146, dressing 22, walk 13.
+  - settings failed once, on its "W held through Escape" pause row only. Rerun alone: 103/103.
+- After the P57 kerb change:
+  - roads 68/0 and foxfire 24/0.
+  - The first try at the kerbs stood a log on P57's tread at its first bend. They were shortened, and that is fixed.
+  - spur-walk: P57 7/7 at low and medium.
+- The earlier full spur-walk (all three spurs, before the kerb change): 7/7 at low and medium.
+
+### Blind readers (sonnet, fresh), from 12 m on the road both ways, low and medium
+| Junction | From the byre | From the Span |
+|---|---|---|
+| P59 (north) | found, right, both tiers | found, left, both tiers |
+| P58 (Beds) | not found: "the road runs on to a lamp" | found, left, both tiers |
+| P57 (Florilegium) | not found | not found |
+
+- P57, from the byre: the moss light's teal pool (SITES.lightMoss, (-205, 140)) draws the eye to the opposite side. A trunk near the stand hides the mouth.
+- P57, from the Span: the moss light's teal strip is read as the way off, on the wrong side.
+- P57 was re-read after the kerb change: still not found.
+- **The bar is not met.** From the Span 2 of 3 are found; from the byre 1 of 3.
+
+### What would fix P57
+- The moss light is the competitor. Either move P57's head south-east, out of the moss light's sight, or tone the moss light down or move it. The moss light is not F1's.
+- Frames: `shots/wip/v18-F1-r7-{low,med}-P5x-from-*`, `v18-F1-r8-*-P57-*`.

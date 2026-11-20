@@ -106,7 +106,7 @@ export function growReach(ctx, ground, K) {
     }
   }
   // the thresholds (round three): what a visitor reads as made at each mouth, different at each. The Florilegium's (P57): a
-  // trunk fallen along the road's edge with the spur worn through it, one piece either side of the gap. The north spur's
+  // pair of fallen trunks lining its mouth like kerbs, from the road's edge into the wood. The north spur's
   // (P59): one piece on its left, a rotten post on its right (foxfire.js sets the posts). The Beds' (P58): two posts.
   // Each piece lies along the road from the gap's edge, 2.9 m out from the road's middle, clear of the way's verge.
   const thresholds = [];
@@ -116,13 +116,17 @@ export function growReach(ctx, ground, K) {
       const L = list.find((l) => l.id === id); if (!L) continue;
       const S = L.lines[0], h = S[0], q = S.find((p) => p.s >= 4) || S[S.length - 1], ul = Math.hypot(q.x - h.x, q.z - h.z) || 1, ux = (q.x - h.x) / ul, uz = (q.z - h.z) / ul;
       for (const sd of sides) {
-        const tx = -uz * sd, tz = ux * sd; // along the road, away from the gap
-        const x = h.x + ux * 2.9 + tx * 1.25, z = h.z + uz * 2.9 + tz * 1.25;
-        const v = fallenV[Math.floor(rng() * fallenV.length)], len = variants[v].len, rot = Math.atan2(-tz, tx);
-        const t = place(x, z, v, 1, 0, rot, 0.8 + rng() * 0.15, 'fallen', false);
+        // the Florilegium's: two trunks lining the mouth like kerbs, from the road's edge into the wood (along the road
+        // they read as a wall closing the side off); the north's: one along the road from the gap's edge
+        const kerb = id === 'P57';
+        const tx = kerb ? ux : -uz * sd, tz = kerb ? uz : ux * sd;
+        const x = kerb ? h.x + ux * 1.9 - uz * sd * 1.6 : h.x + ux * 2.9 + tx * 1.25, z = kerb ? h.z + uz * 1.9 + ux * sd * 1.6 : h.z + uz * 2.9 + tz * 1.25;
+        const sc = kerb ? 0.62 : 1; // (a kerb's trunks shorter: the mouth's straight is 7 m and they must end before it bends)
+        const v = fallenV[Math.floor(rng() * fallenV.length)], len = variants[v].len * sc, rot = Math.atan2(-tz, tx);
+        const t = place(x, z, v, sc, 0, rot, 0.8 + rng() * 0.15, 'fallen', false);
         t.fullTilt = true; t.hidden = false; // (a made thing at the mouth, set where the mouth's own claim would refuse a tree)
-        for (let s = 0; s <= len; s += 1.6) ctx.addCollider({ x: x + tx * s, z: z + tz * s, r: variants[v].trunkR * 1.1, y: t.y - 1, h: variants[v].trunkR * 2 + 1 });
-        thresholds.push({ spur: id, x, z, tx, tz, len, r: variants[v].trunkR, y: t.y });
+        for (let s = 0; s <= len; s += 1.6) ctx.addCollider({ x: x + tx * s, z: z + tz * s, r: variants[v].trunkR * sc * 1.1, y: t.y - 1, h: variants[v].trunkR * sc * 2 + 1 });
+        thresholds.push({ spur: id, x, z, tx, tz, len, r: variants[v].trunkR * sc, y: t.y });
       }
     }
   }
