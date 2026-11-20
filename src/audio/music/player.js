@@ -14,6 +14,8 @@
 //     at       audio-clock time the track's t = 0 falls on (default ac.currentTime + 0.1)
 //     quality  'high' | 'medium' | 'low' (low: fewer detuned oscillators, a pool of LOW_POOL, no tape hiss); default 'high'
 //     gain     the stem's starting level 0..1 (default 1; the stem fades in from 0 over 0.05 s at `at`)
+//     pool     the most voices held at once (default MAX_POOL, LOW_POOL on low; the sketches' plucked notes ring over each other and ask for 24)
+//     tapeLp   the tape's lowpass in Hz (default 3000: patches.js makeVoices)
 //   Live, one timer schedules events about 2 s ahead on the audio clock, and issues the sources' one stop() once the
 //   end (the track's, or a stop()'s fade) is inside that lookahead: older WebKit refuses a second stop() on a source,
 //   so a source is never stopped twice. On an OfflineAudioContext everything is scheduled at once (there is no wall
@@ -70,15 +72,15 @@ export function allocate(events, voices, maxPool = MAX_POOL) {
 // a voice id's place in the stereo field: spread by its order in the track, small (the stem is mostly centred)
 const panOf = (voices) => new Map(voices.map((v, i) => [v.id, i === 0 ? 0 : (((i * 0.618034) % 1) - 0.5) * 0.6]));
 
-export function play(events, { ac, dest, voices, at = ac.currentTime + 0.1, quality = 'high', gain = 1 } = {}) {
+export function play(events, { ac, dest, voices, at = ac.currentTime + 0.1, quality = 'high', gain = 1, pool, tapeLp } = {}) {
   const offline = typeof OfflineAudioContext !== 'undefined' && ac instanceof OfflineAudioContext;
-  const { patchOf, slots, cuts, plan, dropped, stolen, length } = allocate(events, voices, quality === 'low' ? LOW_POOL : MAX_POOL);
+  const { patchOf, slots, cuts, plan, dropped, stolen, length } = allocate(events, voices, pool ?? (quality === 'low' ? LOW_POOL : MAX_POOL));
   const pans = panOf(voices);
   const stem = ac.createGain();
   stem.gain.setValueAtTime(0, at);
   stem.gain.linearRampToValueAtTime(gain, at + 0.05);
   stem.connect(dest);
-  const vs = makeVoices(ac, stem, { quality, plan });
+  const vs = makeVoices(ac, stem, { quality, plan, tapeLp });
   const clock = ac.createConstantSource(); clock.offset.value = 0; clock.connect(stem);
   const t0 = Math.max(at, ac.currentTime);
   vs.start(t0); clock.start(t0);

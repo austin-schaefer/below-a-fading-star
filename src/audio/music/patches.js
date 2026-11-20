@@ -166,12 +166,12 @@ export const tail = (patch, dur) => (patch === 'bell' ? 0.45 : PATCHES[patch].re
 // the stem's level: a track at the player's gain 1 measures about -35 LUFS (tools/music-render.mjs)
 export const STEM_LEVEL = 0.115; // v9-M6: 0.1 until the flute came down 3 dB and wet's stem fell under -38
 
-function makeTape(ac, dest, noise, withHiss = true) {
+function makeTape(ac, dest, noise, withHiss = true, lpHz = 3000) {
   const input = gain(ac, STEM_LEVEL), wow = ac.createDelay(0.05);
   wow.delayTime.value = 0.012;
   // a sine LFO of amplitude A s on the delay bends pitch by up to 2 pi f A: +-4 cents (0.00231) shared over two LFOs
   const lfos = [0.31, 0.53].map((f) => { const l = osc(ac, 'sine', f), d = gain(ac, 0.00231 / 2 / (2 * Math.PI * f)); l.connect(d).connect(wow.delayTime); return l; });
-  const l1 = lp(ac, 3000, 0.6), l2 = lp(ac, 3000, 0.6);
+  const l1 = lp(ac, lpHz, 0.6), l2 = lp(ac, lpHz, 0.6);
   input.connect(wow).connect(l1).connect(l2).connect(dest);
   if (!withHiss) return { input, start(t) { for (const l of lfos) l.start(t); }, stop(t) { for (const l of lfos) halt(l, t); } };
   const hiss = ac.createBufferSource(); hiss.buffer = noise; hiss.loop = true;
@@ -186,9 +186,10 @@ function makeTape(ac, dest, noise, withHiss = true) {
   };
 }
 
-export function makeVoices(ac, dest, { quality = 'high', plan = {} } = {}) {
+// tapeLp: the tape's lowpass in Hz (3 kHz for the walk's tracks; the sketches' recorded instruments ask for more top: sketches/index.js)
+export function makeVoices(ac, dest, { quality = 'high', plan = {}, tapeLp = 3000 } = {}) {
   const noise = makeNoiseBuffer(ac, 4, 'pink', mulberry32(9091));
-  const tape = makeTape(ac, dest, noise, quality !== 'low'); // low: no hiss (one looped source and two filters fewer)
+  const tape = makeTape(ac, dest, noise, quality !== 'low', tapeLp); // low: no hiss (one looped source and two filters fewer)
   const pool = {}, all = [];
   let index = 0;
   for (const [patch, n] of Object.entries(plan)) {
