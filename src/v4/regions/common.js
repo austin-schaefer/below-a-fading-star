@@ -244,3 +244,12 @@ export async function vegetationTrees(ctx) {
 }
 
 export { smoothstep };
+
+// The study page's seed rows (src/study/recipes.js): a stone from a seed, at the sizes the regions ask for.
+export const studyRecipes = [{
+  id: 'stone', name: 'stone',
+  build(rng, seed, ctx) {
+    const s = 0.4 + rng() * 1.4, g = stoneGeo(rng, ctx.noise, 2, { sx: s * (0.8 + rng() * 0.5), sy: s * (0.5 + rng() * 0.4), sz: s * (0.8 + rng() * 0.5), round: rng(), seed });
+    const m = new THREE.Mesh(g, new THREE.MeshStandardMaterial({ color: '#8a857a', roughness: 0.92 })); m.castShadow = m.receiveShadow = true; return m;
+  },
+}];

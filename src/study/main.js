@@ -10,7 +10,7 @@
 //          ?only=id,id (subjects or recipes by id)  ?q=low|high (what builders are told; default high)
 //          ?seeds=6 (a recipe's seeds)  ?cols=N (force the grid)  ?shot=1 (no clock of its own: tools drive it)
 //          ?t=S (run S seconds of the subjects' clocks before the first picture)  ?far=1 (the camera at 3x: the size a
-//          visitor meets it at a dozen metres)
+//          visitor meets it at a dozen metres)  ?part=k&per=n (the k-th n of the sheet: __study.total says how many)
 // Keys:    L the other light, Space pause, drag to turn every camera round its subject, wheel to come closer, R reset.
 // window.__study: { ready, subjects: [{ id, name, kind, module, ok, error, tris, missing }], errors, advance(s),
 //          render(), recipes } for tools/study-shots.mjs and tools/study-test.mjs.
@@ -18,7 +18,7 @@ import * as THREE from 'three';
 import { SUN } from '../world.js';
 import { studyCtx } from './ctx.js';
 import { STUDY_MODULES } from './registry.js';
-import { RECIPES } from './recipes.js';
+import { RECIPE_MODULES } from './recipes.js';
 import { mulberry32 } from '../noise.js';
 
 const Q = new URLSearchParams(location.search);
@@ -102,6 +102,11 @@ setLight(LIGHT);
 let allBuilt; const built = new Promise((r) => { allBuilt = r; });
 const shared = { renderer, scene, quality: QUALITY, events, time, flicker, lights, built: built };
 const subjects = [], errors = [];
+// ?part=k&per=n: only the k-th n of the sheet's subjects (or recipes), so a long sheet is drawn close in several pictures;
+// __study.total is how many the whole sheet has
+const PER = +(Q.get('per') || 0), PART = +(Q.get('part') || 1);
+let seen = 0;
+const inPart = () => { const i = seen++; return !PER || (i >= (PART - 1) * PER && i < PART * PER); };
 const want = (kind, id) => (ONLY ? ONLY.has(id) : SHEET === 'all' ? kind !== 'recipe' : SHEET === `${kind}s`);
 const V = new THREE.Vector3();
 
@@ -124,6 +129,7 @@ async function buildSubjects() {
     if (!Array.isArray(list)) { errors.push(`${path}: no study export`); continue; }
     for (const def of list) {
       if (!want(def.kind, def.id)) continue;
+      if (!inPart()) continue;
       const cam = new THREE.PerspectiveCamera(30, 1, 0.05, 2000);
       const sub = { id: def.id, name: def.name, kind: def.kind, looker: def.looker, module: path, h: def.h || 1.8, camera: cam, ok: false, error: null, tris: 0, updates: [], missing: [] };
       const S = studyCtx(shared, sub);
@@ -149,9 +155,16 @@ async function buildSubjects() {
     }
   }
   // the recipes: each at SEEDS seeds in a row, apart from each other and from the map's subjects
+  const RECIPES = [];
+  if (SHEET === 'recipes' || ONLY) for (const path of RECIPE_MODULES) {
+    try { const mod = await import(`../${path.replace(/^src\//, '')}`); for (const R of mod.studyRecipes || []) RECIPES.push({ ...R, module: path }); }
+    catch (e) { errors.push(`${path}: import: ${e.message}`); }
+  }
+  window.__study.recipes = RECIPES.map((r) => r.id);
   let row = 0;
   for (const R of RECIPES) {
     if (!(ONLY ? ONLY.has(R.id) : SHEET === 'recipes')) continue;
+    if (!inPart()) continue;
     for (let s = 0; s < SEEDS; s++) {
       const cam = new THREE.PerspectiveCamera(30, 1, 0.05, 4000);
       const x = 2000 + s * 400, z = 2000 + row * 400;
@@ -160,7 +173,7 @@ async function buildSubjects() {
       sub.group = S.group; sub.updates = S.updates;
       scene.add(S.group);
       try {
-        const rng = mulberry32((R.salt || 1) * 7919 + (s + 1) * 104729);
+        const rng = mulberry32(7919 + (s + 1) * 104729);
         const obj = await R.build(rng, s + 1, S.ctx);
         if (obj) S.group.add(obj);
         S.group.position.set(x, 0, z);
@@ -184,6 +197,7 @@ async function buildSubjects() {
     for (const s of mine) { s.fitSpan = span; s.fitH = h; }
     row++;
   }
+  window.__study.total = seen;
   allBuilt(true);
 }
 
@@ -301,7 +315,7 @@ canvas.addEventListener('pointerup', () => { drag = null; });
 canvas.addEventListener('wheel', (e) => { view.zoom = Math.min(4, Math.max(0.3, view.zoom * Math.exp(e.deltaY * 0.001))); e.preventDefault(); }, { passive: false });
 addEventListener('resize', layout);
 
-window.__study = { ready: false, subjects, errors, advance, render, layout, setLight: (w) => { setLight(w); layout(); }, recipes: RECIPES.map((r) => r.id), sheet: SHEET };
+window.__study = { ready: false, subjects, errors, advance, render, layout, setLight: (w) => { setLight(w); layout(); }, recipes: [], sheet: SHEET };
 addEventListener('error', (e) => errors.push(`page: ${e.message}`));
 addEventListener('unhandledrejection', (e) => errors.push(`page: ${e.reason?.message || e.reason}`));
 

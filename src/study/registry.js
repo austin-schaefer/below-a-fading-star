@@ -25,10 +25,53 @@ export const STUDY_MODULES = [
   'src/v7/walkers/thurifer.js', 'src/v7/walkers/leerie.js', 'src/v7/walkers/linkboy.js',
 ];
 
-// where figures and creatures are built
-export const FIGURE_DIRS = ['src/fauna', 'src/fauna/uncanny', 'src/v7/walkers', 'src/v7/workers', 'src/v7/still', 'src/v7/small', 'src/v7/canyon', 'src/v7/glyphs', 'src/v15/people', 'src/v2/inhabitants', 'src/v8/twk', 'src/v8/threads'];
-// the rig kits: a module that imports one builds a figure or a creature
-export const FIGURE_KITS = ['v7/walkers/gait.js', 'v7/workers/rig.js', 'v7/workers/body.js', 'v15/people/body.js', 'fauna/geo.js', 'fauna/uncanny/kit.js'];
-// files in those places, or importing those kits, that build no figure or creature of their own, and why
+// where figures and creatures are built: every .js file directly in these is one, or is in NOT_FIGURES
+export const FIGURE_DIRS = ['src/fauna', 'src/fauna/uncanny', 'src/v7/walkers', 'src/v7/workers', 'src/v7/still', 'src/v7/small', 'src/v7/canyon', 'src/v7/glyphs', 'src/v15/people', 'src/v2/inhabitants', 'src/v8/twk', 'src/v8/threads', 'src/v8/house', 'src/v4/regions'];
+// files elsewhere known to draw a figure as part of a place
+export const FIGURE_FILES = ['src/v2/riverlife.js', 'src/v17/sphere.js', 'src/v9/waystation.js', 'src/v10/halt-seat.js', 'src/v5/thrones.js', 'src/v5/plinths.js', 'src/v14/noon-road.js'];
+// the rig kits, and the names in them that make a body: a file anywhere under src/ that imports one of these names builds
+// a figure or a creature
+export const FIGURE_KITS = {
+  'v7/walkers/gait.js': ['figurePainter', 'figureMesh', 'Gait'],
+  'v7/workers/rig.js': ['rigPainter', 'rigMesh', 'makeBones'],
+  'v7/workers/body.js': ['clothBody', 'head', 'sleeve'],
+  'v15/people/body.js': ['figure', 'joints'],
+  'fauna/geo.js': ['flapMaterial', 'flapInstanced'],
+};
+// files in those places, or importing those names, that build no figure or creature of their own (or one the page does
+// not stand alone yet), and why
 export const NOT_FIGURES = {
+  'src/fauna/geo.js': 'the kit (Mesher, the flapping wings)',
+  'src/fauna/uncanny.js': 'builds the six in src/fauna/uncanny/ in turn',
+  'src/fauna/uncanny/kit.js': 'the kit (Painter, the ground, the rules)',
+  'src/v7/walkers/flames.js': 'the walkers\' fire and smoke (each walker\'s study builds them)',
+  'src/v7/walkers/gait.js': 'the walkers\' rig',
+  'src/v7/walkers/shadow.js': 'the Link-Boy\'s drawn shadows (his study carries them)',
+  'src/v7/workers/body.js': 'the workers\' body kit',
+  'src/v7/workers/rig.js': 'the workers\' rig',
+  'src/v7/workers/cut.js': 'the Sexton\'s ground (his study carries it)',
+  'src/v7/workers/graves.js': 'the Sexton\'s plan',
+  'src/v7/still/kit.js': 'the still figures\' kit',
+  'src/v7/still/clear.js': 'clearances',
+  'src/v7/still/medlar.js': 'the Sleeper\'s tree: a recipe (src/study/recipes.js)',
+  'src/v7/small/face.js': 'the Simulacrum\'s face points',
+  'src/v7/canyon/nets.js': 'surface nets, the Bather\'s mesher',
+  'src/v7/glyphs/engrave.js': 'incised glyphs on stone',
+  'src/v7/glyphs/erratic.js': 'a glyph on a stone',
+  'src/v7/glyphs/forms.js': 'the glyphs\' forms',
+  'src/v15/people/body.js': 'the villagers\' body kit',
+  'src/v15/people/folk.js': 'the villagers\' specs (registered through people/index.js)',
+  'src/v15/people/letter.js': 'the clerk\'s act',
+  'src/v8/twk/plan.js': 'the Twk-men\'s stations', 'src/v8/twk/salt.js': 'their salt', 'src/v8/twk/voice.js': 'their voices',
+  'src/v8/threads/chair.js': 'a chair', 'src/v8/threads/gold.js': 'the court\'s gold', 'src/v8/threads/kit.js': 'the threads\' kit', 'src/v8/threads/plan.js': 'the threads\' plan',
+  'src/v8/twk.js': 'the Twk-men\'s flights (their model: twk/model.js)',
+  'src/v8/house/clear.js': 'clearances', 'src/v8/house/kept.js': 'the house\'s kept arrays', 'src/v8/house/lamps.js': 'lamps', 'src/v8/house/props.js': 'props', 'src/v8/house/sound.js': 'sound',
+  'src/v4/regions/bletting.js': 'no creature', 'src/v4/regions/common.js': 'the regions\' kit', 'src/v4/regions/demesne.js': 'its peafowl are peafowl.js\'s', 'src/v4/regions/saltings.js': 'no creature', 'src/v4/regions/skin.js': 'the ground skins', 'src/v4/regions/yews.js': 'no creature',
+  // figures that are part of a place, not on the page yet: each wants its figure lifted out of the place's build (a follow-on)
+  'src/v17/sphere.js': 'the Noonwright at the wheel, inside the sphere\'s glass: part of the place\'s build (not on the page yet)',
+  'src/v9/waystation.js': 'the Lantern Halt\'s sleeper: part of the waystation\'s build (not on the page yet)',
+  'src/v10/halt-seat.js': 'the sleeper\'s answer to the seat (the waystation\'s)',
+  'src/v5/thrones.js': 'the Acephalous Thrones: 150 m colossi carved from the wall, judged in the world',
+  'src/v5/plinths.js': 'stone feet on plinths: statuary, not a figure',
+  'src/v14/noon-road.js': 'the Noonwrights\' carriers: glass vessels, not figures',
 };

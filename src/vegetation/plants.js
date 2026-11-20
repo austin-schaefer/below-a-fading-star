@@ -864,3 +864,17 @@ export function buildPlants(ctx, ground, shared) {
   window.__vegPlants = api; // for tools/grass-flicker-test.mjs
   return api;
 }
+
+// The study page's seed rows (src/study/recipes.js): each plant's tuft from a seed, in its own vertex colours on a plain
+// material (the walk's wind and tint are left out: the shape and the range are what the sheet is for).
+const studyPlant = (id, name, fn) => ({
+  id: `plant-${id}`, name,
+  build(rng) {
+    const ig = fn(rng), g = new THREE.BufferGeometry();
+    for (const k of ['position', 'normal', 'color']) g.setAttribute(k, ig.attributes[k]);
+    g.setIndex(ig.index);
+    const m = new THREE.Mesh(g, new THREE.MeshStandardMaterial({ vertexColors: true, side: THREE.DoubleSide, roughness: 0.9, color: '#9a9070' }));
+    m.castShadow = true; return m;
+  },
+});
+export const studyRecipes = [studyPlant('grass', 'grass', grassGeo), studyPlant('heather', 'heather', heatherGeo), studyPlant('reed', 'reed', reedGeo), studyPlant('bracken', 'bracken', brackenGeo), studyPlant('flower', 'flower', flowerGeo), studyPlant('fleshy', 'fleshy plant', fleshyGeo)];
