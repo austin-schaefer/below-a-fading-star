@@ -36,7 +36,7 @@ import { CLEARINGS, inEntry, leadUnder, CAUSEWAY_CLEAR } from './v8/clearings.js
 import { villageClear } from './v15/plan.js';
 import { LANDMARKS as L } from './world.js';
 import { SPHERE } from './v17/plan.js';
-import { GLASSHOUSE, BEDS, GROVE } from './v18/plan.js';
+import { GLASSHOUSE, BEDS, GROVE, SPUR_MOUTHS } from './v18/plan.js';
 
 export const CLAIMS = [
   // v8-11's table, kept clear of stones and boulders (see src/v8/clearings.js for each place's reasons)
@@ -71,6 +71,7 @@ export const CLAIMS = [
   { name: 'the walk round the Florilegium', keeps: ['rocks', 'trees'], kind: 'disc', x: GLASSHOUSE.x, z: GLASSHOUSE.z, r: GLASSHOUSE.r + 3 },
   { name: 'the Lower Beds\' door', keeps: ['rocks', 'pebbles', 'blocks', 'trees', 'cover', 'trods'], kind: 'disc', x: BEDS.door.x, z: BEDS.door.z, r: 5 },
   { name: 'the stilters\' glade', keeps: ['rocks', 'trees'], kind: 'disc', x: GROVE.x, z: GROVE.z, r: 6 },
+  ...SPUR_MOUTHS.map((m, i) => ({ name: `the mouth of spur ${i + 1}`, keeps: ['trees'], kind: 'strip', a: m.a, b: m.b, half: m.half })), // v18-F1: a gap in the trunks at each spur's head, seen from the road
   { name: 'the glasshouse\'s sightline', keeps: ['trees'], kind: 'strip', a: [-205, 128], b: [GLASSHOUSE.door.x, GLASSHOUSE.door.z], half: 0.5 },
 ];
 

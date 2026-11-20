@@ -36,6 +36,8 @@ export function lobeSd(x, z) {
   d = smin(d, ell(x, z, C.x - 1, C.z - 2, 27, 19), 12);
   d = smin(d, disc(x, z, -178, 9, 9), 9);
   d = smin(d, disc(x, z, -212, 3, 8), 9);
+  d = smin(d, seg(x, z, -205, 22, -213, 37, 5), 6); // a tongue up toward the tor (held off it by LOBE_WEST)
+  d = Math.max(d, 9 - disc(x, z, -164, 30, 0)); // a bay on the east where the rivulet's moor comes in
   // ragged: a slow sway and a short one
   d += N.noise2(x * 0.045, z * 0.045) * 7 + N.noise2(x * 0.13 + 5.1, z * 0.13 - 2.3) * 2.5;
   // held off what it must not touch
