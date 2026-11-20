@@ -16,7 +16,7 @@
 //                                  6-32 s. Detail, in the vault and its stair
 //                  the roots       along the way under the wood, from the roof some metres off: a slow creak and a wet
 //                                  tick after it, as of something drinking. Detail, 30 m, 12-80 s apart
-//                  the chamber     the glass's ticking heard dully through the grate overhead (a lowpass at 650 Hz, quieter,
+//                  the chamber     the glass's ticking heard dully through the grate overhead (a lowpass at 900 Hz,
 //                                  from the grate): the glasshouse's own sounds, under the ground, are only this
 //   the stilters     a step         a deep creak of green wood and a soft heavy set-down, where the stilter stands (the
 //                                  'stilter' event's place), heard and not seen: not every move, never twice within 5 s;
@@ -119,8 +119,8 @@ export function startWoodSound(a, ctx) {
   function glass(kind, dull = false, pos = null) {
     const p = pos || glassAt(dull);
     const v = say(p, { ref: dull ? 2.5 : 4, range: dull ? 40 : 56, dur: kind === 'ring' ? 2.2 : 0.5, verb: dull ? 0.7 : 0.3, air: dull ? 30 : 75, gain: dull ? 9 : 12 }); if (!v) return;
-    const out = filt('lowpass', dull ? 650 : 3600, 0.6); out.connect(v.in);
-    const t0 = v.t0, k = dull ? 0.45 : 1;
+    const out = filt('lowpass', dull ? 900 : 3600, 0.6); out.connect(v.in);
+    const t0 = v.t0, k = dull ? 1.1 : 1;
     if (kind === 'ring') {
       // a pane settling: a small bell of glass on D minor's top (D6, F6, A6), a faint inharmonic partial over it, gone in a second
       const f = [D6, F6, A6][Math.floor(rng() * 3)] * jit(1, 0.003), pk = 0.026 * jit(1, 0.2) * k;
@@ -150,12 +150,12 @@ export function startWoodSound(a, ctx) {
 
   // ---- the vault's drip and the roots' drinking
   function drip(pos) {
-    const v = say(pos || vaultDrip, { ref: 2, range: 26, dur: 1.8, verb: 0.8, air: 40, gain: 6 }); if (!v) return;
+    const v = say(pos || vaultDrip, { ref: 2, range: 26, dur: 1.8, verb: 0.5, air: 40, gain: 6 }); if (!v) return;
     const t0 = v.t0, f = [A4, D5, F5][Math.floor(rng() * 3)] * (1 + (rng() - 0.5) * 0.012);
     const out = filt('lowpass', 2200, 0.6); out.connect(v.in);
-    const g = ac.createGain(); g.gain.setValueAtTime(0.0001, t0); g.gain.linearRampToValueAtTime(jit(0.03, 0.2), t0 + 0.012); g.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.3); g.gain.linearRampToValueAtTime(0, t0 + 0.31);
-    const o = ac.createOscillator(); o.type = 'sine'; o.frequency.setValueAtTime(f * 0.8, t0); o.frequency.exponentialRampToValueAtTime(f, t0 + 0.1);
-    chain(o, g, out); o.start(t0); o.stop(t0 + 0.34); v.srcs.push(o);
+    const g = ac.createGain(); g.gain.setValueAtTime(0.0001, t0); g.gain.linearRampToValueAtTime(jit(0.018, 0.2), t0 + 0.012); g.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.22); g.gain.linearRampToValueAtTime(0, t0 + 0.23);
+    const o = ac.createOscillator(); o.type = 'sine'; o.frequency.setValueAtTime(f * 0.9, t0); o.frequency.exponentialRampToValueAtTime(f, t0 + 0.1);
+    chain(o, g, out); o.start(t0); o.stop(t0 + 0.26); v.srcs.push(o);
     grain(v, out, t0, jit(850, 0.1), 2.2, 0.01, 0.004, 0.05);
   }
   // a point on the roof of the way, 5-14 m along it from where the walker is nearest (either side); the way's floor
