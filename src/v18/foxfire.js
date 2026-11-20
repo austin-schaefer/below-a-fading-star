@@ -23,9 +23,9 @@ export async function build(ctx) {
   const T = ctx.terrain, rng = ctx.makeRng(18020);
   const veg = (await ctx.built('vegetation')) ? ctx.trunks : null;
   const all = veg ? veg.list.filter((t) => !t.hidden && t.kind !== 'thorn' && t.kind !== 'mound' && t.kind !== 'fallen') : [];
-  const rOf = (t) => veg.trunk(t) * 1.25;
-  // what blocks a sight: every standing trunk (and the fallen ones, low)
-  const blockers = veg ? veg.list.filter((t) => !t.hidden && t.kind !== 'mound').map((t) => ({ x: t.x, z: t.z, r: t.kind === 'thorn' ? 0.6 : rOf(t) })) : [];
+  // what blocks a sight: every collider that stands above the knee (the trunks, the stones), as foxfire-test reads them
+  await ctx.built('rocks');
+  const blockers = ctx.controls.state.colliders.filter((c) => c.x != null && c.r != null && c.x1 == null && !(c.h != null && c.y != null && c.y + c.h < T.heightAt(c.x, c.z) + 0.6));
   const clear = (ax, az, bx, bz, skip) => {
     const ex = bx - ax, ez = bz - az, l2 = ex * ex + ez * ez || 1;
     const x0 = Math.min(ax, bx) - 3, x1 = Math.max(ax, bx) + 3, z0 = Math.min(az, bz) - 3, z1 = Math.max(az, bz) + 3;
@@ -36,7 +36,7 @@ export async function build(ctx) {
     }
     return true;
   };
-  const blockerOf = (t) => blockers.find((o) => o.x === t.x && o.z === t.z);
+  const blockerOf = (t) => blockers.find((o) => Math.abs(o.x - t.x) < 1e-6 && Math.abs(o.z - t.z) < 1e-6);
   const clumps = [], stumps = [], heads = [];
   const list = leads().list;
   for (const id of SPUR_IDS) {
@@ -53,11 +53,11 @@ export async function build(ctx) {
     // a stump: a rotten one beside the line, foxfire on its side toward the line
     const onStump = (px, pz, nx, nz, n, s) => {
       // (off every other lead's tread, off claimed ground and out of the water)
-      if (nearestLead(px, pz, 0.6) && nearestLead(px, pz, 0.6).id !== id) return null;
+      if (nearestLead(px, pz, 0.6) && (nearestLead(px, pz, 0.6).id !== id || nearestLead(px, pz, 0.6).d < 1.05)) return null; // (its own line too, where it bends back on itself)
       if (ctx.claims?.at(px, pz, 0.4, 'trees') && !/the lead/.test(ctx.claims.at(px, pz, 0.4, 'trees')) || T.isUnderwater(px, pz) || T.slopeAt(px, pz) > 0.6) return null;
       const r = 0.26 + rng() * 0.14, h = (n >= 4 ? 0.65 : 0.4) + rng() * 0.4, y = T.heightAt(px, pz);
       stumps.push({ x: px, y, z: pz, r, h, rot: rng() * 6.28, tilt: (rng() - 0.5) * 0.2 });
-      blockers.push({ x: px, z: pz, r: 0 }); // (a stump is below the eye: it blocks nothing)
+      if (h > 0.55) blockers.push({ x: px, z: pz, r }); // (a tall one stands in a later sight, as its collider will)
       clumps.push({ spur: id, x: px + nx * r * 0.95, y: y + Math.min(h - 0.08, 0.15 + rng() * 0.3), z: pz + nz * r * 0.95, nx, nz, n, host: 'stump', at: s, top: y + h, r });
       return clumps[clumps.length - 1];
     };

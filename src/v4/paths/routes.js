@@ -73,7 +73,7 @@ export const LEADS = [
   { id: 'P30', kind: 'path', cls: 'trod', w: 0.5, brief: 'trod, the Link-Boy\'s post to the causeway', pts: [[-168.2, -101.3], [-185, -98], [-201, -90]] }, // v8-09: from the wall's gap
   { id: 'P31', kind: 'path', cls: 'trod', w: 0.5, brief: 'red clay trod to the Galleries\' foot', pts: [[-264, -48], [-282, -58], [-298, -67]] },
   { id: 'P32', kind: 'path', cls: 'way', w: 1.0, brief: 'the wood way, the byre through the Deodand Wood to the Span\'s west stair', pts: [[-135, 62], [-160, 86], [-188, 112], [-212, 140], [-214, 172], [-205, 176], [-195, 180], [-194, 196]] },
-  { id: 'P33', kind: 'path', cls: 'trod', w: 0.5, brief: 'trod out of the wood to the Thrones and the causeway\'s west end', pts: [[-214, 172], [-240, 140], [-250, 110], [-270, 106], [-298, 100]] }, // v18-F1: round the north of the Florilegium (GLASSHOUSE, r 13), not through it
+  { id: 'P33', kind: 'path', cls: 'trod', w: 0.5, brief: 'trod out of the wood to the Thrones and the causeway\'s west end', pts: [[-214, 172], [-240, 140], [-262, 147], [-283, 133], [-298, 100]] }, // v18-F1: round the south and west of the Florilegium (GLASSHOUSE, r 13), not through it nor across its spur
   { id: 'P34', kind: 'path', cls: 'trod', w: 0.5, brief: 'shingle trod down to the bay\'s strand', pts: [[-122, 172], [-117, 186], [-113, 193]] },
   { id: 'P35', kind: 'path', cls: 'way', w: 1.0, brief: 'the shore way, the spit to the bay', pts: [[-42, 150], [-50, 166]] },
   { id: 'P36', kind: 'path', cls: 'trod', w: 0.5, brief: 'trod out along the spit', pts: [[-42, 150], [-55, 148], [-66, 143]] },
