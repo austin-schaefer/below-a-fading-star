@@ -39,7 +39,7 @@ await page.evaluate(([x, z]) => {
 await sleep(1500);
 const st = () => page.evaluate(() => {
   const fp = window.__fp, p = fp.player, B = fp.beds, f = B.floor(p.pos.x, p.pos.z), plan = f;
-  return { x: p.pos.x, z: p.pos.z, feet: p.pos.y - p.eye, yaw: p.yaw, pitch: p.pitch, floor: p.onStack?.name || 'ground', below: fp.below?.here ?? 0, locked: !!document.pointerLockElement, plan, draws: fp.renderer?.info?.render?.calls ?? null };
+  return { x: p.pos.x, z: p.pos.z, feet: p.pos.y - p.eye, ground: fp.terrain.heightAt(p.pos.x, p.pos.z), yaw: p.yaw, pitch: p.pitch, floor: p.onStack?.name || 'ground', below: fp.below?.here ?? 0, locked: !!document.pointerLockElement, plan, draws: fp.renderer?.info?.render?.calls ?? null };
 });
 const s0 = await st();
 console.log(`pointer captured: ${s0.locked}; sound: ${await page.evaluate(() => { const a = window.__fp.audio; return a.started ? a.ctx?.state : 'not started'; })}`);
@@ -70,7 +70,8 @@ while (i < full.length && Date.now() - t0 < 30 * 60 * 1000) {
   const s = await st();
   if (lastP) walkedSince += Math.hypot(s.x - lastP.x, s.z - lastP.z);
   // past the stair's head (x < -252.3), the stacked floor holds the walker
-  if (s.plan !== null && s.plan !== undefined && s.x < -252.4) {
+  // (only while the feet are down in the rooms: a walker steering wide on the bank over the way is not in it)
+  if (s.plan !== null && s.plan !== undefined && s.x < -252.4 && s.feet < s.ground - 1) {
     if (s.floor !== 'beds') { left++; if (left < 6) console.log(`OFF the Beds' floor at (${s.x.toFixed(1)}, ${s.z.toFixed(1)}) (on ${s.floor}, feet ${s.feet.toFixed(2)}, plan ${s.plan.toFixed(2)})`); }
     else lowest = Math.min(lowest, s.feet - s.plan);
   }
