@@ -43,3 +43,4 @@
   - On the phone the test's eyes (0.65 rad off the look) fall outside the narrow frame, so the phone frame shows none. The live rule (frame edge in NDC) does place them inside it.
   - In the frames the marks are faint.
 - **Waiting on F1 and F2:** stilters among the lobe's real trees, `paneColour` and the moth ring tied to F2's panes, then everything rerun.
+- **Blind reader on the grove frames (s3 medium):** "while my back was turned, the thick tree on the right seemed to be replaced by bare trunks". It still reads as a swap or pop-in, not "that tree followed me". Not yet met.
