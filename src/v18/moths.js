@@ -4,23 +4,31 @@
 // then twitching.
 //
 // One draw: an InstancedBufferGeometry of one moth (a body and two wings, 26 triangles), every moth's place, beat and
-// flap worked out in the vertex shader from its seed and the clock: no work a frame but one uniform. No light. Until
-// F2's glasshouse is in, the glass is MOTHS in plan.js (a ring of radius r, panes from y0 to y1) and `?mothpanes=1`
-// draws a stand-in of it; paneColour (GLSL) is the panes' colour by bearing and height, the one place to tie to F2's.
+// flap worked out in the vertex shader from its seed and the clock: no work a frame but one uniform. No light. The
+// glass is the Florilegium's own (GLASS: its twelve walls' apothem, sill and eave over its floor, from florilegium/
+// house.js and plan.js), `paneColour` its panes' colours; hidden past 200 m with the house. The study page alone draws
+// a stand-in of the glass (`standin`).
 import * as THREE from 'three';
-import { MOTHS } from './plan.js';
+import { GLASSHOUSE, FLORILEGIUM } from './plan.js';
+import { N, A, SILL, EAVE, PANES, SCHEME_A, SCHEME_B } from './florilegium/house.js';
 import { hyp } from '../noise.js';
 
-// the panes' colours: a stained-glass scatter by bearing and row (amber, crimson, verdigris, violet, gold, cold blue)
+// the panes' colours, as the Florilegium's glass has them (florilegium/house.js): twelve sides, each with its two schemes
+// of the eight colours, the lower scheme giving way to the upper with height, a quarry in seven its own
 export const PANE_GLSL = /* glsl */`
+  const vec3 FL_PANES[8] = vec3[8](${PANES.map((c) => `vec3(${c.join(', ')})`).join(', ')});
+  const int FL_A[12] = int[12](${SCHEME_A.join(', ')});
+  const int FL_B[12] = int[12](${SCHEME_B.join(', ')});
   vec3 paneColour(float th, float y) {
-    float seg = floor(th / 6.2831853 * 18.0), row = floor(y / 1.15);
-    float h = fract(sin(seg * 12.9898 + row * 78.233) * 43758.5453);
-    vec3 c = h < 0.18 ? vec3(1.0, 0.52, 0.12) : h < 0.34 ? vec3(0.95, 0.12, 0.14) : h < 0.5 ? vec3(0.18, 0.72, 0.55)
-           : h < 0.66 ? vec3(0.55, 0.25, 0.9) : h < 0.82 ? vec3(1.0, 0.82, 0.32) : vec3(0.25, 0.45, 1.0);
-    return c;
+    int side = int(mod(floor(th / ${(Math.PI * 2 / N).toFixed(6)} + 0.5), ${N}.0));
+    float h = fract(sin(floor(th * 9.0) * 12.9898 + floor(y / 0.33) * 78.233) * 43758.5453);
+    float up = smoothstep(0.6, 6.6, y + (h - 0.5) * 3.2);
+    int ci = h < 0.15 ? int(h * 53.0) : (fract(h * 7.31) < up ? FL_B[side] : FL_A[side]);
+    return FL_PANES[ci];
   }
 `;
+// the real glass (FLORILEGIUM in plan.js, the house's own numbers): the walls' apothem, sill and eave over the floor
+export const GLASS = { x: GLASSHOUSE.x, z: GLASSHOUSE.z, floor: FLORILEGIUM.floor, r: A, n: N, y0: SILL, y1: EAVE };
 
 function mothTemplate() {
   const P = [], S = [], UV = [], I = [];
@@ -38,7 +46,7 @@ function mothTemplate() {
   return { P, S, UV, I };
 }
 
-export function buildMoths(ctx, { glass = MOTHS, standin = false } = {}) {
+export function buildMoths(ctx, { glass = GLASS, standin = false } = {}) {
   const { scene, terrain, camera } = ctx;
   const rng = ctx.makeRng(18049);
   const low = ctx.quality === 'low';
@@ -60,9 +68,12 @@ export function buildMoths(ctx, { glass = MOTHS, standin = false } = {}) {
 
   const uTime = { value: 0 };
   const mat = new THREE.ShaderMaterial({
-    uniforms: THREE.UniformsUtils.merge([THREE.UniformsLib.fog, { uR: { value: glass.r }, uY0: { value: glass.y0 }, uY1: { value: glass.y1 } }]),
+    uniforms: THREE.UniformsUtils.merge([THREE.UniformsLib.fog, { uR: { value: glass.r }, uN: { value: glass.n || 0 }, uY0: { value: glass.y0 }, uY1: { value: glass.y1 } }]),
     vertexShader: /* glsl */`
-      uniform float uTime, uR, uY0, uY1;
+      uniform float uTime, uR, uN, uY0, uY1;
+      // the wall's distance at bearing th (a regular polygon of uN sides, its walls' normals at k * 2pi / uN; a circle at 0)
+      float wallR(float th) { if (uN < 0.5) return uR; float h = 3.14159265 / uN; return uR / cos(mod(th + h, 2.0 * h) - h); }
+      float wallA(float th) { if (uN < 0.5) return th; float s = 6.2831853 / uN; return floor(th / s + 0.5) * s; }
       attribute float aSide; attribute vec4 aSeed; attribute float aMode;
       varying vec2 vUv; varying vec3 vPane; varying float vLit;
       ${PANE_GLSL}
@@ -77,9 +88,10 @@ export function buildMoths(ctx, { glass = MOTHS, standin = false } = {}) {
           float ph = t * (1.1 + aSeed.z * 1.3) + aSeed.w * 40.0;
           float out1 = pow(abs(sin(ph)), 0.55) * (0.55 + 0.45 * sin(t * 0.37 + aSeed.x * 9.0));
           float d = 0.035 + 0.42 * out1;
-          N = vec3(cos(th), 0.0, sin(th));
-          P = N * (uR + d) + vec3(0.0, y, 0.0);
-          vec3 T = vec3(-sin(th), 0.0, cos(th));
+          float wa = wallA(th);
+          N = vec3(cos(wa), 0.0, sin(wa));
+          P = vec3(cos(th), 0.0, sin(th)) * wallR(th) + N * d + vec3(0.0, y, 0.0);
+          vec3 T = vec3(-sin(wa), 0.0, cos(wa));
           float psi = (aSeed.z - 0.5) * 1.8 + 0.35 * sin(t * 0.6 + aSeed.x * 11.0);
           Hd = cos(psi) * vec3(0.0, 1.0, 0.0) + sin(psi) * T;
           // beating hard while off the glass, flatter as it presses on it
@@ -89,7 +101,7 @@ export function buildMoths(ctx, { glass = MOTHS, standin = false } = {}) {
         } else {
           float th = aSeed.x * 6.2831853;
           N = vec3(0.0, 1.0, 0.0);
-          P = vec3(cos(th), 0.0, sin(th)) * (uR + 0.12 + aSeed.y * 0.3) + vec3(0.0, uY0 + 0.012, 0.0);
+          P = vec3(cos(th), 0.0, sin(th)) * (wallR(th) + 0.1 + aSeed.y * 0.22) + vec3(0.0, uY0 + 0.012, 0.0);
           float ya = aSeed.z * 6.2831853;
           Hd = vec3(cos(ya), 0.0, sin(ya));
           float tw = step(0.93, fract(t * 0.07 + aSeed.w)) * abs(sin(t * 18.0));
@@ -125,7 +137,7 @@ export function buildMoths(ctx, { glass = MOTHS, standin = false } = {}) {
           col = mix(col, vec3(0.05, 0.03, 0.03), smoothstep(0.45, 0.38, r));
           col = mix(col, vec3(1.0), smoothstep(0.16, 0.08, length(vec2(u - 0.49, (v + 0.44) * 0.6) / 0.2)));
           // lit through the pane behind: the wing takes its colour
-          col = col * (0.14 + 0.85 * mix(vec3(1.0), vPane, 0.55) * vLit) + vPane * 0.08 * vLit;
+          col = col * (0.12 + 0.8 * mix(vec3(1.0), vPane, 0.8) * vLit) + vPane * 0.12 * vLit;
         }
         gl_FragColor = vec4(col, 1.0);
         #include <fog_fragment>
@@ -135,14 +147,16 @@ export function buildMoths(ctx, { glass = MOTHS, standin = false } = {}) {
   mat.uniforms.uTime = uTime;
   const mesh = new THREE.Mesh(geo, mat);
   mesh.name = 'v18-moths';
-  const gy = terrain.heightAt(glass.x, glass.z);
+  const gy = glass.floor ?? terrain.heightAt(glass.x, glass.z);
   mesh.position.set(glass.x, gy, glass.z);
   mesh.updateMatrixWorld();
   scene.add(mesh);
 
   let pane = null;
   if (standin) {
-    const cg = new THREE.CylinderGeometry(glass.r, glass.r, glass.y1 - glass.y0, 48, 6, true);
+    const rc = glass.n ? glass.r / Math.cos(Math.PI / glass.n) : glass.r;
+    const cg = new THREE.CylinderGeometry(rc, rc, glass.y1 - glass.y0, glass.n || 48, 6, true);
+    if (glass.n) cg.rotateY(Math.PI / 2 - Math.PI / glass.n);
     cg.translate(0, (glass.y0 + glass.y1) / 2, 0);
     const pm = new THREE.ShaderMaterial({
       uniforms: THREE.UniformsUtils.merge([THREE.UniformsLib.fog, {}]),
@@ -159,17 +173,17 @@ export function buildMoths(ctx, { glass = MOTHS, standin = false } = {}) {
   let t = 0;
   ctx.registerUpdate((dt) => {
     t += dt; uTime.value = t;
-    mesh.visible = hyp(camera.position.x - glass.x, camera.position.z - glass.z) < 85;
-  }, { at: () => glass, near: 90, hz: 0 });
+    mesh.visible = hyp(camera.position.x - glass.x, camera.position.z - glass.z) < 200; // the house's own cull (florilegium.js)
+  }, { at: () => glass, near: 210, hz: 0 });
   return { mesh, pane, n, uTime };
 }
 
 // The study page: the cloud at a stand-in pane ring, small (r 1.6) so the cell can hold it.
 export const study = [{
-  id: 'glass-moths', name: 'moths at the glass', kind: 'creature', h: 2.4, at: [MOTHS.x, MOTHS.z],
+  id: 'glass-moths', name: 'moths at the glass', kind: 'creature', h: 4.5, at: [GLASSHOUSE.x, GLASSHOUSE.z],
   build(ctx) {
-    const M = buildMoths(ctx, { glass: { x: 0, z: 0, r: 1.0, y0: 0.4, y1: 2.2 }, standin: true });
+    const M = buildMoths(ctx, { glass: { x: 0, z: 0, floor: 0, r: A, n: N, y0: SILL, y1: EAVE }, standin: true });
     M.mesh.rotation.y = M.pane.rotation.y = -0.87; // the cloud's thick side (east) to the cell's camera
-    return { at: (o) => o.set(0, 0, 0), h: 2.4 };
+    return { at: (o) => o.set(0, 0, 0), h: 4.5 };
   },
 }];

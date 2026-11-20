@@ -434,6 +434,8 @@ export function buildStilters(ctx, { leadAt = null, exitAt = null, trees = [] } 
         const a = mid + (rng() - 0.5) * Math.min(1.6, 0.3 + k * 0.05), dd = Math.max(S.keep + 1, want + (rng() - 0.5) * (1 + k * 0.15));
         tries.push([vx + Math.sin(a) * dd, vz + Math.cos(a) * dd]);
       }
+      // or, where the wood allows none of those, a shorter step straight toward them
+      for (let k = 0; k < 10; k++) { const a = own + (rng() - 0.5) * 0.4, dd = Math.max(S.keep + 1, d - 1.5 - rng() * 2); tries.push([vx + Math.sin(a) * dd, vz + Math.cos(a) * dd]); }
     }
     if (tries) for (const [x, z] of tries) {
       const ny = faceYaw(x, z) + (rng() - 0.5) * 0.3;

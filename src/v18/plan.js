@@ -47,9 +47,6 @@ export const STILTERS = {
     { a: 4.3, d: 19, h: 12, legs: 3, asleep: true, lean: [-0.4, -0.4] },
   ],
 };
-// F4: the moths at the glass, against a stand-in for the glasshouse until F2's is in: a ring of glass of radius r round
-// its middle, its panes from y0 to y1 over the ground there (the plinth's top at y0)
-export const MOTHS = { x: -265, z: 126, r: 7.2, y0: 1.0, y1: 6.0 };
 
 // The likenesses: the same six people, in the same order, as flowers in the glasshouse (F2) and as effigies on the
 // tomb lids below (F3); the seventh is the Graffer's own. `prop` is what makes each read at 15 m.

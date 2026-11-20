@@ -2,7 +2,7 @@
 // spurs and in the old wood (eyes.js), the moths at the glasshouse's panes (moths.js). This module only gathers what the
 // three share: the tracks to keep off (the leads, and the north spur's straight line until F1's lead is in), the way out
 // of the grove for the ring's gap, and the wood's trunks.
-// ?inhabitants=0 leaves all three out; ?stilters=0, ?eyes=0, ?moths=0 each its own; ?mothpanes=1 draws the stand-in glass.
+// ?inhabitants=0 leaves all three out; ?stilters=0, ?eyes=0, ?moths=0 each its own (no moths with ?florilegium=0).
 import { GROVE, SPURS } from './plan.js';
 import { LEADS, leads, nearestLead } from '../v4/paths/routes.js';
 import { hyp } from '../noise.js';
@@ -53,6 +53,6 @@ export async function build(ctx) {
     tracks.push(L ? L.pts : [[sp.from.x, sp.from.z], [sp.to.x, sp.to.z]]);
   }
   if (P.get('eyes') !== '0') out.eyes = buildEyes(ctx, { leadAt, woodTrees, tracks });
-  if (P.get('moths') !== '0') out.moths = buildMoths(ctx, { standin: P.get('mothpanes') === '1' });
+  if (P.get('moths') !== '0' && P.get('florilegium') !== '0') out.moths = buildMoths(ctx);
   out.leadAt = leadAt;
 }
