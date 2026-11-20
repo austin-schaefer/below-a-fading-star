@@ -1,12 +1,11 @@
-// v18-F4: eyes between the trees. Along the three spurs and in the old wood off the road: pairs of small pale eyes low
-// between the trunks, 15 to 40 m off, that open where the visitor is not quite looking and shut (or sink) when the view
-// comes onto them, then open again somewhere else. Never a body. Kinds of spacing and height: something small, something
-// long and low, something up a trunk, and one with three.
+// v18-F4: eyes between the trees. Beside the wood way and the spurs, 8 to 20 m off a visitor on the track: pairs of
+// pale eyes low between the trunks that open toward the frame's edge (seen from the corner of the eye) and, when the
+// view comes onto them (centred, in NDC within 0.3 across and 0.6 up), blink once slowly and shut (or sink), then open
+// again somewhere else. Never a body. Kinds of spacing and height: small, long and low, up a trunk, and one with three.
 //
-// One Points draw, no light: each eye a point with a world size and a floor of 5 px, its lid (and its sinking) read from
-// a uniform per watcher. A few watchers at a time (3 on low, 4 above), each a state: 'away' (waiting to open somewhere),
-// 'open' (blinking now and then), 'shut' (closing or sinking, then away). Placed only out of the view's middle; shut when
-// the look comes within SHUT of them or the visitor within 11 m; never within 4 m of a track's middle.
+// One Points draw, no light: each eye a point with a world size and a floor of 7 px, kept 6 px from its pair's middle,
+// its lid (and its sinking) a uniform per watcher. Two watchers on low, three above, each 'away', 'open' (blinking now
+// and then), 'blinking' (the slow one before it goes) or 'shut'. Never within 4 m of a track's middle.
 import * as THREE from 'three';
 import { SPURS } from './plan.js';
 import { hyp } from '../noise.js';
@@ -19,7 +18,7 @@ export const EYE_KINDS = [
   { id: 'high', gap: 0.12, y: 2.4, s: 0.065, n: 2, col: [1.6, 1.5, 1.25] },
   { id: 'three', gap: 0.13, y: 0.6, s: 0.065, n: 3, col: [1.4, 1.6, 1.25] },
 ];
-const MAXW = 3, SHUT = 0.24; // watchers; radians off the look at which they shut (less on a narrow view)
+const MAXW = 3; // watchers
 
 export function buildEyes(ctx, { leadAt = null, woodTrees = [], tracks = [] } = {}) {
   const { scene, terrain, camera, landmarks } = ctx;
@@ -156,7 +155,7 @@ export function buildEyes(ctx, { leadAt = null, woodTrees = [], tracks = [] } = 
         const d = hyp(Wt.x - cam.x, Wt.z - cam.z);
         ndc.set(Wt.x, Wt.y, Wt.z).project(camera);
         const centred = ndc.z < 1 && Math.abs(ndc.x) < 0.3 && Math.abs(ndc.y) < 0.6;
-        if (centred || offLook(Wt.x, Wt.y, Wt.z) < SHUT || d < 6) { Wt.mode = 'blinking'; Wt.tb = 0; Wt.shuts++; state.shut++; }
+        if (centred || d < 6) { Wt.mode = 'blinking'; Wt.tb = 0; Wt.shuts++; state.shut++; }
         else if (d > 26 || !inWood) { Wt.mode = 'shut'; }
         Wt.lid = lid;
       } else if (Wt.mode === 'blinking') {

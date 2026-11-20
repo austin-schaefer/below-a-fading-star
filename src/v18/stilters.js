@@ -32,7 +32,7 @@ export function stilterColours(palette) {
   return {
     bark: mixc(barkC, [0, 0, 0], 0.25), barkTop: barkC, mossCol: lin('#26301a'), moss: 0.7,
     leaf: lin('#1a2214'), leafAlt: lin('#2a2614'), mossHang: lin('#3a4028'),
-    hollow: lin('#030202'), lip: mixc(barkC, lin('#5a4a3a'), 0.35), lichen: lin('#7d8466'), nest: lin('#3a2e22'), egg: lin('#b8b0a0'),
+    hollow: lin('#030202'), lip: mixc(barkC, lin('#5a4a3a'), 0.35), lichen: lin('#7d8466'), scar: lin('#a89a80'), nest: lin('#3a2e22'), egg: lin('#b8b0a0'),
   };
 }
 
@@ -153,6 +153,18 @@ export function growStilter(rng, spec) {
   sk.limbs.push({ pts: [{ x: e.x, y: e.y + 0.25, z: e.z - 0.1, r: kr * 0.9, wob: 0.15 }, { x: e.x, y: e.y - 0.05, z: e.z + 0.05, r: kr * 1.15, wob: 0.15 }, { x: e.x, y: e.y - 0.35, z: e.z + 0.05, r: kr * 0.6, wob: 0.12 }], level: 1, cap: true, burl: true });
   sk.face = { x: e.x, y: e.y - 0.02, z: e.z + kr * 1.05, tilt: 0.55, gap: kr * 0.42, eyeR: kr * 0.2, rim: kr * 0.12, closed: asleep };
   if (asleep) sk.nest = { x: J.x, y: jy + 0.5, z: J.z - 0.2, r: bR * 0.9 };
+  // the one thing a visitor remembers it by: a pale scar down a bole, a long rag of moss, or a broken bough
+  const leg0 = sk.limbs[0].pts;
+  if (spec.mark === 'scar' || spec.mark === 'both') {
+    const k0 = Math.floor(leg0.length * 0.12), k1 = Math.floor(leg0.length * 0.75), sc = [];
+    for (let k = k0; k <= k1; k++) { const q = leg0[k], ox = q.x - J.x * (q.y / jy), oz = q.z - J.z * (q.y / jy), l = hyp(ox, oz) || 1; sc.push({ x: q.x + (ox / l) * q.r * 0.93, y: q.y, z: q.z + (oz / l) * q.r * 0.93, r: 0.05 + 0.04 * Math.sin((k - k0) / (k1 - k0) * Math.PI) }); }
+    sk.limbs.push({ pts: sc, level: 1, scar: true });
+  }
+  if (spec.mark === 'rag' || spec.mark === 'both') sk.moss.push({ p: V(J.x + 0.3, J.y - 0.6, J.z + 0.2), len: Math.min(5, jy * 0.55), w: 1.1, ang: 0.4, rag: true });
+  if (spec.mark === 'broken') {
+    const b0 = J.clone().add(V(-0.3, 0.2, -0.2)), b1 = b0.clone().add(V(-2.6, 0.5, -0.8));
+    sk.limbs.push({ pts: bez(b0, b0.clone().lerp(b1, 0.5).add(V(0, 0.4, 0)), b1, 5, (t) => legR * 0.75 * (1 - 0.3 * t), 0.1, rng, 0.1), level: 1, broken: true });
+  }
   sk.spheres = boundSpheres(sk);
   return sk;
 }
@@ -183,7 +195,7 @@ export function meshStilter(sk, colors, rng, detail = 'hi') {
     if (!sides) continue;
     let pts = limb.pts;
     if (detail !== 'hi' && limb.level >= 2 && pts.length > 3) pts = pts.filter((_, i) => i % 2 === 0 || i === pts.length - 1);
-    tube(gb, pts, limb.burl ? 9 : sides, (i) => (limb.burl ? colors.lip : barkAt(pts[i].y)), { capTip: limb.level > 0 || limb.cap, u0: BARK_U0, u1: BARK_U1, vPerMetre: 0.35, ex: ex0 });
+    tube(gb, pts, limb.burl ? 9 : sides, (i) => (limb.scar ? colors.scar : limb.broken && i === pts.length - 1 ? colors.scar : limb.burl ? colors.lip : barkAt(pts[i].y)), { capTip: (limb.level > 0 || limb.cap) && !limb.broken, u0: BARK_U0, u1: BARK_U1, vPerMetre: 0.35, ex: ex0 });
   }
   // the face: two hollows (or two shut slits, asleep) and a split, on a plane turned down by `tilt`
   const F = sk.face, ct = Math.cos(F.tilt), st = Math.sin(F.tilt);
@@ -294,7 +306,9 @@ export function buildStilters(ctx, { leadAt = null, exitAt = null, trees = [] } 
   const S = STILTERS;
   const list = [];
   const offTrack = (x, z) => (leadAt ? !leadAt(x, z) : true);
-  const offTrees = (x, z) => { for (const t of trees) if (hyp(t.x - x, t.z - z) < 3.6) return false; return true; };
+  const offTrees = (x, z) => { for (const t of trees) if (hyp(t.x - x, t.z - z) < 2.6) return false; return true; };
+  const nearTrees = (x, z) => { for (const t of trees) if (hyp(t.x - x, t.z - z) < 2.2) return false; return true; }; // the ring may stand closer in
+  const offGlade = (x, z) => hyp(x - GROVE.x, z - GROVE.z) > 7.5; // the glade's open middle is where they ring, not where they stand
   const inLeash = (x, z) => hyp(x - GROVE.x, z - GROVE.z) < S.leash;
   const dry = (x, z) => { const wl = terrain.waterLevelAt(x, z); return wl === null || terrain.heightAt(x, z) > wl + 0.4; };
   const apart = (x, z, me) => { for (const o of list) if (o !== me && hyp(o.x - x, o.z - z) < 5.5) return false; return true; };
@@ -306,11 +320,11 @@ export function buildStilters(ctx, { leadAt = null, exitAt = null, trees = [] } 
     let x = GROVE.x + Math.sin(spec.a) * spec.d, z = GROVE.z - Math.cos(spec.a) * spec.d;
     for (let k = 0; k < 40; k++) {
       const tx = x + (k ? (rng() - 0.5) * k * 0.8 : 0), tz = z + (k ? (rng() - 0.5) * k * 0.8 : 0);
-      if (offTrack(tx, tz) && offTrees(tx, tz) && dry(tx, tz) && apart(tx, tz, null)) { x = tx; z = tz; break; }
+      if (offTrack(tx, tz) && offTrees(tx, tz) && offGlade(tx, tz) && dry(tx, tz) && apart(tx, tz, null)) { x = tx; z = tz; break; }
     }
     const st = {
       i, x, z, yaw: Math.atan2(GROVE.x - x, GROVE.z - z) + (rng() - 0.5) * 1.2, h: spec.h, asleep: !!spec.asleep, mesh, sk,
-      wait: 3 + rng() * 4, inView: false, steps: 0, turns: 0, colliders: [], home: { x, z },
+      wait: 3 + rng() * 4, seenT: -1, inView: false, steps: 0, turns: 0, colliders: [], home: { x, z },
     };
     // a collider at each foot, moved with it
     for (const f of sk.feet) { const c = { x: 0, z: 0, r: f.r }; st.colliders.push({ f, c }); ctx.addCollider(c); }
@@ -352,14 +366,14 @@ export function buildStilters(ctx, { leadAt = null, exitAt = null, trees = [] } 
   const faceYaw = (x, z) => Math.atan2(cam.x - x, cam.z - z);
   // never to where a foot of it would stand within 3.5 m of the visitor
   for (const st of list) st.reach = Math.max(...st.sk.feet.map((f) => hyp(f.x, f.z) + f.r));
-  const fine = (st, x, z) => inLeash(x, z) && hyp(x - cam.x, z - cam.z) >= Math.max(S.keep, st.reach + 3.5) && offTrack(x, z) && offTrees(x, z) && dry(x, z) && apart(x, z, st);
+  const fine = (st, x, z) => inLeash(x, z) && hyp(x - cam.x, z - cam.z) >= Math.max(S.keep, st.reach + 3.5) && offTrack(x, z) && offTrees(x, z) && offGlade(x, z) && dry(x, z) && apart(x, z, st);
 
   const ev = (st, kind, from) => {
     st.mesh.updateMatrixWorld();
     ctx.events?.dispatchEvent(new CustomEvent('stilter', { detail: { i: st.i, kind, x: st.x, y: ground(st.x, st.z), z: st.z, h: st.h, from } }));
   };
 
-  let cool = 0, ringHold = 0, ringed = false;
+  let cool = 0, ringHold = 0, ringed = false, clock = 0, pending = null, pendingT = 0;
   // where each stood: a ring of pressed bare earth with root-holes at every foot it lifted, so the ground shows a walk
   const MARKS = 48, markGeo = new THREE.PlaneGeometry(1, 1).rotateX(-Math.PI / 2);
   const markMat = new THREE.ShaderMaterial({
@@ -369,9 +383,9 @@ export function buildStilters(ctx, { leadAt = null, exitAt = null, trees = [] } 
       vec2 c = vUv * 2.0 - 1.0; float r = length(c); if (r > 1.0) discard;
       float a = atan(c.y, c.x), n = fract(sin(dot(floor(c * 7.0), vec2(12.9898, 78.233))) * 43758.5453);
       float earth = smoothstep(1.0, 0.72, r + n * 0.12) * smoothstep(0.12, 0.34, r);
-      float k = fract(a / 6.2831853 * 7.0 + n * 0.15), hole = smoothstep(0.16, 0.04, abs(k - 0.5)) * smoothstep(0.13, 0.02, abs(r - 0.6));
-      vec3 col = mix(vec3(0.075, 0.058, 0.042) * (0.8 + 0.4 * n), vec3(0.012, 0.009, 0.007), hole);
-      float al = max(earth * 0.78, hole * 0.95); if (al < 0.02) discard;
+      float k = fract(a / 6.2831853 * 7.0 + n * 0.15), hole = smoothstep(0.22, 0.08, abs(k - 0.5)) * smoothstep(0.17, 0.05, abs(r - 0.58));
+      vec3 col = mix(vec3(0.05, 0.038, 0.028) * (0.8 + 0.4 * n), vec3(0.006, 0.004, 0.003), hole);
+      float al = max(earth * 0.92, hole); if (al < 0.02) discard;
       gl_FragColor = vec4(col, al);\n#include <fog_fragment>\n}`,
     fog: true, transparent: true, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2,
   });
@@ -383,7 +397,7 @@ export function buildStilters(ctx, { leadAt = null, exitAt = null, trees = [] } 
   const leaveMarks = (st) => {
     for (const { c } of st.colliders) {
       terrain.normalAt(c.x, c.z, mN); mq.setFromUnitVectors(mUp, mN).multiply(new THREE.Quaternion().setFromAxisAngle(mUp, rng() * 6.28));
-      mP.set(c.x, ground(c.x, c.z) + 0.04, c.z); const sc = c.r * 2.4; mS.set(sc, 1, sc);
+      mP.set(c.x, ground(c.x, c.z) + 0.04, c.z); const sc = c.r * 3.4; mS.set(sc, 1, sc);
       marks.setMatrixAt(markNext, mM.compose(mP, mq, mS));
       markNext = (markNext + 1) % MARKS; marks.count = Math.max(marks.count, markNext === 0 ? MARKS : markNext);
     }
@@ -408,20 +422,15 @@ export function buildStilters(ctx, { leadAt = null, exitAt = null, trees = [] } 
       if (hd < 1) return false;
       const k = Math.min(1, 3.5 / hd);
       tries.push([st.x + (st.home.x - st.x) * k, st.z + (st.home.z - st.z) * k]);
-    } else if (r < 0.2) {
+    } else if (r < 0.12) {
       tries = null; // only turn
-    } else if (r < 0.6 && d > S.keep + 3) {
-      // nearer, but never inside the keep
-      const want = Math.max(S.keep + 1, d - (2.5 + rng() * 2));
-      for (let k = 0; k < 8; k++) {
-        const a = Math.atan2(st.x - vx, st.z - vz) + (rng() - 0.5) * 0.7;
-        tries.push([vx + Math.sin(a) * want, vz + Math.cos(a) * want]);
-      }
     } else {
-      // into the way the visitor came, behind them
-      const back = cameFrom();
-      for (let k = 0; k < 10; k++) {
-        const a = back + (rng() - 0.5) * 2.8, dd = 7.5 + rng() * 7;
+      // it follows: nearer, on the side the visitor came by, between where it stood and the way they came
+      const came = cameFrom(), own = Math.atan2(st.x - vx, st.z - vz);
+      const mid = own + Math.atan2(Math.sin(came - own), Math.cos(came - own)) * 0.6;
+      const want = Math.max(S.keep + 1, Math.min(14, d - 3 - rng() * 3));
+      for (let k = 0; k < 28; k++) {
+        const a = mid + (rng() - 0.5) * Math.min(1.6, 0.5 + k * 0.06), dd = Math.max(S.keep + 1, want + (rng() - 0.5) * (2 + k * 0.15));
         tries.push([vx + Math.sin(a) * dd, vz + Math.cos(a) * dd]);
       }
     }
@@ -452,10 +461,10 @@ export function buildStilters(ctx, { leadAt = null, exitAt = null, trees = [] } 
     woke.forEach((st, k) => {
       const base = gap + S.gap / 2 + ((k + 0.5) / woke.length) * span;
       const from = { x: st.x, z: st.z };
-      for (let t = 0; t < 40; t++) {
-        const a = base + (t ? (rng() - 0.5) * (0.4 + t * 0.04) : 0), rr = S.ring + (t ? (rng() - 0.3) * 3.5 : 0);
+      for (let t = 0; t < 80; t++) {
+        const a = base + (t ? (rng() - 0.5) * Math.min(1.4, 0.4 + t * 0.03) : 0), rr = S.ring + (t ? (rng() - 0.35) * 4 : 0);
         const x = vx + Math.sin(a) * rr, z = vz + Math.cos(a) * rr;
-        if (hyp(x - vx, z - vz) < Math.max(S.keep, st.reach + 3.5) || !offTrack(x, z) || !offTrees(x, z) || !dry(x, z) || !clear(x, z)) continue;
+        if (hyp(x - vx, z - vz) < Math.max(S.keep, st.reach + 3.5) || !offTrack(x, z) || !nearTrees(x, z) || !dry(x, z) || !clear(x, z)) continue;
         leaveMarks(st); st.x = x; st.z = z; st.yaw = faceYaw(x, z); place(st); st.steps++; state.steps++; ev(st, 'ring', from);
         taken.push([x, z]); placed.push({ i: st.i, a, r: rr });
         break;
@@ -475,15 +484,22 @@ export function buildStilters(ctx, { leadAt = null, exitAt = null, trees = [] } 
     if (dark > 0.85 && inGrove && !ringed) { ringed = true; ring(); ringHold = 20; return; }
     if (dark < 0.3) ringed = false;
     if (ringHold > 0) { if (dark < 0.5) ringHold -= dt; if (hyp(vx - state.ring.x, vz - state.ring.z) > 6) ringHold = 0; return; }
-    cool -= dt;
+    // one mover a look: once one has moved, none moves again until the visitor has seen it where it now stands (or 25 s)
+    clock += dt; cool -= dt;
+    for (const st of list) if (st.inView) st.seenT = clock;
+    if (pending) { if (pending.inView || clock - pendingT > 25) pending = null; else return; }
+    if (cool > 0) return;
+    // the mover: of those out of view and not close, the one the visitor saw last
+    let mover = null;
     for (const st of list) {
-      if (st.asleep) continue;
-      if (st.inView || hyp(st.x - vx, st.z - vz) < S.near) { st.wait = Math.max(st.wait, 1.2); continue; }
-      st.wait -= dt;
-      if (st.wait > 0 || cool > 0) continue;
-      st.wait = 2.5 + rng() * 4.5;
-      if (step(st)) cool = 1.1;
+      if (st.asleep || st.inView || hyp(st.x - vx, st.z - vz) < S.near) continue;
+      if (!mover || st.seenT > mover.seenT) mover = st;
     }
+    if (!mover) return;
+    mover.wait -= dt;
+    if (mover.wait > 0) return;
+    mover.wait = 1.5 + rng() * 3;
+    if (step(mover)) { cool = 1.1; pending = mover; pendingT = clock; }
   }
   ctx.registerUpdate(update, { at: () => GROVE, near: 160, hz: 0 });
   state.seenAt = seenAt; state.place = place; state.ringNow = ring; state.marks = marks; state.cameFrom = cameFrom;

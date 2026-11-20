@@ -119,27 +119,30 @@ async function run(view, q, frames) {
       const fp = window.__fp, p = fp.player, S = fp.stilters;
       const came = S.cameFrom(), off = (s) => { const b = Math.atan2(s.x - p.pos.x, s.z - p.pos.z); return Math.abs(Math.atan2(Math.sin(b - came), Math.cos(b - came))); };
       const d = (s) => Math.hypot(s.x - p.pos.x, s.z - p.pos.z);
-      const far = S.list.filter((s) => !s.asleep && d(s) > 11 && d(s) < 24).sort((a, b) => off(a) - off(b))[0];
+      const far = S.list.filter((s) => !s.asleep && d(s) > 10 && d(s) < 17).sort((a, b) => off(a) - off(b))[0];
       const yaw = (far ? Math.atan2(far.x - p.pos.x, far.z - p.pos.z) : came) + Math.PI;
-      p.yaw = yaw; p.pitch = 0.3;
-      return { yaw };
+      p.yaw = yaw; p.pitch = 0.14;
+      return { yaw, i: far ? far.i : -1 };
     });
     await page.waitForTimeout(1500);
     const before = await page.evaluate(() => window.__fp.stilters.list.map((s) => [s.x, s.z, s.yaw]));
     await shot('look');
     await page.evaluate((yaw) => { const p = window.__fp.player; p.yaw = yaw + Math.PI; }, pick.yaw);
-    // away until one that stands, or comes to stand, within the look-back's frame has stepped (a minute at most)
-    await page.waitForFunction(([before, yaw]) => {
-      const fp = window.__fp, p = fp.player.pos;
-      const inLook = (x, z) => { const b = Math.atan2(-(x - p.x), -(z - p.z)); return Math.abs(Math.atan2(Math.sin(b - yaw), Math.cos(b - yaw))) < 0.55; };
-      return fp.stilters.list.some((s, i) => Math.hypot(s.x - before[i][0], s.z - before[i][1]) > 1 && (inLook(s.x, s.z) || inLook(before[i][0], before[i][1])));
-    }, [before, pick.yaw], { timeout: 60000, polling: 300 }).catch(() => console.log('[frames] nothing stepped into the look-back in a minute'));
+    // away until the one looked at has stepped (one mover a look; a minute at most)
+    await page.waitForFunction(([before, i]) => {
+      const S = window.__fp.stilters.list;
+      return i >= 0 ? Math.hypot(S[i].x - before[i][0], S[i].z - before[i][1]) > 1 : S.some((s, k) => Math.hypot(s.x - before[k][0], s.z - before[k][1]) > 1);
+    }, [before, pick.i], { timeout: 60000, polling: 300 }).catch(() => console.log('[frames] the one looked at did not step in a minute'));
     await page.waitForTimeout(800);
     await shot('away');
     await page.evaluate((yaw) => { const p = window.__fp.player; p.yaw = yaw; }, pick.yaw);
     await page.waitForTimeout(1200);
     await shot('back');
     const after = await page.evaluate(() => window.__fp.stilters.list.map((s) => [s.x, s.z, s.yaw]));
+    const pp = await page.evaluate(() => ({ x: window.__fp.player.pos.x, z: window.__fp.player.pos.z }));
+    const movers = before.filter((b, i) => Math.hypot(b[0] - after[i][0], b[1] - after[i][1]) > 0.5).length;
+    check(movers <= 1, `${view}: one mover a look`, `${movers} moved`);
+    if (pick.i >= 0) { const b = before[pick.i], a = after[pick.i]; console.log(`[frames] the one looked at: ${Math.hypot(b[0] - pp.x, b[1] - pp.z).toFixed(1)} m -> ${Math.hypot(a[0] - pp.x, a[1] - pp.z).toFixed(1)} m`); }
     const changed = before.filter((b, i) => Math.hypot(b[0] - after[i][0], b[1] - after[i][1]) > 0.5 || Math.abs(b[2] - after[i][2]) > 0.2).length;
     check(changed >= 1, `${view}: something changed between the look and the look back`, `${changed} stilters`);
   }
@@ -201,11 +204,13 @@ async function run(view, q, frames) {
     if (!E) return null;
     fp.controls.placeAt(-196, 150); p.yaw = 0; p.pitch = 0;
     await new Promise((r) => setTimeout(r, 800));
-    // a spot 10 to 18 m off, 0.55 to 0.8 rad to one side, that no trunk stands in front of
+    // a spot 10 to 18 m off to one side, that no trunk stands in front of
     const T = fp.woodTrees || [];
     const clear = (x, z) => T.every((t) => { const ex = x - p.pos.x, ez = z - p.pos.z, l2 = ex * ex + ez * ez, k = Math.max(0, Math.min(1, ((t.x - p.pos.x) * ex + (t.z - p.pos.z) * ez) / l2)); return Math.hypot(t.x - p.pos.x - ex * k, t.z - p.pos.z - ez * k) > 1.6; });
     let a = p.yaw + 0.65, x = p.pos.x - Math.sin(a) * 25, z = p.pos.z - Math.cos(a) * 25;
-    search: for (const d of [14, 12, 16, 18, 10]) for (const off of [0.65, -0.65, 0.75, -0.75, 0.55, -0.55, 0.8, -0.8]) {
+    // off the look by 0.7 of the view's half-width (a phone's is narrow): in the frame, toward its edge
+    const hf = Math.atan(Math.tan((fp.camera.fov * Math.PI) / 360) * fp.camera.aspect), o0 = hf * 0.7;
+    search: for (const d of [14, 12, 16, 18, 10]) for (const off of [o0, -o0, o0 * 1.1, -o0 * 1.1, o0 * 0.9, -o0 * 0.9]) {
       const aa = p.yaw + off, xx = p.pos.x - Math.sin(aa) * d, zz = p.pos.z - Math.cos(aa) * d;
       if (clear(xx, zz)) { a = aa; x = xx; z = zz; break search; }
     }

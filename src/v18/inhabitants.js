@@ -42,7 +42,7 @@ export async function build(ctx) {
     }
   }
   await ctx.built?.('vegetation');
-  const trees = (ctx.woodTrees || []).filter((t) => hyp(t.x - GROVE.x, t.z - GROVE.z) < 70);
+  const trees = (ctx.trunks?.list || ctx.woodTrees || []).filter((t) => !t.hidden && hyp(t.x - GROVE.x, t.z - GROVE.z) < 70);
   const woodTrees = ctx.woodTrees || [];
   const out = ctx.inhabitants = { exit, spurLead };
   if (P.get('stilters') !== '0') out.stilters = ctx.stilters = buildStilters(ctx, { leadAt, exitAt: () => exit, trees });
