@@ -132,6 +132,6 @@ export function buildDeodand(ctx) {
 
 // The study page (src/study/registry.js): the deodand at the tree line.
 export const study = [{
-  id: 'deodand', name: 'the deodand', kind: 'creature', h: 2.5, at: [0, 0],
+  id: 'deodand', name: 'the deodand', kind: 'creature', h: 2.5, looker: 'far', at: [0, 0],
   build(ctx) { buildDeodand(ctx); const p = ctx.deodand.position; return { at: (o) => o.set(p.x, 0, p.z) }; },
 }];
