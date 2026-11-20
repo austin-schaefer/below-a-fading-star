@@ -210,8 +210,9 @@ function buildLeads(ctx) {
     function pushRow(c, r) {
       const T = c.T, base = T.pos.length / 3, nx = -r.tz, nz = r.tx; // across: left of the direction
       const ang = Math.atan2(nz, nx);
-      // (v18-F1: a spur's first 10 m worn wider and paler, so its line is seen leaving the road's edge)
-      const head = L.cls === 'spur' ? 1 - smoothstep(4, 11, r.s) : 0, hw = half * (1 + 0.6 * head), lf = lift + 0.5 * head;
+      // (v18-F1: a spur's first few metres worn out of the road's own surface, as wide and as pale as a way's, darkening
+      // to its own by 9 m: its line is seen leaving the road's edge)
+      const head = L.cls === 'spur' ? 1 - smoothstep(3.5, 9, r.s) : 0, hw = half * (1 + 1.2 * head), lf = lift + (1 - lift) * head;
       for (const u of across) {
         const x = r.x + nx * u * hw, z = r.z + nz * u * hw;
         let y = Math.max(G.heightAt(x, z), terrain.heightAt(x, z)) + 0.035;

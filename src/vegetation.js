@@ -26,7 +26,7 @@ export async function build(ctx) {
     const trees = buildTrees(ctx, ground, mats);
     return { mats, trees, fungi: buildToadstools(ctx, ground, mats, trees) };
   });
-  ctx.trunks = { list: trees.trees, trunk: trees.trunkOf }; // v18-F1: every tree and its trunk's radius (the foxfire's hosts)
+  ctx.trunks = { list: trees.trees, trunk: trees.trunkOf, thresholds: trees.thresholds }; // v18-F1: every tree and its trunk's radius (the foxfire's hosts)
   ctx.woodTrees = trees.trees.filter((t) => t.kind === 'wood' && !t.hidden); // the Deodand Wood's trees, { x, y, z, h }: the shafts fall from their crowns (v8/shafts.js)
   const tTrees = lap();
   await ctx.progress?.('sowing the heather and the reeds', 0.6);

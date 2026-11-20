@@ -73,7 +73,7 @@ export const LEADS = [
   { id: 'P30', kind: 'path', cls: 'trod', w: 0.5, brief: 'trod, the Link-Boy\'s post to the causeway', pts: [[-168.2, -101.3], [-185, -98], [-201, -90]] }, // v8-09: from the wall's gap
   { id: 'P31', kind: 'path', cls: 'trod', w: 0.5, brief: 'red clay trod to the Galleries\' foot', pts: [[-264, -48], [-282, -58], [-298, -67]] },
   { id: 'P32', kind: 'path', cls: 'way', w: 1.0, brief: 'the wood way, the byre through the Deodand Wood to the Span\'s west stair', pts: [[-135, 62], [-160, 86], [-188, 112], [-212, 140], [-214, 172], [-205, 176], [-195, 180], [-194, 196]] },
-  { id: 'P33', kind: 'path', cls: 'trod', w: 0.5, brief: 'trod out of the wood to the Thrones and the causeway\'s west end', pts: [[-214, 172], [-240, 140], [-262, 147], [-283, 133], [-298, 100]] }, // v18-F1: round the south and west of the Florilegium (GLASSHOUSE, r 13), not through it nor across its spur
+  { id: 'P33', kind: 'path', cls: 'trod', w: 0.5, brief: 'trod out of the wood to the Thrones and the causeway\'s west end', pts: [[-212.4, 146], [-240, 140], [-262, 147], [-283, 133], [-298, 100]] }, // v18-F1: off the wood way at (-212.4, 146), not the corner, so the Beds' spur leaves the road alone; round the south and west of the Florilegium (r 13), not through it nor across its spur
   { id: 'P34', kind: 'path', cls: 'trod', w: 0.5, brief: 'shingle trod down to the bay\'s strand', pts: [[-122, 172], [-117, 186], [-113, 193]] },
   { id: 'P35', kind: 'path', cls: 'way', w: 1.0, brief: 'the shore way, the spit to the bay', pts: [[-42, 150], [-50, 166]] },
   { id: 'P36', kind: 'path', cls: 'trod', w: 0.5, brief: 'trod out along the spit', pts: [[-42, 150], [-55, 148], [-66, 143]] },
@@ -100,11 +100,12 @@ export const LEADS = [
   { id: 'P56', kind: 'path', cls: 'trod', w: 0.5, brief: 'a trod off the Lonely Staircase\'s trod (P51) north past the Noon Road\'s east end and up the moor to the glass sphere\'s valley face', pts: [[275, 4.6], [284, 16], [293, 29], [299, 42], [297, 57], [290, 71], [282, 85], [276.5, 95], [274, 100]] },
   // v18-F1 (the owner's #18: "little spur trails off the main road, dark and twisty things"): three spurs off the wood way
   // (P32), each to another brief's doorstep (src/v18/plan.js SPURS). cls 'spur': narrower and darker than a trod, no
-  // gnomon at their heads or along them (src/v8/roads/place.js); foxfire marks them (src/v18/foxfire.js). Their points
-  // bend every 6-9 m, so no spur's end is in sight from its head.
-  { id: 'P57', kind: 'path', cls: 'spur', w: 0.4, brief: 'a spur west off the wood way, twisting between the trunks to the Florilegium\'s door', pts: [[-200, 125], [-207, 123.5], [-213, 127], [-219, 124.5], [-226, 121.5], [-232, 124.5], [-237, 130], [-243, 131.5], [-249, 129], [-253.5, 127.5], [-257, 127]] },
-  { id: 'P58', kind: 'path', cls: 'spur', w: 0.4, brief: 'a spur south-west off the wood way, round the roots to the Lower Beds\' door in the bank', pts: [[-214, 172], [-218, 177], [-224, 177.5], [-229, 173], [-234, 169.5], [-239, 172], [-243, 175.5], [-246.5, 174], [-249, 172]] },
-  { id: 'P59', kind: 'path', cls: 'spur', w: 0.4, brief: 'a spur north off the wood way, out of the old wood through the neck and into the north lobe to the stilters\' grove', pts: [[-160, 86], [-166, 81], [-165.5, 74], [-171, 68], [-178, 64.5], [-182, 58], [-188, 53], [-187, 46], [-192, 40.5], [-197, 36.5], [-195, 30], [-198, 24]] },
+  // gnomon at their heads or along them (src/v8/roads/place.js); foxfire marks them (src/v18/foxfire.js). Each leaves
+  // the road square to it for its first 7 m, where the road is straight (a mouth seen from 12 m either way), then bends
+  // every 6-9 m, so no spur's end is in sight from its head.
+  { id: 'P57', kind: 'path', cls: 'spur', w: 0.4, brief: 'a spur west off the wood way, twisting between the trunks to the Florilegium\'s door', pts: [[-199.4, 126.8], [-204.8, 122.3], [-210, 124], [-215.5, 127.5], [-220, 124.5], [-226, 121.5], [-232, 124.5], [-237, 130], [-243, 131.5], [-249, 129], [-253.5, 127.5], [-257, 127]] },
+  { id: 'P58', kind: 'path', cls: 'spur', w: 0.4, brief: 'a spur south-west off the wood way, round the roots to the Lower Beds\' door in the bank', pts: [[-213.8, 162], [-220.7, 160.5], [-225, 164.5], [-230, 169], [-235.5, 168.5], [-240, 172.5], [-244, 175.5], [-246.5, 174], [-249, 172]] },
+  { id: 'P59', kind: 'path', cls: 'spur', w: 0.4, brief: 'a spur north off the wood way, out of the old wood through the neck and into the north lobe to the stilters\' grove', pts: [[-169.7, 93.6], [-174.1, 88.2], [-173, 82], [-176, 75.5], [-179, 69], [-182.5, 62], [-188, 53], [-187, 46], [-192, 40.5], [-197, 36.5], [-195, 30], [-198, 24]] },
 ];
 
 // ---------------------------------------------------------------- what the leads keep off

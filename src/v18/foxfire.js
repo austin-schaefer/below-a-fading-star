@@ -14,9 +14,9 @@ import { leads, nearestLead } from '../v4/paths/routes.js';
 import { SPUR_IDS } from './wood-reach.js';
 import { fogPars, fogAtten } from '../particles/shaderParts.js';
 
-const STEP_MIN = 6, STEP_MAX = 12; // m along a spur between clumps
+const STEP_MIN = 6, STEP_MAX = 11; // m along a spur between clumps
 const HOST_R = 3.2; // m from the line a trunk may be to carry a clump
-const COL = new THREE.Color('#bff2cf'), COL2 = new THREE.Color('#e4f7d2'); // pale green to pale white
+const COL = new THREE.Color('#d9f6cf'), COL2 = new THREE.Color('#f3f8e4'); // greenish white to bone white: off the moss light's teal, so never read as water
 
 export async function build(ctx) {
   if (new URLSearchParams(location.search).get('foxfire') === '0') return;
@@ -51,42 +51,42 @@ export async function build(ctx) {
       return clumps[clumps.length - 1];
     };
     // a stump: a rotten one beside the line, foxfire on its side toward the line
-    const onStump = (px, pz, nx, nz, n, s, gate = false) => {
+    const onStump = (px, pz, nx, nz, n, s, gate = false, post = false) => {
       // (off every other lead's tread, off claimed ground and out of the water)
       if (nearestLead(px, pz, 0.6) && (nearestLead(px, pz, 0.6).id !== id || nearestLead(px, pz, 0.6).d < 1.05)) return null; // (its own line too, where it bends back on itself)
-      if (ctx.claims?.at(px, pz, 0.4, 'trees') && !/the lead/.test(ctx.claims.at(px, pz, 0.4, 'trees')) || T.isUnderwater(px, pz) || T.slopeAt(px, pz) > 0.6) return null;
-      const r = gate ? 0.38 + rng() * 0.1 : 0.26 + rng() * 0.14, h = gate ? 1.3 + rng() * 0.4 : n >= 4 ? 0.45 + rng() * 0.12 : 0.4 + rng() * 0.4, y = T.heightAt(px, pz); // (the mouth's stay under the knee: they never hide the next clump)
+      if (ctx.claims?.at(px, pz, 0.4, 'trees') && !/the lead|the mouth/.test(ctx.claims.at(px, pz, 0.4, 'trees')) || T.isUnderwater(px, pz) || T.slopeAt(px, pz) > 0.6) return null;
+      const r = post ? 0.3 + rng() * 0.06 : gate ? 0.38 + rng() * 0.1 : 0.26 + rng() * 0.14, h = post ? 1.05 + rng() * 0.25 : gate ? 1.3 + rng() * 0.4 : n >= 4 ? 0.45 + rng() * 0.12 : 0.4 + rng() * 0.4, y = T.heightAt(px, pz); // (the mouth's stay under the knee: they never hide the next clump)
       stumps.push({ x: px, y, z: pz, r, h, rot: rng() * 6.28, tilt: (rng() - 0.5) * 0.2 });
-      if (h > 0.55) blockers.push({ x: px, z: pz, r }); // (a tall one stands in a later sight, as its collider will)
-      clumps.push({ spur: id, x: px + nx * r * 0.95, y: y + (gate ? 0.25 : Math.min(h - 0.08, 0.15 + rng() * 0.3)), z: pz + nz * r * 0.95, nx, nz, n, host: 'stump', at: s, top: y + h, r, gate });
+      if (h > 0.55 && !post) blockers.push({ x: px, z: pz, r }); // (a tall one stands in a later sight, as its collider will; a post at the road's edge is behind every sight down the spur)
+      clumps.push({ spur: id, x: px + nx * r * 0.95, y: y + (post ? h * 0.6 : gate ? 0.25 : Math.min(h - 0.08, 0.15 + rng() * 0.3)), z: pz + nz * r * 0.95, nx, nz, n, host: 'stump', at: s, top: y + h, r, gate });
       return clumps[clumps.length - 1];
     };
     const trunksNear = (x, z, R) => all.filter((t) => (t.x - x) ** 2 + (t.z - z) ** 2 < R * R).sort((a, b) => ((a.x - x) ** 2 + (a.z - z) ** 2) - ((b.x - x) ** 2 + (b.z - z) ** 2));
-    // the head: both sides of the mouth, and the trunks round it, thickest here
+    // the head (round three): nothing on the road's side of the mouth but the threshold itself, a small clump on each
+    // log's cut end or each post; the knot is 6-7 m in, at the end of the mouth's short straight, so it is seen from the
+    // road as a light down a way, not as a lamp beside one
     const h0 = at(0);
     heads.push({ spur: id, x: h0.x, z: h0.z });
-    const c0 = clumps.length;
-    for (const sd of [-1, 1]) for (const sm of [2.2, 3.2, 4.5, 6]) { const m = at(sm); if (onStump(m.x - m.tz * sd * 1.3, m.z + m.tx * sd * 1.3, m.tz * sd, -m.tx * sd, 5 + Math.floor(rng() * 3), sm)) break; }
-    // the gateposts: the nearest trunk either side of the mouth, just past its cleared gap (claims.js, SPUR_MOUTHS), the
-    // thickest knot of all, run up the bark to the eye; failing a trunk, a tall rotten snag in its place
-    let headN = 0;
-    const m1 = at(6), ux = m1.x - h0.x, uz = m1.z - h0.z, ul = Math.hypot(ux, uz) || 1;
-    for (const sd of [-1, 1]) {
-      const px = h0.x + (ux / ul) * 2.5, pz = h0.z + (uz / ul) * 2.5;
-      const t = trunksNear(px, pz, 6).find((t) => {
-        if (t.kind === 'giant' || t.kind === 'rimgiant') return false;
-        const ex = t.x - h0.x, ez = t.z - h0.z, along = (ex * ux + ez * uz) / ul, lat = (ex * -uz + ez * ux) / ul * sd;
-        return along > -0.5 && along < 7 && lat > 1.8 && lat < 5.5;
-      });
-      if (t) { onTrunk(t, px, pz, 9, 1, true); headN++; continue; }
-      const gx = px + (-uz / ul) * sd * 2.6, gz = pz + (ux / ul) * sd * 2.6;
-      if (onStump(gx, gz, (uz / ul) * sd, -(ux / ul) * sd, 9, 1, true)) headN++;
+    const m1 = at(5), ul = Math.hypot(m1.x - h0.x, m1.z - h0.z) || 1, ux = (m1.x - h0.x) / ul, uz = (m1.z - h0.z) / ul;
+    const posts = { P58: [-1, 1], P59: [1] }[id] || [];
+    for (const sd of posts) { // a rotten post either side of the gap, 2.9 m out from the road's middle
+      const px = h0.x + ux * 2.9 - uz * sd * 1.5, pz = h0.z + uz * 2.9 + ux * sd * 1.5;
+      const c = onStump(px, pz, -ux, -uz, 3, 0.5, true, true); if (c) c.threshold = true;
     }
-    for (const t of trunksNear(h0.x, h0.z, 9)) { if (headN >= 4) break; if (t.kind === 'giant' || t.kind === 'rimgiant' || clumps.some((c) => c.tree === t)) continue; onTrunk(t, h0.x, h0.z, 5 + Math.floor(rng() * 3), 0); headN++; }
-    // along: the farthest host within reach that the last clump can see; failing that, a stump at the nearest step
-    // (the walk starts from the mouth's farther stump, or the head's nearest trunk)
-    const mouth = clumps.slice(c0).filter((c) => c.host === 'stump').sort((a, b) => b.at - a.at)[0];
-    let last = mouth || clumps[c0] || { x: h0.x, z: h0.z, at: 0 }, s = last.at;
+    for (const th of (veg.thresholds || []).filter((t) => t.spur === id)) { // the cut end of each log, toward the gap
+      const x = th.x - th.tx * 0.15, z = th.z - th.tz * 0.15;
+      clumps.push({ spur: id, x, y: th.y + th.r * 1.2, z, nx: -ux, nz: -uz, n: 3, host: 'log', at: 0.5, threshold: true });
+    }
+    let knot = null;
+    for (const sk of [6.5, 7, 6, 7.5, 5.5]) {
+      const p = at(sk);
+      const t = trunksNear(p.x, p.z, 2.6).find((t) => t.kind !== 'giant' && t.kind !== 'rimgiant');
+      if (t) { knot = onTrunk(t, p.x, p.z, 8, sk); knot.knot = true; break; }
+      for (const sd of [1, -1]) { knot = onStump(p.x - p.tz * sd * 1.2, p.z + p.tx * sd * 1.2, p.tz * sd, -p.tx * sd, 8, sk); if (knot) { knot.knot = true; break; } }
+      if (knot) break;
+    }
+    // along: from the knot, the farthest host within reach that the last clump can see; failing that, a stump
+    let last = knot || clumps[clumps.length - 1] || { x: h0.x, z: h0.z, at: 0 }, s = last.at;
     let lastBlk = [];
     while (s < len - 3) {
       let placed = null;
@@ -163,7 +163,9 @@ export async function build(ctx) {
       m4.compose(v3, q, sc); shelves.setMatrixAt(k, m4);
       col.copy(COL).lerp(COL2, rng()).multiplyScalar(0.8 + rng() * 0.35); shelves.setColorAt(k, col); k++;
     }
-    halo.push(c.x + c.nx * 0.12, c.y + (c.gate ? 0.6 : 0.12 * c.n * 0.5), c.z + c.nz * 0.12); haloI.push(c.gate ? 3.6 : c.n >= 4 ? 2.6 : 1.3, rng()); // (a head's knot reads from 20 m down the road)
+    // its halo: a few small points in a cluster round the shelves, not one round glow (one read as a lamp, or as water)
+    const hn = c.knot ? 5 : c.threshold ? 2 : 3, hi = c.knot ? 1.6 : c.threshold ? 0.8 : 1.0;
+    for (let i = 0; i < hn; i++) { halo.push(c.x + c.nx * 0.1 + (rng() - 0.5) * 0.3, c.y + (rng() - 0.2) * 0.12 * c.n, c.z + c.nz * 0.1 + (rng() - 0.5) * 0.3); haloI.push(hi, rng()); }
   }
   shelves.instanceMatrix.needsUpdate = true; shelves.instanceColor.needsUpdate = true;
   shelves.computeBoundingSphere();
@@ -206,7 +208,7 @@ export async function build(ctx) {
         gl_Position = projectionMatrix * mvPosition;
         float d = max(-mvPosition.z, 0.5);
         vI = aI.x * uGlow * (0.85 + 0.15 * sin(uTime * 0.37 + aI.y * 6.283)) * smoothstep(1.0, 4.0, d); // (none in the face)
-        gl_PointSize = clamp(1.2 * uScale / d, 3.0, 110.0);
+        gl_PointSize = clamp(0.55 * uScale / d, 2.0, 60.0);
         #include <fog_vertex>
       }`,
     fragmentShader: /* glsl */`
@@ -223,10 +225,11 @@ export async function build(ctx) {
   halos.name = 'v18-foxfire-halos'; halos.frustumCulled = false; halos.renderOrder = 21;
   ctx.scene.add(halos);
 
-  // a dim light at each head, low on the mouth's trunks: the ground and the bark there take a little of the green
+  // a dim light at each spur's knot, 6-7 m in: the ground and the bark there take a little of the green
   // (a light, not more emissive: the shelves glow but light nothing, and what tells a visitor the way opens here is the
-  // worn mouth and the gateposts' bark picked out green, which only a light does; three, each on only within 45 m)
-  const lamps = heads.map((h) => { const l = new THREE.PointLight(COL, 2.6, 11, 2); l.position.set(h.x, T.heightAt(h.x, h.z) + 0.7, h.z); ctx.scene.add(l); return l; });
+  // light down the mouth picking out the bark green, which only a light does; three, each on only within 45 m)
+  const knots = clumps.filter((c) => c.knot);
+  const lamps = knots.map((k) => { const l = new THREE.PointLight(COL, 2.2, 8, 2); l.position.set(k.x + k.nx * 0.5, k.y + 0.4, k.z + k.nz * 0.5); ctx.scene.add(l); return l; });
 
   const W = ctx.landmarks.wood, C = new Float64Array(clumps.flatMap((c) => [c.x, c.z]));
   ctx.registerUpdate((dt, t) => {
@@ -240,7 +243,7 @@ export async function build(ctx) {
     let near = Infinity; for (let i = 0; i < C.length; i += 2) near = Math.min(near, (C[i] - cx) ** 2 + (C[i + 1] - cz) ** 2);
     const on = near < 120 * 120;
     shelves.visible = halos.visible = on; if (stumpMesh) stumpMesh.visible = on;
-    lamps.forEach((l, i) => { l.visible = (heads[i].x - cx) ** 2 + (heads[i].z - cz) ** 2 < 45 * 45; l.intensity = 2.6 * g * breath; });
+    lamps.forEach((l, i) => { l.visible = (knots[i].x - cx) ** 2 + (knots[i].z - cz) ** 2 < 45 * 45; l.intensity = 2.2 * g * breath; });
   }, { pos: new THREE.Vector3(W.x, 0, W.z - 40), near: 180, hz: 0 });
   ctx.log?.(`foxfire: ${clumps.length} clumps (${nShelf} shelves, ${stumps.length} stumps) on ${heads.length} spurs`);
 }

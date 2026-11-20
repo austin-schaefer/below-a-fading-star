@@ -1,8 +1,8 @@
 #!/usr/bin/env node
 // v18-F1: the wood's three spurs (routes.js P57-P59) and the foxfire that is their only mark (src/v18/foxfire.js).
 // Checks, from the live page on low: each spur leaves the wood way (P32) and ends at its doorstep (src/v18/plan.js
-// SPURS, within 3 m); each has a knot of foxfire at its head (at least four clumps within 9 m, two of them on trunks or
-// stumps either side of the mouth); along it, every clump is within 14 m of the one before and in sight of it (the line
+// SPURS, within 3 m); its threshold carries foxfire (2+ clumps on its logs' ends or posts) and its knot is 5-8.5 m in, with
+// nothing else lit by the road; along it, every clump is within 14 m of the one before and in sight of it (the line
 // between them at a walker's knee to eye misses every trunk collider but the two hosts); from every 4 m of the spur a
 // clump is in sight within 16 m; no gnomon stands within 6 m of a spur past its head (no signpost: foxfire only); no
 // stump stands on a tread; the foxfire's cost (draw calls, triangles). The roads-test's sight rule skips the spurs;
@@ -46,13 +46,17 @@ const res = await page.evaluate(async () => {
     if (!L) { out.push({ id, missing: true }); continue; }
     const pts = L.lines[0].map((s) => [s[0], s[1]]), head = pts[0], end = pts[pts.length - 1];
     const cl = F.clumps.filter((c) => c.spur === id).sort((a, b) => a.at - b.at);
-    const knot = cl.filter((c) => Math.hypot(c.x - head[0], c.z - head[1]) < 9);
-    const mouth = knot.filter((c) => c.host === 'stump').length;
+    // round three: the threshold's clumps (on its logs' cut ends or its posts), the knot 5-8.5 m in, and nothing else by
+    // the road (within 3.5 m of P32's line and 12 m of the head)
+    const P32l = P32.lines[0].map((q) => [q[0], q[1]]);
+    const knot = cl.filter((c) => c.threshold);
+    const mouth = cl.filter((c) => c.knot && c.at >= 5 && c.at <= 8.5 && c.n >= 6).length;
+    const roadside = cl.filter((c) => !c.threshold && Math.hypot(c.x - head[0], c.z - head[1]) < 12 && segD(c.x, c.z, P32l) < 3.5).map((c) => `(${c.x.toFixed(1)},${c.z.toFixed(1)})`);
     // the chain
     // (every clump past the knot is seen from one before it, within 14 m: the knot's two mouth stumps are one station)
     const breaks = [];
     for (const b of cl) {
-      if (knot.includes(b)) continue;
+      if (b.threshold || b.knot) continue;
       const before = cl.filter((a) => a !== b && a.at <= b.at);
       if (!before.some((a) => Math.hypot(a.x - b.x, a.z - b.z) <= 14 && sees(a, b))) { const a = before[before.length - 1]; breaks.push(`${a ? a.at.toFixed(0) : '?'}->${b.at.toFixed(0)} (${a ? Math.hypot(a.x - b.x, a.z - b.z).toFixed(1) : '?'} m)`); }
     }
@@ -69,7 +73,7 @@ const res = await page.evaluate(async () => {
     }
     const gnomons = fp.roads.gnomons.filter((g) => g.visible && Math.hypot(g.x - head[0], g.z - head[1]) > 10 && segD(g.x, g.z, pts) < 6).map((g) => `(${g.x.toFixed(0)},${g.z.toFixed(0)})`);
     out.push({ id, len: +L.length.toFixed(0), headOnRoad: +segD(head[0], head[1], P32.lines[0].map((q) => [q[0], q[1]])).toFixed(2), endD: +Math.hypot(end[0] - ends[id].to.x, end[1] - ends[id].to.z).toFixed(2),
-      clumps: cl.length, knot: knot.length, mouth, breaks, blind, samples: Math.ceil(s / 4), gnomons });
+      clumps: cl.length, knot: knot.length, mouth, roadside, breaks, blind, samples: Math.ceil(s / 4), gnomons });
   }
   // stumps on a tread
   const onTread = F.stumps.filter((st) => { const h = fp.paths.leadAt(st.x, st.z); return h && h.d < 0.4 + 0.3; }).map((st) => `(${st.x.toFixed(1)},${st.z.toFixed(1)})`);
@@ -88,7 +92,8 @@ else {
     if (s.missing) { check(false, `${s.id}: the spur is traced`); continue; }
     check(s.headOnRoad < 2.5, `${s.id}: leaves the wood way (its head on P32)`, `${s.headOnRoad} m from P32's line, ${s.len} m long`);
     check(s.endD < 3, `${s.id}: ends at its doorstep (the plan's SPURS)`, `${s.endD} m short`);
-    check(s.knot >= 4 && s.mouth >= 1, `${s.id}: a knot of foxfire at its head (4+ clumps within 9 m, a stump at the mouth)`, `${s.knot} clumps, ${s.mouth} on stumps; ${s.clumps} on the spur`);
+    check(s.knot >= 2 && s.mouth === 1, `${s.id}: its threshold marked (2+ clumps on its logs or posts) and its knot 5-8.5 m in`, `${s.knot} on the threshold, ${s.mouth} knot; ${s.clumps} on the spur`);
+    check(!s.roadside.length, `${s.id}: no foxfire by the road but the threshold's (within 3.5 m of P32, 12 m of the head)`, s.roadside.join(' ') || 'none');
     check(!s.breaks.length, `${s.id}: each clump within 14 m of the last and in sight of it`, s.breaks.slice(0, 6).join(' ') || 'unbroken');
     check(!s.blind.length, `${s.id}: a clump in sight within 16 m from every 4 m of it`, `${s.samples} samples, ${s.blind.length} blind ${s.blind.slice(0, 6).join(' ')}`);
     check(!s.gnomons.length, `${s.id}: no gnomon along it (foxfire is its only mark)`, s.gnomons.join(' ') || 'none');

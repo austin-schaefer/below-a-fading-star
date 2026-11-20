@@ -833,7 +833,7 @@ export function buildTrees(ctx, ground, mats) {
     reach: { ...reach.stats, noShadow: reachNoShadow }, // v18-F1
   };
   const trunkOf = (t) => variants[t.v].trunkR * (t.s || 1); // v18-F1: a trunk's radius at its foot
-  return { trees, batch, update, stats, fade, deadSpots, fallenSpots, giants, variantNames, trunkOf };
+  return { trees, batch, update, stats, fade, deadSpots, fallenSpots, giants, variantNames, trunkOf, thresholds: reach.thresholds };
 }
 
 // ---------- Toadstools ----------
