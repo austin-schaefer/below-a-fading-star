@@ -29,11 +29,11 @@ export const GROVE = { x: -198, z: 22, r: 22 };
 export const STILTERS = {
   leash: 34, near: 5.5, keep: 7, ring: 8, gap: 1.6,
   list: [
-    { a: 0.6, d: 12, h: 12.5, legs: 2 },
-    { a: 2.3, d: 15, h: 10.5, legs: 3 },
-    { a: 3.6, d: 10, h: 11.5, legs: 2 },
-    { a: 5.0, d: 16, h: 9.5, legs: 2 },
-    { a: 4.3, d: 19, h: 13, legs: 3, asleep: true },
+    { a: 0.6, d: 12, h: 12.5, legs: 3, lean: [0.6, -0.3] },
+    { a: 2.3, d: 15, h: 11, legs: 3, prop: true, lean: [-0.8, 0.2] },
+    { a: 3.6, d: 10, h: 13, legs: 3, lean: [0.2, 0.5] },
+    { a: 5.0, d: 16, h: 10, legs: 2, lean: [0.9, 0.4] },
+    { a: 4.3, d: 19, h: 12, legs: 3, asleep: true, lean: [-0.4, -0.4] },
   ],
 };
 // F4: the moths at the glass, against a stand-in for the glasshouse until F2's is in: a ring of glass of radius r round

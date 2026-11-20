@@ -83,89 +83,74 @@ function branch(sk, rng, start, dir, len, r, level, maxLevel) {
 
 export function growStilter(rng, spec) {
   const H = spec.h, asleep = !!spec.asleep;
-  const sk = { limbs: [], leaves: [], moss: [], feet: [], height: H, crown: V(0, H * 0.82, 0) };
-  const bodyY = H * 0.64, bodyR = 0.7 + H * 0.02;
-  const legR = 0.4 + H * 0.02;
-  const spread = 1.4 + H * 0.055;
+  const sk = { limbs: [], leaves: [], moss: [], feet: [], height: H, crown: V(0, H * 0.86, 0) };
+  const [lx, lz] = spec.lean || [0, 0];
+  // where the boles meet, high up (the asleep one sunk low, into a fork of its own roots)
+  const jy = asleep ? H * 0.3 : H * (0.76 + rng() * 0.06);
+  const J = V(lx, jy, lz);
+  const legR = asleep ? 0.5 + H * 0.02 : 0.24 + H * 0.013;
+  const spread = asleep ? 2.6 + H * 0.05 : 0.9 + H * 0.06;
   const n = spec.legs;
-  // legs: boles from the ground, bowed out at the knee, meeting under the body
+  // the boles: long, thin, a close clump of trunks, each a little bowed, flared at the foot; with `prop` the last is a
+  // thinner stay set further out and leaning in
   for (let k = 0; k < n; k++) {
-    const a = n === 2 ? (k ? 0 : Math.PI) + (rng() - 0.5) * 0.4 : Math.PI / 2 + (k * 2 * Math.PI) / 3 + (rng() - 0.5) * 0.3;
-    const fx = Math.cos(a) * spread, fz = Math.sin(a) * spread * (n === 2 ? 0.6 : 1) + (n === 2 ? (rng() - 0.5) * 0.8 : 0);
-    sk.feet.push({ x: fx, z: fz, r: legR * 1.5 });
-    const foot = V(fx, -0.6, fz), hip = V(fx * 0.22, bodyY - 0.5, fz * 0.22 - 0.1);
-    const knee = V(fx * 0.92, bodyY * 0.45, fz * 0.92 - 0.3);
-    const pts = bez(foot, knee, hip, 12, (t) => legR * (1 - 0.3 * t) * (1 + 0.9 * Math.exp(-Math.max(t * bodyY, 0) * 1.6)), 0.2, rng, 0.42);
+    const prop = spec.prop && k === n - 1;
+    const a = (k / n) * Math.PI * 2 + 0.6 + (rng() - 0.5) * 0.7;
+    const sp = spread * (prop ? 1.9 : 0.8 + rng() * 0.4);
+    const fx = Math.cos(a) * sp, fz = Math.sin(a) * sp;
+    const r0 = legR * (prop ? 0.6 : 0.9 + rng() * 0.25);
+    sk.feet.push({ x: fx, z: fz, r: r0 * 1.6 });
+    const foot = V(fx, -0.5, fz), top = J.clone().add(V(Math.cos(a) * 0.25, -0.4, Math.sin(a) * 0.25));
+    const mid = foot.clone().lerp(top, 0.45).add(V(Math.cos(a + 1.3) * (0.3 + rng() * 0.5), 0, Math.sin(a + 1.3) * (0.3 + rng() * 0.5)));
+    const pts = bez(foot, mid, top, asleep ? 6 : 14, (t) => r0 * (1 - 0.45 * t) * (1 + 1.0 * Math.exp(-Math.max(t * jy, 0) * 1.4)), 0.16, rng, asleep ? 0.2 : 0.3);
     sk.limbs.push({ pts, level: 0 });
-    // a burl or two on the bole, and a snapped stub: what a trunk carries
-    for (let b = 0; b < 2; b++) {
-      const q = pts[3 + Math.floor(rng() * 6)], ba = rng() * Math.PI * 2, br = q.r * (0.45 + rng() * 0.25);
-      sk.limbs.push({ pts: [{ x: q.x, y: q.y, z: q.z, r: br }, { x: q.x + Math.cos(ba) * q.r * 0.8, y: q.y + 0.1, z: q.z + Math.sin(ba) * q.r * 0.8, r: br * 0.9, wob: 0.2 }], level: 1, cap: true });
-    }
-    { const q = pts[5 + Math.floor(rng() * 4)], ba = a + (rng() - 0.5) * 1.5;
-      sk.limbs.push({ pts: [{ x: q.x, y: q.y, z: q.z, r: q.r * 0.35 }, { x: q.x + Math.cos(ba) * 0.9, y: q.y + 0.55, z: q.z + Math.sin(ba) * 0.9, r: q.r * 0.22 }], level: 1, cap: true }); }
-    // roots: short buttresses into the ground, as the trees'
-    for (let r = 0; r < 3; r++) {
-      const ra = a + (r - 1) * 1.1 + (rng() - 0.5) * 0.5, rp = [];
-      for (let i = 0; i <= 3; i++) {
-        const t = i / 3;
-        rp.push({ x: fx + Math.cos(ra) * (legR * 0.5 + t * legR * 2.4), y: 0.6 * (1 - t) - 0.35 * t, z: fz + Math.sin(ra) * (legR * 0.5 + t * legR * 2.4), r: legR * 0.42 * (1 - 0.7 * t) });
+    // roots flared at the foot, as the trees' (the asleep one's many, its boles grown over)
+    for (let r = 0; r < (asleep ? 5 : 3); r++) {
+      const ra = a + (r - 1) * (asleep ? 0.8 : 1.2) + (rng() - 0.5) * 0.6, rp = [], L = r0 * (asleep ? 2.2 : 2.6);
+      for (let q = 0; q <= 3; q++) {
+        const t = q / 3;
+        rp.push({ x: fx + Math.cos(ra) * (r0 * 0.4 + t * L), y: (asleep ? 1.1 : 0.7) * (1 - t) * (1 - t * 0.3) - 0.35 * t, z: fz + Math.sin(ra) * (r0 * 0.4 + t * L), r: r0 * (asleep ? 0.32 : 0.5) * (1 - 0.75 * t), wob: 0.2 });
       }
       sk.limbs.push({ pts: rp, level: 2, root: true });
     }
+    // a burl and a snapped stub, as a trunk carries
+    const q = pts[Math.floor(pts.length * (0.3 + rng() * 0.4))], ba = rng() * Math.PI * 2;
+    sk.limbs.push({ pts: [{ x: q.x, y: q.y, z: q.z, r: q.r * 0.5 }, { x: q.x + Math.cos(ba) * 0.7, y: q.y + 0.45, z: q.z + Math.sin(ba) * 0.7, r: q.r * 0.25 }], level: 1, cap: true });
   }
-  // the body: a gnarled bole, thick, a little forward
+  // the body: a small hanging burl, a wasps' nest under the crown where the boles meet
+  const bR = asleep ? 1.0 : 0.5 + H * 0.02;
   sk.limbs.push({ pts: [
-    { x: 0, y: bodyY - 1.1, z: -0.05, r: bodyR * 0.75, wob: 0.2 },
-    { x: 0.05, y: bodyY - 0.2, z: 0, r: bodyR * 1.0, wob: 0.22 },
-    { x: -0.04, y: bodyY + 0.7, z: 0.08, r: bodyR * 1.05, wob: 0.2 },
-    { x: 0, y: bodyY + 1.5, z: 0.12, r: bodyR * 0.85, wob: 0.18 },
-    { x: 0.03, y: bodyY + 2.1, z: 0.08, r: bodyR * 0.55, wob: 0.15 },
-  ], level: 0, cap: true });
-  // a leader on up, as a trunk would go on
-  sk.limbs.push({ pts: bez(V(0.03, bodyY + 2.0, 0.08), V(-0.2, H * 0.82, -0.1), V(0.1 + (rng() - 0.5) * 0.6, H * 0.97, -0.2), 5, (t) => bodyR * 0.5 * (1 - 0.8 * t), 0.12, rng, 0.2), level: 1 });
-  // the face: a burl on the body's front, its two hollows and a split under them, turned down at the ground before it
-  const fy = bodyY + 0.75, fz = bodyR * 1.0;
-  sk.limbs.push({ pts: [{ x: 0, y: fy + 0.05, z: fz * 0.4, r: bodyR * 0.5, wob: 0.15 }, { x: 0, y: fy - 0.05, z: fz * 0.85, r: bodyR * 0.48, wob: 0.12 }, { x: 0, y: fy - 0.15, z: fz * 1.05, r: bodyR * 0.36, wob: 0.1 }], level: 1, cap: true, burl: true });
-  sk.face = { y: fy - 0.08, z: fz * 1.05 + bodyR * 0.3, tilt: 0.5, gap: bodyR * 0.4, eyeR: bodyR * 0.2, closed: asleep };
-  // arms: from the shoulders out and up, held like boughs, a hand of twigs and leaves at the end
-  const sh = bodyY + 1.5;
-  for (const s of [-1, 1]) {
-    const el = 0.75 + rng() * 0.25, reach = H * (0.17 + rng() * 0.05);
-    const shoulder = V(s * bodyR * 0.75, sh, 0.05);
-    const elbow = shoulder.clone().add(V(s * reach * Math.cos(el), reach * Math.sin(el), 0.2 + rng() * 0.5));
-    const wrist = elbow.clone().add(V(s * H * (0.09 + rng() * 0.04), H * (0.12 + rng() * 0.05), (rng() - 0.3) * 0.8));
-    const armR = legR * 0.72;
-    const arm = bez(shoulder, elbow.clone().add(V(0, -0.4, 0)), wrist, 8, (t) => armR * (1 - 0.5 * t), 0.12, rng, 0.2);
-    sk.limbs.push({ pts: arm, level: 1 });
-    // boughs all along the arm, up and out, so the crown is a canopy over it and not a fist of leaves
-    for (let k = 0; k < 4; k++) {
-      const q = arm[2 + k], a2 = (rng() - 0.5) * 1.2;
-      branch(sk, rng, V(q.x, q.y, q.z), V(s * (0.6 + rng() * 0.5), 0.3 + rng() * 0.35, Math.sin(a2) * 1.1).normalize(), H * (0.13 + rng() * 0.06), q.r * 0.55, 2, 3);
-    }
-    // the hand: five twigs splayed up and out
-    for (let f = 0; f < 3; f++) {
-      const fa = (f - 1) * 0.55;
-      const d = V(s * Math.sin(fa + 0.25 * s) * 0.8, 1, Math.cos(fa) * 0.3 + (rng() - 0.5) * 0.4).normalize();
-      branch(sk, rng, wrist.clone(), d, H * (0.09 + rng() * 0.05), armR * 0.42, 2, asleep ? 3 : 3);
-    }
-    // a bough or two off the forearm, as a limb would carry
-    const mid = elbow.clone().lerp(wrist, 0.4);
-    branch(sk, rng, mid, V(s * 0.8, 0.6, (rng() - 0.5) * 0.8).normalize(), H * 0.12, armR * 0.5, 2, 3);
+    { x: J.x, y: J.y + 0.4, z: J.z, r: bR * 0.6, wob: 0.2 },
+    { x: J.x + 0.05, y: J.y - 0.3, z: J.z + 0.05, r: bR, wob: 0.25 },
+    { x: J.x, y: J.y - 1.0, z: J.z, r: bR * 0.85, wob: 0.25 },
+    { x: J.x - 0.05, y: J.y - 1.5, z: J.z - 0.05, r: bR * 0.4, wob: 0.2 },
+  ], level: 0, cap: true, burl: true });
+  // the crown: an ordinary tree's, one mass: a leader and limbs up and out from the meeting, branching to leaves
+  const C = J.clone().add(V(0, 0.3, 0));
+  sk.crown.set(J.x, asleep ? jy + H * 0.4 : jy + H * 0.12, J.z);
+  sk.limbs.push({ pts: bez(C, C.clone().add(V(0.3, (H - jy) * 0.5, 0)), V(J.x + (rng() - 0.5), H, J.z + (rng() - 0.5)), 5, (t) => legR * 1.1 * (1 - 0.85 * t), 0.12, rng, 0.2), level: 1 });
+  const nPrim = asleep ? 7 : 6 + Math.floor(rng() * 3);
+  for (let k = 0; k < nPrim; k++) {
+    const az = k * 2.39996 + rng() * 0.8, el = 0.1 + rng() * 0.6;
+    const at = C.clone().add(V(0, (asleep ? H * 0.5 : (H - jy) * 0.6) * (k / nPrim), 0));
+    branch(sk, rng, at, V(Math.cos(az) * Math.cos(el), Math.sin(el), Math.sin(az) * Math.cos(el)), H * (asleep ? 0.3 : 0.3) * (0.8 + rng() * 0.4), legR * 0.75, 1, 3);
   }
-  // a few short boughs off the leader, so the top is a crown and not a stalk
-  for (let k = 0; k < 5; k++) {
-    const y = lerp(bodyY + 2.3, H * 0.92, k / 4), a = k * 2.4 + rng();
-    branch(sk, rng, V(0, y, -0.1), V(Math.cos(a), 0.55, Math.sin(a)).normalize(), H * 0.13, bodyR * 0.22, 2, 3);
-  }
-  // the asleep one: overgrown, with a nest of sticks and three eggs in the fork of its arms
   if (asleep) {
-    sk.nest = { x: 0, y: sh + 0.55, z: -0.15, r: bodyR * 0.95 };
-    for (let k = 0; k < 6; k++) {
-      const a = rng() * Math.PI * 2;
-      sk.moss.push({ p: V(Math.cos(a) * bodyR * 0.8, bodyY + rng() * 1.6, Math.sin(a) * bodyR * 0.8), len: 1.4 + rng() * 2.2, w: 0.5 + rng() * 0.5, ang: a });
-    }
+    // its own trunk on up from the fork, for the crown it now is
+    sk.limbs.push({ pts: bez(J.clone(), J.clone().add(V(0.4, H * 0.3, 0.2)), J.clone().add(V(-0.3, H * 0.62, 0)), 7, (t) => bR * 0.8 * (1 - 0.6 * t), 0.18, rng, 0.25), level: 0 });
   }
+  // the hanging limb: out from the meeting and down among the boles, bent the wrong way, its end a knot that might be
+  // a face, turned to whoever the stilter faces (+z)
+  const out = asleep ? 1.6 : 1.8 + H * 0.12, drop = asleep ? 0.6 : jy * (0.38 + rng() * 0.08);
+  const s0 = J.clone().add(V(0.25, -0.2, 0.4));
+  const e = V(J.x + 0.2, jy - drop, J.z + out);
+  const hang = bez(s0, s0.clone().add(V(0.15, 0.2, out * 1.05)), e, 10, (t) => legR * (0.9 - 0.45 * t), 0.12, rng, 0.12);
+  sk.limbs.push({ pts: hang, level: 1 });
+  for (let k = 0; k < 2; k++) { const q = hang[3 + k * 3]; sk.moss.push({ p: V(q.x, q.y - q.r, q.z), len: 0.8 + rng() * 1.4, w: 0.4, ang: rng() * 3 }); }
+  const kr = legR * 0.75;
+  sk.limbs.push({ pts: [{ x: e.x, y: e.y + 0.25, z: e.z - 0.1, r: kr * 0.9, wob: 0.15 }, { x: e.x, y: e.y - 0.05, z: e.z + 0.05, r: kr * 1.15, wob: 0.15 }, { x: e.x, y: e.y - 0.35, z: e.z + 0.05, r: kr * 0.6, wob: 0.12 }], level: 1, cap: true, burl: true });
+  sk.face = { x: e.x, y: e.y - 0.02, z: e.z + kr * 1.05, tilt: 0.55, gap: kr * 0.42, eyeR: kr * 0.2, rim: kr * 0.12, closed: asleep };
+  if (asleep) sk.nest = { x: J.x, y: jy + 0.5, z: J.z - 0.2, r: bR * 0.9 };
   sk.spheres = boundSpheres(sk);
   return sk;
 }
@@ -202,7 +187,7 @@ export function meshStilter(sk, colors, rng, detail = 'hi') {
   const F = sk.face, ct = Math.cos(F.tilt), st = Math.sin(F.tilt);
   const n = V(0, -st, ct), up = V(0, ct, st), side = V(1, 0, 0);
   const disc = (cx, cy, rx, ry, depth, col, rim) => {
-    const c = V(0, F.y, F.z).addScaledVector(side, cx).addScaledVector(up, cy);
+    const c = V(F.x || 0, F.y, F.z).addScaledVector(side, cx).addScaledVector(up, cy);
     const ic = gb.vert(c.x - n.x * depth, c.y - n.y * depth, c.z - n.z * depth, n.x, n.y, n.z, col[0], col[1], col[2], 0.2, 0.2, ex0);
     const ring = [], outer = [];
     const seg = 10;
@@ -210,7 +195,7 @@ export function meshStilter(sk, colors, rng, detail = 'hi') {
       const a = (k / seg) * Math.PI * 2, ca = Math.cos(a), sa = Math.sin(a);
       const p = c.clone().addScaledVector(side, ca * rx).addScaledVector(up, sa * ry);
       ring.push(gb.vert(p.x, p.y, p.z, n.x, n.y, n.z, col[0], col[1], col[2], 0.2, 0.2, ex0));
-      const o = c.clone().addScaledVector(side, ca * (rx + 0.07)).addScaledVector(up, sa * (ry + 0.06)).addScaledVector(n, 0.04);
+      const rw = F.rim || 0.07, o = c.clone().addScaledVector(side, ca * (rx + rw)).addScaledVector(up, sa * (ry + rw * 0.85)).addScaledVector(n, rw * 0.5);
       outer.push(gb.vert(o.x, o.y, o.z, n.x, n.y, n.z, rim[0], rim[1], rim[2], 0.2, 0.2, ex0));
     }
     for (let k = 0; k < seg; k++) {
@@ -363,7 +348,9 @@ export function buildStilters(ctx, { leadAt = null, exitAt = null, trees = [] } 
     return false;
   };
   const faceYaw = (x, z) => Math.atan2(cam.x - x, cam.z - z);
-  const fine = (st, x, z) => inLeash(x, z) && hyp(x - cam.x, z - cam.z) >= S.keep && offTrack(x, z) && offTrees(x, z) && dry(x, z) && apart(x, z, st);
+  // never to where a foot of it would stand within 3.5 m of the visitor
+  for (const st of list) st.reach = Math.max(...st.sk.feet.map((f) => hyp(f.x, f.z) + f.r));
+  const fine = (st, x, z) => inLeash(x, z) && hyp(x - cam.x, z - cam.z) >= Math.max(S.keep, st.reach + 3.5) && offTrack(x, z) && offTrees(x, z) && dry(x, z) && apart(x, z, st);
 
   const ev = (st, kind, from) => {
     st.mesh.updateMatrixWorld();
@@ -371,6 +358,41 @@ export function buildStilters(ctx, { leadAt = null, exitAt = null, trees = [] } 
   };
 
   let cool = 0, ringHold = 0, ringed = false;
+  // where each stood: a ring of pressed bare earth with root-holes at every foot it lifted, so the ground shows a walk
+  const MARKS = 48, markGeo = new THREE.PlaneGeometry(1, 1).rotateX(-Math.PI / 2);
+  const markMat = new THREE.ShaderMaterial({
+    uniforms: THREE.UniformsUtils.merge([THREE.UniformsLib.fog, {}]),
+    vertexShader: `varying vec2 vUv;\n#include <fog_pars_vertex>\nvoid main() { vUv = uv; vec3 transformed = position; vec4 mvPosition = modelViewMatrix * instanceMatrix * vec4(transformed, 1.0); gl_Position = projectionMatrix * mvPosition;\n#include <fog_vertex>\n}`,
+    fragmentShader: `varying vec2 vUv;\n#include <fog_pars_fragment>\nvoid main() {
+      vec2 c = vUv * 2.0 - 1.0; float r = length(c); if (r > 1.0) discard;
+      float a = atan(c.y, c.x), n = fract(sin(dot(floor(c * 7.0), vec2(12.9898, 78.233))) * 43758.5453);
+      float earth = smoothstep(1.0, 0.72, r + n * 0.12) * smoothstep(0.12, 0.34, r);
+      float k = fract(a / 6.2831853 * 7.0 + n * 0.15), hole = smoothstep(0.16, 0.04, abs(k - 0.5)) * smoothstep(0.13, 0.02, abs(r - 0.6));
+      vec3 col = mix(vec3(0.075, 0.058, 0.042) * (0.8 + 0.4 * n), vec3(0.012, 0.009, 0.007), hole);
+      float al = max(earth * 0.78, hole * 0.95); if (al < 0.02) discard;
+      gl_FragColor = vec4(col, al);\n#include <fog_fragment>\n}`,
+    fog: true, transparent: true, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2,
+  });
+  const marks = new THREE.InstancedMesh(markGeo, markMat, MARKS);
+  marks.name = 'stilter-marks'; marks.count = 0; marks.frustumCulled = false; marks.renderOrder = 2;
+  scene.add(marks);
+  let markNext = 0;
+  const mq = new THREE.Quaternion(), mUp = new THREE.Vector3(0, 1, 0), mN = new THREE.Vector3(), mM = new THREE.Matrix4(), mP = new THREE.Vector3(), mS = new THREE.Vector3();
+  const leaveMarks = (st) => {
+    for (const { c } of st.colliders) {
+      terrain.normalAt(c.x, c.z, mN); mq.setFromUnitVectors(mUp, mN).multiply(new THREE.Quaternion().setFromAxisAngle(mUp, rng() * 6.28));
+      mP.set(c.x, ground(c.x, c.z) + 0.04, c.z); const sc = c.r * 2.4; mS.set(sc, 1, sc);
+      marks.setMatrixAt(markNext, mM.compose(mP, mq, mS));
+      markNext = (markNext + 1) % MARKS; marks.count = Math.max(marks.count, markNext === 0 ? MARKS : markNext);
+    }
+    marks.instanceMatrix.needsUpdate = true;
+  };
+  // the way the visitor came: where they stood some 8 to 14 s ago
+  const trail = [], trailT = { t: 0 };
+  const cameFrom = () => {
+    for (let k = trail.length - 1; k >= 0; k--) { const [x, z] = trail[k]; if (hyp(x - cam.x, z - cam.z) > 4) return Math.atan2(x - cam.x, z - cam.z); }
+    return ctx.player.yaw;
+  };
   const state = { list, ring: null, steps: 0, rings: 0, frozen: false, why: { fine: 0, seen: 0 } };
 
   function step(st) {
@@ -394,10 +416,10 @@ export function buildStilters(ctx, { leadAt = null, exitAt = null, trees = [] } 
         tries.push([vx + Math.sin(a) * want, vz + Math.cos(a) * want]);
       }
     } else {
-      // round behind the visitor's back
-      const back = ctx.player.yaw; // the look is (-sin yaw, -cos yaw): behind is the bearing yaw itself
+      // into the way the visitor came, behind them
+      const back = cameFrom();
       for (let k = 0; k < 10; k++) {
-        const a = back + (rng() - 0.5) * 2.4, dd = 8.5 + rng() * 8;
+        const a = back + (rng() - 0.5) * 2.8, dd = 7.5 + rng() * 7;
         tries.push([vx + Math.sin(a) * dd, vz + Math.cos(a) * dd]);
       }
     }
@@ -405,7 +427,7 @@ export function buildStilters(ctx, { leadAt = null, exitAt = null, trees = [] } 
       const ny = faceYaw(x, z) + (rng() - 0.5) * 0.3;
       if (!fine(st, x, z)) { state.why.fine++; continue; }
       if (seenAt(x, z, st, ny)) { state.why.seen++; continue; }
-      st.x = x; st.z = z; st.yaw = ny;
+      leaveMarks(st); st.x = x; st.z = z; st.yaw = ny;
       place(st); st.steps++; state.steps++; ev(st, 'step', from);
       return true;
     }
@@ -431,8 +453,8 @@ export function buildStilters(ctx, { leadAt = null, exitAt = null, trees = [] } 
       for (let t = 0; t < 40; t++) {
         const a = base + (t ? (rng() - 0.5) * (0.4 + t * 0.04) : 0), rr = S.ring + (t ? (rng() - 0.3) * 3.5 : 0);
         const x = vx + Math.sin(a) * rr, z = vz + Math.cos(a) * rr;
-        if (hyp(x - vx, z - vz) < S.keep || !offTrack(x, z) || !offTrees(x, z) || !dry(x, z) || !clear(x, z)) continue;
-        st.x = x; st.z = z; st.yaw = faceYaw(x, z); place(st); st.steps++; state.steps++; ev(st, 'ring', from);
+        if (hyp(x - vx, z - vz) < Math.max(S.keep, st.reach + 3.5) || !offTrack(x, z) || !offTrees(x, z) || !dry(x, z) || !clear(x, z)) continue;
+        leaveMarks(st); st.x = x; st.z = z; st.yaw = faceYaw(x, z); place(st); st.steps++; state.steps++; ev(st, 'ring', from);
         taken.push([x, z]); placed.push({ i: st.i, a, r: rr });
         break;
       }
@@ -443,6 +465,7 @@ export function buildStilters(ctx, { leadAt = null, exitAt = null, trees = [] } 
 
   function update(dt) {
     if (state.frozen) return;
+    trailT.t -= dt; if (trailT.t <= 0) { trailT.t = 1; trail.push([cam.x, cam.z]); if (trail.length > 14) trail.shift(); }
     updateWide();
     const f = ctx.sky?.flicker, dark = f?.dark ?? 0;
     const vx = cam.x, vz = cam.z, inGrove = hyp(vx - GROVE.x, vz - GROVE.z) < GROVE.r + 8;
@@ -461,19 +484,36 @@ export function buildStilters(ctx, { leadAt = null, exitAt = null, trees = [] } 
     }
   }
   ctx.registerUpdate(update, { at: () => GROVE, near: 160, hz: 0 });
-  state.seenAt = seenAt; state.place = place; state.ringNow = ring;
+  state.seenAt = seenAt; state.place = place; state.ringNow = ring; state.marks = marks; state.cameFrom = cameFrom;
   return state;
 }
 
-// The study page (src/study/registry.js): one waking stilter and the asleep one, standing still.
+// The study page (src/study/registry.js): one waking stilter and the asleep one, standing still; and the lineup, two
+// of the wood's own trees (trees.js's deodand recipe) with three stilters between them at one scale, to judge whether
+// standing still they pass for trees.
 const studyOne = (k) => ({
-  id: `stilter${k ? '-asleep' : ''}`, name: k ? 'the asleep stilter' : 'a stilter', kind: 'creature', h: k ? 13 : 12.5, at: [GROVE.x, GROVE.z],
+  id: `stilter${k ? '-asleep' : ''}`, name: k ? 'the asleep stilter' : 'a stilter', kind: 'creature', h: 13, at: [GROVE.x, GROVE.z],
   build(ctx) {
     const spec = STILTERS.list[k ? 4 : 0];
     const { mesh } = makeStilter(ctx, spec, k ? 4 : 0);
     mesh.rotation.y = 0.5;
     ctx.scene.add(mesh);
-    return { at: (o) => o.set(0, 0, 0), face: () => 0.5, h: spec.h };
+    return { at: (o) => o.set(0, 0, 0), face: () => 0.5, h: 13 };
   },
 });
-export const study = [studyOne(0), studyOne(1)];
+const lineup = {
+  id: 'stilter-lineup', name: 'two wood trees and three stilters', kind: 'creature', h: 20, at: [GROVE.x, GROVE.z],
+  async build(ctx) {
+    const { studyRecipes } = await import('../vegetation/trees.js');
+    const deo = studyRecipes.find((r) => r.id === 'tree-deodand');
+    const row = [['tree', 0], ['stilter', 1], ['tree', 3], ['stilter', 3], ['stilter', 2]];
+    row.forEach(([kind, k], i) => {
+      const x = (i - 2) * 7.5;
+      const m = kind === 'tree' ? deo.build(ctx.makeRng(4200 + k), k, ctx) : makeStilter(ctx, STILTERS.list[k], k).mesh;
+      m.position.set(x, 0, (i % 2) * 3); m.rotation.y = 0.4 + i * 1.3;
+      ctx.scene.add(m);
+    });
+    return { at: (o) => o.set(0, 0, 0), h: 20 };
+  },
+};
+export const study = [studyOne(0), studyOne(1), lineup];

@@ -46,7 +46,13 @@ export async function build(ctx) {
   const woodTrees = ctx.woodTrees || [];
   const out = ctx.inhabitants = { exit, spurLead };
   if (P.get('stilters') !== '0') out.stilters = ctx.stilters = buildStilters(ctx, { leadAt, exitAt: () => exit, trees });
-  if (P.get('eyes') !== '0') out.eyes = buildEyes(ctx, { leadAt, woodTrees });
+  // the tracks the eyes keep beside: the wood way, and each spur (its lead when F1's is in, else its straight line)
+  const tracks = [LEADS.find((L) => L.id === 'P32')?.pts].filter(Boolean);
+  for (const sp of Object.values(SPURS)) {
+    const L = LEADS.find((D) => D.pts.some(([x, z]) => hyp(x - sp.to.x, z - sp.to.z) < 8));
+    tracks.push(L ? L.pts : [[sp.from.x, sp.from.z], [sp.to.x, sp.to.z]]);
+  }
+  if (P.get('eyes') !== '0') out.eyes = buildEyes(ctx, { leadAt, woodTrees, tracks });
   if (P.get('moths') !== '0') out.moths = buildMoths(ctx, { standin: P.get('mothpanes') === '1' });
   out.leadAt = leadAt;
 }

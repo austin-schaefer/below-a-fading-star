@@ -13,34 +13,32 @@ import { hyp } from '../noise.js';
 
 // kind: eye gap (m), height over the ground (m), eye size (m), count, colour (linear, pre-tonemap)
 export const EYE_KINDS = [
-  { id: 'small', gap: 0.07, y: 0.22, s: 0.035, n: 2, col: [1.5, 1.55, 1.05] },
-  { id: 'fox', gap: 0.12, y: 0.45, s: 0.045, n: 2, col: [1.7, 1.4, 0.7] },
-  { id: 'low', gap: 0.2, y: 0.12, s: 0.04, n: 2, col: [1.1, 1.6, 1.4], slant: 0.05 },
-  { id: 'high', gap: 0.1, y: 2.6, s: 0.04, n: 2, col: [1.6, 1.5, 1.25] },
-  { id: 'three', gap: 0.11, y: 0.6, s: 0.042, n: 3, col: [1.4, 1.6, 1.25] },
+  { id: 'small', gap: 0.09, y: 0.25, s: 0.06, n: 2, col: [1.5, 1.55, 1.05] },
+  { id: 'fox', gap: 0.14, y: 0.45, s: 0.07, n: 2, col: [1.7, 1.4, 0.7] },
+  { id: 'low', gap: 0.24, y: 0.15, s: 0.065, n: 2, col: [1.1, 1.6, 1.4], slant: 0.05 },
+  { id: 'high', gap: 0.12, y: 2.4, s: 0.065, n: 2, col: [1.6, 1.5, 1.25] },
+  { id: 'three', gap: 0.13, y: 0.6, s: 0.065, n: 3, col: [1.4, 1.6, 1.25] },
 ];
-const MAXW = 4, SHUT = 0.24; // watchers; radians off the look at which they shut
+const MAXW = 3, SHUT = 0.24; // watchers; radians off the look at which they shut (less on a narrow view)
 
-export function buildEyes(ctx, { leadAt = null, woodTrees = [] } = {}) {
+export function buildEyes(ctx, { leadAt = null, woodTrees = [], tracks = [] } = {}) {
   const { scene, terrain, camera, landmarks } = ctx;
   const rng = ctx.makeRng(18048);
-  const low = ctx.quality === 'low', W = low ? 3 : MAXW;
+  const low = ctx.quality === 'low', W = low ? 2 : MAXW;
   const wood = landmarks.wood;
   const offTrack = (x, z) => !leadAt || !leadAt(x, z);
   const dry = (x, z) => { const wl = terrain.waterLevelAt(x, z); return wl === null || terrain.heightAt(x, z) > wl + 0.3; };
 
-  // the sites: beside each spur's line, 4 to 14 m off it, and scattered through the old wood
+  // the sites: beside the tracks (the wood way and the spurs, `tracks` as polylines; the spurs' straight lines when none
+  // are given), 3.5 to 9 m off their line, so they are met 8 to 20 m from a visitor on the track
   const sites = [];
-  for (const sp of Object.values(SPURS)) {
-    const L = hyp(sp.to.x - sp.from.x, sp.to.z - sp.from.z), ux = (sp.to.x - sp.from.x) / L, uz = (sp.to.z - sp.from.z) / L;
-    for (let s = 6; s < L - 2; s += 3.5) for (const side of [-1, 1]) {
-      const off = 4 + rng() * 10;
-      sites.push([sp.from.x + ux * s - uz * off * side, sp.from.z + uz * s + ux * off * side, 'spur']);
+  const lines = tracks.length ? tracks : Object.values(SPURS).map((sp) => [[sp.from.x, sp.from.z], [sp.to.x, sp.to.z]]);
+  for (const pts of lines) for (let k = 0; k < pts.length - 1; k++) {
+    const [ax, az] = pts[k], [bx, bz] = pts[k + 1], L = hyp(bx - ax, bz - az), ux = (bx - ax) / L, uz = (bz - az) / L;
+    for (let s = 0; s < L; s += 3) for (const side of [-1, 1]) {
+      const off = 3.5 + rng() * 5.5;
+      sites.push([ax + ux * s - uz * off * side, az + uz * s + ux * off * side, 'track']);
     }
-  }
-  for (let k = 0; k < 260; k++) {
-    const a = rng() * Math.PI * 2, r = Math.sqrt(rng()) * (wood.r - 8);
-    sites.push([wood.x + Math.cos(a) * r, wood.z + Math.sin(a) * r, 'wood']);
   }
   // near a trunk is better (something peering round it); keep only the dry, off-track ones
   const good = sites.filter(([x, z]) => offTrack(x, z) && dry(x, z));
@@ -73,13 +71,13 @@ export function buildEyes(ctx, { leadAt = null, woodTrees = [] } = {}) {
         float open = uOpen[w];
         // the eyes apart by their gap, or by 4.5 px from their middle when that is more: a pair still reads as two at 40 m
         float dc = max(-(modelViewMatrix * vec4(position, 1.0)).z, 0.1), lo = length(aOff);
-        float k = lo > 0.0 ? max(1.0, 4.5 * dc / uScale / lo) : 1.0;
+        float k = lo > 0.0 ? max(1.0, 6.0 * dc / uScale / lo) : 1.0;
         vec3 transformed = position + aOff * k - vec3(0.0, uSink[w] * 0.35, 0.0);
         vec4 mvPosition = modelViewMatrix * vec4(transformed, 1.0);
         gl_Position = projectionMatrix * mvPosition;
         float depth = -mvPosition.z;
         vOpen = open; vC = aC;
-        gl_PointSize = aS <= 0.0 || open <= 0.01 ? 0.0 : clamp(aS * 4.0 * uScale / max(depth, 0.1), 5.0, 14.0);
+        gl_PointSize = aS <= 0.0 || open <= 0.01 ? 0.0 : clamp(aS * 4.0 * uScale / max(depth, 0.1), 7.0, 18.0);
         #include <fog_vertex>
       }`,
     fragmentShader: /* glsl */`
@@ -102,26 +100,27 @@ export function buildEyes(ctx, { leadAt = null, woodTrees = [] } = {}) {
   pts.name = 'v18-eyes'; pts.frustumCulled = false; pts.renderOrder = 21; pts.visible = false;
   scene.add(pts);
 
-  const fwd = new THREE.Vector3(), cam = camera.position, size = new THREE.Vector2();
+  const ndc = new THREE.Vector3(), fwd = new THREE.Vector3(), cam = camera.position, size = new THREE.Vector2();
   const watchers = [];
   for (let w = 0; w < W; w++) watchers.push({ w, mode: 'away', t: 2 + w * 3 + rng() * 4, kind: null, x: 0, z: 0, y: 0, open: 0, sink: 0, how: 'shut', blink: 3, site: null, opens: 0, shuts: 0 });
   let threeUsed = 0;
   const offLook = (x, y, z) => { const dx = x - cam.x, dy = y - cam.y, dz = z - cam.z, l = Math.hypot(dx, dy, dz) || 1; return Math.acos(Math.max(-1, Math.min(1, (fwd.x * dx + fwd.y * dy + fwd.z * dz) / l))); };
 
   function open(W0) {
-    // a site 15 to 40 m off, not within 0.5 rad of the look (it opens where the visitor is not quite looking), apart
-    // from the other watchers
-    for (let k = 0; k < 30; k++) {
+    // a site 8 to 20 m off, in the frame but toward its edge (it opens where the visitor is not quite looking: seen
+    // from the corner of the eye), apart from the other watchers
+    for (let k = 0; k < 40; k++) {
       const s = SITES[Math.floor(rng() * SITES.length)];
       const d = hyp(s.x - cam.x, s.z - cam.z);
-      if (d < 15 || d > 40) continue;
+      if (d < 8 || d > 20) continue;
       if (watchers.some((o) => o !== W0 && o.mode !== 'away' && hyp(o.x - s.x, o.z - s.z) < 10)) continue;
       // the kind: three only now and then, high only beside a trunk
       let kind = EYE_KINDS[Math.floor(rng() * 3)];
       if (s.trunk && rng() < 0.3) kind = EYE_KINDS[3];
       if (rng() < 0.08 && threeUsed < 1) { kind = EYE_KINDS[4]; threeUsed++; }
       const y = terrain.heightAt(s.x, s.z) + kind.y;
-      if (offLook(s.x, y, s.z) < 0.5) continue;
+      ndc.set(s.x, y, s.z).project(camera);
+      if (ndc.z > 1 || Math.abs(ndc.x) < 0.55 || Math.abs(ndc.x) > 0.9 || Math.abs(ndc.y) > 0.8) continue;
       W0.kind = kind; W0.x = s.x; W0.z = s.z; W0.y = y; W0.site = s; W0.mode = 'open'; W0.open = 0; W0.sink = 0; W0.blink = 2 + rng() * 5; W0.opens++;
       W0.how = rng() < 0.5 ? 'shut' : 'sink';
       // the eyes across the look from the visitor, the line between them square to it
@@ -155,10 +154,18 @@ export function buildEyes(ctx, { leadAt = null, woodTrees = [] } = {}) {
         let lid = Wt.open;
         if (Wt.blink < 0) { lid *= Math.min(1, Math.abs(Wt.blink + 0.09) / 0.09); if (Wt.blink < -0.18) Wt.blink = 2.5 + rng() * 5; }
         const d = hyp(Wt.x - cam.x, Wt.z - cam.z);
-        if (offLook(Wt.x, Wt.y, Wt.z) < SHUT || d < 11 || d > 48 || !inWood) { Wt.mode = 'shut'; Wt.shuts++; state.shut++; }
+        ndc.set(Wt.x, Wt.y, Wt.z).project(camera);
+        const centred = ndc.z < 1 && Math.abs(ndc.x) < 0.3 && Math.abs(ndc.y) < 0.6;
+        if (centred || offLook(Wt.x, Wt.y, Wt.z) < SHUT || d < 6) { Wt.mode = 'blinking'; Wt.tb = 0; Wt.shuts++; state.shut++; }
+        else if (d > 26 || !inWood) { Wt.mode = 'shut'; }
         Wt.lid = lid;
+      } else if (Wt.mode === 'blinking') {
+        // one slow blink, then shut (or sink)
+        Wt.tb += dt;
+        Wt.lid = 1 - 0.85 * Math.sin(Math.PI * Math.min(1, Wt.tb / 0.55));
+        if (Wt.tb >= 0.55) { Wt.mode = 'shut'; Wt.lid = 1; }
       } else {
-        if (Wt.how === 'sink') Wt.sink = Math.min(1, Wt.sink + dt / 0.35); else Wt.lid = Math.max(0, (Wt.lid ?? 1) - dt / 0.12);
+        if (Wt.how === 'sink') Wt.sink = Math.min(1, Wt.sink + dt / 0.6); else Wt.lid = Math.max(0, (Wt.lid ?? 1) - dt / 0.45);
         if ((Wt.how === 'sink' ? Wt.sink >= 1 : Wt.lid <= 0)) { Wt.mode = 'away'; Wt.t = 3 + rng() * 9; Wt.lid = 0; Wt.sink = 0; }
       }
       const lid = Wt.mode === 'away' ? 0 : Wt.how === 'sink' && Wt.mode === 'shut' ? 1 - Wt.sink * 0.6 : (Wt.lid ?? 0);

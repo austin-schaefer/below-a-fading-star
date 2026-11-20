@@ -6,7 +6,7 @@
 //   - none comes within 3 m of the visitor (the nearest foot's edge), none stands on a track (its middle or a foot);
 //   - after a gutter in the grove the waking ones ring the visitor, facing in, with a gap of at least 60 degrees
 //     toward the track out, and none stood within 3 m;
-//   - the eyes shut when looked at (a watcher opened 25 m off to the side, the look turned onto it).
+//   - the eyes shut when looked at (a watcher opened 10 to 18 m off to the side, the look turned onto it).
 // Twice: 1280x720 and the phone's 390x844 (its tall view is where a frame's edge is nearest), both on low.
 // Frames, in order (look, look away, look back; the ring in the dark and after): shots/wip/<prefix>-<q>-<view>-NN-*.png
 //   node tools/stilters-test.mjs <base> [prefix=v18-F4-stilters] [frames=low]   (frames: low,medium,phone or none)
@@ -28,7 +28,7 @@ async function run(view, q, frames) {
   page.setDefaultTimeout(600000);
   const errs = [];
   page.on('pageerror', (e) => errs.push(e.message));
-  await page.goto(`${base}/?q=${q}&pos=-196,31&yaw=0`, { waitUntil: 'load', timeout: 120000 });
+  await page.goto(`${base}/?q=${q}&pos=-187.6,41&yaw=0.55`, { waitUntil: 'load', timeout: 120000 });
   await page.waitForFunction(() => document.body.classList.contains('ready'), null, { timeout: 300000 });
   const has = await page.evaluate(() => !!window.__fp?.stilters);
   check(has, `${view}: the stilters are built`);
@@ -79,13 +79,13 @@ async function run(view, q, frames) {
           if ((now || p.seen) && dark < 0.5) M.inViewMoves.push({ i, t: +M.t.toFixed(2), from: [p.x, p.z].map((v) => +v.toFixed(1)), to: [s.x, s.z].map((v) => +v.toFixed(1)) });
           if (lead(s.x, s.z)) M.onTrack.push({ i, x: s.x, z: s.z });
         }
-        for (const { c } of s.colliders) M.minFoot = Math.min(M.minFoot, Math.hypot(c.x - cam.position.x, c.z - cam.position.z) - c.r);
+        if (moved) for (const { c } of s.colliders) M.minFoot = Math.min(M.minFoot, Math.hypot(c.x - cam.position.x, c.z - cam.position.z) - c.r); // where it stepped to (the visitor may walk up to one)
         p.x = s.x; p.z = s.z; p.yaw = s.yaw; p.seen = now;
       });
     });
   }, MARGIN);
 
-  // 1. the sweep: 60 s of looking round, holding, looking back, and a few steps along the track
+  // 1. the sweep: 60 s of looking round, holding, looking back, walking 12 m down the track into the grove
   await page.evaluate(() => {
     const fp = window.__fp, p = fp.player, M = window.__mon;
     const y0 = p.yaw, x0 = p.pos.x, z0 = p.pos.z;
@@ -98,7 +98,7 @@ async function run(view, q, frames) {
       if (left <= 0) { k++; if (k < plan.length) left = plan[k][0]; }
       p.yaw = yaw; p.pitch = 0.12;
       const a = Math.min(1, t / 60);
-      p.pos.x = x0 + 3 * a; p.pos.z = z0 - 4 * a;
+      p.pos.x = x0 - 0.52 * 12 * a; p.pos.z = z0 - 0.85 * 12 * a; // 12 m down the north spur into the grove
     };
   });
   await page.waitForFunction(() => window.__mon.done, null, { timeout: 400000, polling: 500 });
@@ -114,14 +114,15 @@ async function run(view, q, frames) {
   // 2. look, look away, look back: at the nearest waking stilter, then the other way until one that was in the
   //    first frame has stepped, then back
   if (frames) {
+    // the look: back the way the visitor came (where a stilter that follows will come), then forward, then back
     const pick = await page.evaluate(() => {
       const fp = window.__fp, p = fp.player, S = fp.stilters;
-      const dist = (s) => Math.hypot(s.x - p.pos.x, s.z - p.pos.z);
-      const awake = S.list.filter((s) => !s.asleep).sort((a, b) => Math.abs(dist(a) - 14) - Math.abs(dist(b) - 14));
-      const s = awake[0];
-      const yaw = Math.atan2(-(s.x - p.pos.x), -(s.z - p.pos.z));
-      p.yaw = yaw; p.pitch = Math.min(0.45, Math.atan2(s.h * 0.45, dist(s)));
-      return { yaw, i: s.i };
+      const came = S.cameFrom(), off = (s) => { const b = Math.atan2(s.x - p.pos.x, s.z - p.pos.z); return Math.abs(Math.atan2(Math.sin(b - came), Math.cos(b - came))); };
+      const d = (s) => Math.hypot(s.x - p.pos.x, s.z - p.pos.z);
+      const far = S.list.filter((s) => !s.asleep && d(s) > 11 && d(s) < 24).sort((a, b) => off(a) - off(b))[0];
+      const yaw = (far ? Math.atan2(far.x - p.pos.x, far.z - p.pos.z) : came) + Math.PI;
+      p.yaw = yaw; p.pitch = 0.3;
+      return { yaw };
     });
     await page.waitForTimeout(1500);
     const before = await page.evaluate(() => window.__fp.stilters.list.map((s) => [s.x, s.z, s.yaw]));
@@ -193,18 +194,18 @@ async function run(view, q, frames) {
     }
   }
 
-  // 4. the eyes: a watcher opened 25 m off, 0.65 rad to the side (in the frame, off the look); the look turned onto it
+  // 4. the eyes: a watcher opened 10 to 18 m off, 0.65 rad to the side (in the frame, off the look); the look turned onto it
   //    in steps; it shuts once the look is within its reach. Frames at each step when framing.
   const E0 = await page.evaluate(async () => {
     const fp = window.__fp, E = fp.inhabitants.eyes, p = fp.player;
     if (!E) return null;
     fp.controls.placeAt(-196, 150); p.yaw = 0; p.pitch = 0;
     await new Promise((r) => setTimeout(r, 800));
-    // a spot 18 to 30 m off, 0.55 to 0.8 rad to one side, that no trunk stands in front of
+    // a spot 10 to 18 m off, 0.55 to 0.8 rad to one side, that no trunk stands in front of
     const T = fp.woodTrees || [];
     const clear = (x, z) => T.every((t) => { const ex = x - p.pos.x, ez = z - p.pos.z, l2 = ex * ex + ez * ez, k = Math.max(0, Math.min(1, ((t.x - p.pos.x) * ex + (t.z - p.pos.z) * ez) / l2)); return Math.hypot(t.x - p.pos.x - ex * k, t.z - p.pos.z - ez * k) > 1.6; });
     let a = p.yaw + 0.65, x = p.pos.x - Math.sin(a) * 25, z = p.pos.z - Math.cos(a) * 25;
-    search: for (const d of [24, 20, 28, 18, 30]) for (const off of [0.65, -0.65, 0.75, -0.75, 0.55, -0.55, 0.8, -0.8]) {
+    search: for (const d of [14, 12, 16, 18, 10]) for (const off of [0.65, -0.65, 0.75, -0.75, 0.55, -0.55, 0.8, -0.8]) {
       const aa = p.yaw + off, xx = p.pos.x - Math.sin(aa) * d, zz = p.pos.z - Math.cos(aa) * d;
       if (clear(xx, zz)) { a = aa; x = xx; z = zz; break search; }
     }
