@@ -106,3 +106,16 @@ export function buildGutterBats(ctx) {
   st.pour = pour;
   st.advance = (sec, step = 0.05) => { for (let k = 0; k < sec; k += step) update(step, ctx.time.t + k); };
 }
+
+// The study page (src/study/registry.js): the tower's bats pouring out, on a gutter of their own every 25 s.
+export const study = [{
+  id: 'gutter-bats', name: 'bats at the gutter', kind: 'creature', h: 12, fly: true, at: [0, 0],
+  build(ctx) {
+    const flicker = { value: 1 }; let t = 0;
+    ctx.sky = { ...ctx.sky, flicker };
+    ctx.registerUpdate((dt) => { t = (t + dt) % 25; flicker.value = t > 1 && t < 6 ? 0.3 : 1; });
+    buildGutterBats(ctx);
+    const TW = ctx.landmarks.tower, c = new THREE.Vector3(TW.x, 22, TW.z);
+    return { at: (o) => o.copy(c) };
+  },
+}];

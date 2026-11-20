@@ -131,3 +131,19 @@ export function buildLampMoths(ctx) {
   }
   ctx.registerUpdate(update);
 }
+
+// The study page (src/study/registry.js): the taverna's lamp-moths at one lamp on a post.
+export const study = [{
+  id: 'lamp-moths', name: 'lamp-moths', kind: 'creature', h: 2, fly: true, at: [0, 0],
+  build(ctx) {
+    const T = ctx.landmarks.taverna, pos = new THREE.Vector3(T.x, 2.4, T.z);
+    for (const dx of [0, 6]) { // two lamps (it waits for two), the second out of the cell
+      const light = new THREE.PointLight('#' + LAMP_COLOUR, 3, 8); light.position.set(pos.x + dx, pos.y, pos.z);
+      const post = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.05, 2.4, 6), new THREE.MeshStandardMaterial({ color: '#3a3026' }));
+      post.position.set(pos.x + dx, 1.2, pos.z); post.castShadow = true;
+      ctx.scene.add(light, post);
+    }
+    buildLampMoths(ctx);
+    return { at: (o) => o.copy(pos) };
+  },
+}];

@@ -10,7 +10,7 @@
 // tools/study-test.mjs fails when a file in FIGURE_DIRS, or a file anywhere under src/ that imports a figure kit
 // (FIGURE_KITS), is neither here nor in NOT_FIGURES with its reason; and when a module here has no `study` export.
 export const STUDY_MODULES = [
-  'src/fauna/grazers.js',
+  'src/fauna/grazers.js', 'src/fauna/wings.js', 'src/fauna/deodand.js', 'src/fauna/life.js', 'src/fauna/small.js', 'src/fauna/rooks.js', 'src/fauna/lamps.js', 'src/fauna/gutterbats.js', 'src/fauna/beetles.js',
   'src/v7/walkers/thurifer.js', 'src/v7/walkers/leerie.js', 'src/v7/walkers/linkboy.js',
 ];
 

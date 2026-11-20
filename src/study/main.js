@@ -267,8 +267,9 @@ function render() {
     for (const o of subjects) o.group.visible = o === c.s;
     const s = c.s;
     if (!s.ok) { renderer.setViewport(c.x, H - c.y - c.h, c.w, c.h); renderer.setScissor(c.x, H - c.y - c.h, c.w, c.h); renderer.setClearColor('#2a1a1a'); renderer.clear(); continue; }
-    const dist = aim(s);
-    s.at(T0);
+    let dist;
+    try { dist = aim(s); s.at(T0); }
+    catch (e) { s.ok = false; s.error = `at: ${e.message}`.slice(0, 300); errors.push(`${s.id}: at: ${e.message}`); layoutSoon = true; continue; }
     ground.position.set(T0.x, s.fly ? 0 : (s.floor ?? 0), T0.z);
     if (s.kind === 'recipe' && s.box) ground.position.y = 0;
     // the key: the walk's sun, or the neutral key over the camera's left shoulder; its shadow box round the subject
