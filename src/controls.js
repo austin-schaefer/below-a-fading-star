@@ -89,9 +89,10 @@ export function buildControls(ctx) {
     ctx.events.dispatchEvent(new CustomEvent('draglook', { detail: state.dragLook }));
   }
   try { if (url.searchParams.get('lock') === '0' || localStorage.getItem('fp-draglook') === '1') { state.dragLook = true; state.lockFailed = true; } } catch (e) { /* ignore */ }
-  // In drag-look mode Esc is ours (no capture to release), so it toggles the pause.
+  // In drag-look mode Esc is ours (no capture to release), so it toggles the pause; so it is with no capture held at all
+  // (gone out on a gamepad, v17.1): while the mouse is captured the browser takes Esc and the lost capture pauses (hud.js).
   window.addEventListener('keydown', (e) => {
-    if (e.code === 'Escape' && state.dragLook && state.enabled) ctx.events.dispatchEvent(new CustomEvent('pausetoggle'));
+    if (e.code === 'Escape' && (state.dragLook || !state.locked) && state.enabled) ctx.events.dispatchEvent(new CustomEvent('pausetoggle'));
   });
   // Pointer lock can be refused (an embedding iframe without the permission, some browsers). Then
   // the mouse looks by dragging on the canvas instead, and the page says so once.

@@ -21,14 +21,16 @@ const errors = [];
 
 // the fake: getGamepads counts its calls and lists window.__pad; __mkPad connects one, __unPad takes it away
 const FAKE = () => {
-  window.__padCalls = 0; window.__pad = null;
-  Object.defineProperty(navigator, 'getGamepads', { configurable: true, value: () => { window.__padCalls++; return window.__pad ? [window.__pad] : []; } });
-  window.__mkPad = (mapping = 'standard', id = 'Xbox Wireless Controller (STANDARD GAMEPAD Vendor: 045e Product: 0b13)') => {
-    window.__pad = { id, index: 0, connected: true, mapping, timestamp: 0, axes: [0, 0, 0, 0], buttons: Array.from({ length: 17 }, () => ({ pressed: false, touched: false, value: 0 })) };
-    const e = new Event('gamepadconnected'); e.gamepad = window.__pad; window.dispatchEvent(e);
+  // two slots: __pad (index 0) and __pad2 (index 1, a second pad such as Steam Input's virtual one)
+  window.__padCalls = 0; window.__pad = null; window.__pad2 = null;
+  Object.defineProperty(navigator, 'getGamepads', { configurable: true, value: () => { window.__padCalls++; return [window.__pad, window.__pad2].filter(Boolean); } });
+  window.__mkPad = (mapping = 'standard', id = 'Xbox Wireless Controller (STANDARD GAMEPAD Vendor: 045e Product: 0b13)', index = 0, axes = [0, 0, 0, 0]) => {
+    const g = { id, index, connected: true, mapping, timestamp: 0, axes: axes.slice(), buttons: Array.from({ length: 17 }, () => ({ pressed: false, touched: false, value: 0 })) };
+    if (index === 0) window.__pad = g; else window.__pad2 = g;
+    const e = new Event('gamepadconnected'); e.gamepad = g; window.dispatchEvent(e);
   };
-  window.__unPad = () => { const g = window.__pad; window.__pad = null; const e = new Event('gamepaddisconnected'); e.gamepad = g; window.dispatchEvent(e); };
-  window.__btn = (i, on) => { const b = window.__pad.buttons[i]; b.pressed = on; b.touched = on; b.value = on ? 1 : 0; };
+  window.__unPad = (index = 0) => { const g = index === 0 ? window.__pad : window.__pad2; if (index === 0) window.__pad = null; else window.__pad2 = null; const e = new Event('gamepaddisconnected'); e.gamepad = g; window.dispatchEvent(e); };
+  window.__btn = (i, on, pad = window.__pad) => { const b = pad.buttons[i]; b.pressed = on; b.touched = on; b.value = on ? 1 : 0; };
 };
 
 async function open(viewport) {
@@ -151,10 +153,10 @@ const waitFor = async (page, fn, arg, ms = 5000) => { const t0 = Date.now(); whi
   h = await hints(page);
   check('the panel\'s keys line says the pad\'s buttons', /d-pad/.test(h.set), h.set);
   await shot(page, 4, 'panel-focus', 'desktop');
-  const f0 = await page.evaluate(() => document.activeElement?.textContent);
+  const f0 = await page.evaluate(() => { window.__f0 = document.activeElement; return document.activeElement?.textContent; });
   await press(page, 13);
-  const f1 = await page.evaluate(() => document.activeElement?.textContent);
-  check('d-pad down moves the focus', f1 !== f0, { f0, f1 });
+  s = await page.evaluate(() => { const a = document.activeElement, r = document.getElementById('settings-panel'); return { moved: a !== window.__f0 && r.contains(a) && a !== r, f1: a?.id || a?.textContent?.slice(0, 30) }; });
+  check('d-pad down moves the focus to another control', s.moved, { f0, ...s });
   // a slider: left and right step it
   const vol = await page.evaluate(() => { const el = document.getElementById('set-volume'); el.focus(); return Number(el.value); });
   await press(page, 14);
@@ -193,6 +195,12 @@ const waitFor = async (page, fn, arg, ms = 5000) => { const t0 = Date.now(); whi
   s = await page.evaluate(() => ({ shown: !!window.__fp.settings?.shown, lockFailed: window.__fp.player.lockFailed }));
   check('A on "Back to the moor" shuts the panel with no drag-look fallback', !s.shown && !s.lockFailed, s);
 
+  // Escape after going out on the pad (no capture held, not drag-look): opens the panel; again shuts it
+  await page.keyboard.press('Escape'); await sleep(400);
+  const escOpen = await page.evaluate(() => !!window.__fp.settings?.shown);
+  await page.keyboard.press('Escape'); await sleep(300);
+  const escShut = await page.evaluate(() => !window.__fp.settings?.shown);
+  check('Escape after a pad start opens the panel, and again shuts it', escOpen && escShut, { escOpen, escShut });
   // a key: the hints go back
   await atStroke(page);
   await page.evaluate(() => { const fp = window.__fp; for (const h of fp.acts.list || []) if (h.def.id === 'halt-tally') h.done = false; });
@@ -202,6 +210,29 @@ const waitFor = async (page, fn, arg, ms = 5000) => { const t0 = Date.now(); whi
   check('a key puts the keys back (title line, act\'s E)', /Space/.test(h.keys) && h.act === 'E', h);
   await waitFor(page, () => !!window.__fp.acts.offered, null, 4000);
   await shot(page, 6, 'offer-keys', 'desktop');
+
+  // two pads both holding a button (a real pad and a virtual one): one hop, one panel toggle
+  await page.evaluate(() => window.__unPad()); await sleep(200);
+  await page.evaluate(() => { window.__mkPad(); window.__mkPad('standard', 'Xbox 360 Controller (XInput STANDARD GAMEPAD)', 1); });
+  await sleep(300);
+  await page.evaluate(() => { const fp = window.__fp, st = fp.settings; fp.controls.placeAt(-40, 20); window.__toggles = 0; for (const k of ['open', 'close']) { const f = st[k]; st['_' + k] = f; st[k] = (...a) => { window.__toggles++; return f(...a); }; } });
+  await sleep(300);
+  const h2a = await page.evaluate(() => window.__fp.player.hops);
+  await page.evaluate(() => { window.__btn(0, true, window.__pad); window.__btn(0, true, window.__pad2); });
+  await sleep(1800); // past a hop's landing: a held A that fired again would hop again
+  await page.evaluate(() => { window.__btn(0, false, window.__pad); window.__btn(0, false, window.__pad2); });
+  await sleep(200);
+  const h2b = await page.evaluate(() => window.__fp.player.hops);
+  await page.evaluate(() => { window.__btn(9, true, window.__pad); window.__btn(9, true, window.__pad2); });
+  await sleep(700);
+  await page.evaluate(() => { window.__btn(9, false, window.__pad); window.__btn(9, false, window.__pad2); });
+  await sleep(200);
+  s = await page.evaluate(() => ({ toggles: window.__toggles, shown: !!window.__fp.settings.shown }));
+  check('two pads holding A: one hop', h2b === h2a + 1, { h2a, h2b });
+  check('two pads holding Start: the panel opens once and stays open', s.toggles === 1 && s.shown, s);
+  await press(page, 1); await sleep(200);
+  await page.evaluate(() => { const st = window.__fp.settings; st.open = st._open; st.close = st._close; window.__unPad(1); });
+  await sleep(200);
 
   // a non-standard pad: axes 0 and 1 walk, button 0 hops
   await page.evaluate(() => window.__unPad()); await sleep(300);
@@ -215,6 +246,22 @@ const waitFor = async (page, fn, arg, ms = 5000) => { const t0 = Date.now(); whi
   await press(page, 0);
   const hn1 = await page.evaluate(() => window.__fp.player.hops);
   check('a non-standard pad walks on axes 0 and 1 and hops on button 0', s.speed > 2.5 && hn1 === hn0 + 1, { ...s, hn0, hn1 });
+  // a non-standard pad whose trigger rests at -1 on axis 2: no turn, and a key's hints stay
+  await page.evaluate(() => window.__unPad()); await sleep(300);
+  await page.evaluate(() => window.__mkPad('', 'Generic USB Gamepad (Vendor: 0810 Product: 0001)', 0, [0, 0, -1, 0]));
+  await sleep(400);
+  await page.keyboard.press('KeyQ'); await sleep(200);
+  const y0 = await page.evaluate(() => window.__fp.player.yaw);
+  await sleep(1000);
+  s = await page.evaluate(() => ({ yaw: window.__fp.player.yaw, active: window.__fp.gamepad.active }));
+  h = await hints(page);
+  check('a trigger resting at -1 on axis 2 turns nothing', Math.abs(s.yaw - y0) < 1e-6, { y0, ...s });
+  check('... and after a key the hints stay on the keys', !s.active && h.act === 'E', { ...s, act: h.act });
+  // pulling that trigger still turns nothing (it is not a stick); a real stick on axes 0 and 1 still walks
+  await axes(page, [0, 0, 1, 0]); await sleep(500);
+  const y1 = await page.evaluate(() => window.__fp.player.yaw);
+  await axes(page, [0, 0, -1, 0]);
+  check('... and pulling it turns nothing either', Math.abs(y1 - y0) < 1e-6, { y0, y1 });
 
   // disconnect: the polling stops
   await page.evaluate(() => window.__unPad()); await sleep(300);

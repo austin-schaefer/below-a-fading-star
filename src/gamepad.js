@@ -44,7 +44,10 @@ const family = (g) => {
 export function installGamepad(ctx) {
   if (ctx.gamepad) return ctx.gamepad;
   const P = ctx.controls.state, pad = ctx.controls.pad;
-  const prev = new Uint8Array(32);         // the buttons held last poll
+  // per pad (by index): the buttons held last poll, the axes last poll, and (other mappings) each axis's rest
+  const prevs = new Map(), lastAx = new Map(), rests = new Map();
+  const prevOf = (g) => { let a = prevs.get(g.index); if (!a) prevs.set(g.index, (a = new Uint8Array(32))); return a; };
+  const pressed = (b) => !!b && (b.pressed || b.value > 0.5);
   let raf = 0, last = 0, lastIndex = -1, latch = false;
   let held = null, heldT = 0;               // the panel direction held, and when it steps next
   let lab = LABELS.xbox;
@@ -53,7 +56,7 @@ export function installGamepad(ctx) {
 
   const connected = () => { try { return [...(navigator.getGamepads?.() || [])].filter((g) => g && g.connected !== false); } catch (e) { return []; } };
   function arm() { if (!raf && connected().length) { last = performance.now(); raf = requestAnimationFrame(tick); } }
-  function disarm() { if (raf) cancelAnimationFrame(raf); raf = 0; pad.x = pad.z = 0; pad.hurry = false; prev.fill(0); held = null; }
+  function disarm() { if (raf) cancelAnimationFrame(raf); raf = 0; pad.x = pad.z = 0; pad.hurry = false; prevs.clear(); lastAx.clear(); rests.clear(); held = null; latch = false; }
   addEventListener('gamepadconnected', arm);
   addEventListener('gamepaddisconnected', () => { if (!connected().length) disarm(); });
 
@@ -78,17 +81,29 @@ export function installGamepad(ctx) {
     api.polls++;
     const pads = connected();
     if (!pads.length) { disarm(); return; }
-    // the pad last pressed leads; else the first
+    // the pad last pressed leads: another pad leads only on a button newly pressed on it, so two pads that both show a
+    // button held (Steam Input or DS4Windows add a virtual pad beside the real one) never trade the lead every frame;
+    // each pad keeps its own last buttons, so a switch never makes a held button new
     let g = pads.find((p) => p.index === lastIndex) || pads[0];
-    for (const p of pads) if (p !== g && p.buttons.some((b) => b.pressed)) { g = p; break; }
-    if (g.index !== lastIndex) { lastIndex = g.index; prev.fill(0); lab = LABELS[family(g)]; }
-    const std = g.mapping === 'standard', B = g.buttons, A = g.axes;
-    const btn = (i) => !!B[i] && (B[i].pressed || B[i].value > 0.5);
+    for (const p of pads) {
+      if (p === g) continue;
+      const pv = prevOf(p);
+      if (p.buttons.some((b, i) => i < 32 && pressed(b) && !pv[i])) { g = p; break; }
+    }
+    if (g.index !== lastIndex) { lastIndex = g.index; lab = LABELS[family(g)]; }
+    const std = g.mapping === 'standard', B = g.buttons, A = axesOf(g), prev = prevOf(g);
+    const btn = (i) => pressed(B[i]);
     const down = (i) => btn(i) && !prev[i];
-    stick(A[0] || 0, A[1] || 0, DEAD_MOVE, L);
-    stick(A[2] || 0, A[3] || 0, DEAD_LOOK, R);
-    let any = L.m > 0 || R.m > 0;
-    for (let i = 0; i < B.length && !any; i++) if (btn(i)) any = true;
+    stick(A[0], A[1], DEAD_MOVE, L);
+    stick(A[2], A[3], DEAD_LOOK, R);
+    // used: a button newly pressed, or a stick moved since the last poll; a held button or an axis held steady (a
+    // trigger resting at -1) never counts, so a key's press is not undone by the pad lying on the desk
+    let any = false;
+    for (let i = 0; i < B.length && i < 32 && !any; i++) if (btn(i) && !prev[i]) any = true;
+    const la = lastAx.get(g.index);
+    if (!any && la && (L.m > 0 || R.m > 0)) for (let i = 0; i < 4; i++) if (Math.abs(A[i] - la[i]) > 0.02) { any = true; break; }
+    let ls = la; if (!ls) lastAx.set(g.index, (ls = new Float32Array(4)));
+    for (let i = 0; i < 4; i++) ls[i] = A[i];
     if (any && !api.active) showPad(true);
 
     const iHop = 0, iBack = 1, iAct = 2;
@@ -97,7 +112,7 @@ export function installGamepad(ctx) {
       if (down(iHop) || startDown) ctx.events.dispatchEvent(new CustomEvent('begin', { detail: { pad: true } }));
       pad.x = pad.z = 0; pad.hurry = false;
     } else if (panelUp()) {
-      pad.x = pad.z = 0; pad.hurry = false;
+      pad.x = pad.z = 0; pad.hurry = false; latch = false; // a stick click's hurry ends at the panel
       panel(dt, std, down, btn, startDown);
     } else if (walkUp()) {
       pad.x = L.x; pad.z = -L.y;
@@ -115,7 +130,19 @@ export function installGamepad(ctx) {
       if (down(iAct)) ctx.acts?.doOffered?.();
       if (startDown) ctx.settings?.open({ paused: true });
     } else { pad.x = pad.z = 0; pad.hurry = false; }
-    for (let i = 0; i < prev.length; i++) prev[i] = btn(i) ? 1 : 0;
+    for (const p of pads) { const pv = prevOf(p); for (let i = 0; i < 32; i++) pv[i] = pressed(p.buttons[i]) ? 1 : 0; }
+  }
+  // the four axes the walk reads, as numbers. The standard mapping's rest at 0. Any other mapping: each axis's first
+  // reading is its rest, and one that rested far from 0 (a trigger at -1 on axis 2, as many generic pads report it) is
+  // not a stick and reads 0; the others read from their rest
+  const AX = [0, 0, 0, 0];
+  function axesOf(g) {
+    const a = g.axes || [];
+    if (g.mapping === 'standard') { for (let i = 0; i < 4; i++) AX[i] = +a[i] || 0; return AX; }
+    let r = rests.get(g.index);
+    if (!r) rests.set(g.index, (r = [0, 1, 2, 3].map((i) => +a[i] || 0)));
+    for (let i = 0; i < 4; i++) AX[i] = Math.abs(r[i]) > 0.5 ? 0 : Math.max(-1, Math.min(1, (+a[i] || 0) - r[i]));
+    return AX;
   }
 
   // --- the panel, through DOM focus
@@ -129,30 +156,34 @@ export function installGamepad(ctx) {
   const focusEl = (el) => { el.focus({ focusVisible: true }); el.scrollIntoView?.({ block: 'nearest' }); };
   const current = () => { const a = document.activeElement, r = root(); return a && r && r.contains(a) && a !== r ? a : null; };
   const DIRS = { up: [0, -1], down: [0, 1], left: [-1, 0], right: [1, 0] };
-  // the nearest control in a direction from the focused one: ahead of it, scored by the distance along plus twice
-  // the distance across (so a list goes row by row and a map's marks go to the one that way)
+  // The panel's own focusNext first (v17.1 Q1: the map's marks by where they lie); when it moves nothing (or is absent),
+  // the nearest control that way by DOM focus, except left and right on a slider, which the panel's own has stepped.
+  // Nearest: ahead of the focused one (its near edge past ours), scored by the gap between the edges along the move
+  // plus twice the gap between the spans across it (0 where they overlap), so a slider under a button is not skipped
+  // for a button further off whose centre lines up better
   function move(dir) {
     const api2 = ctx.settings, [dx, dy] = DIRS[dir];
-    if (typeof api2?.focusNext === 'function') { // the panel's own (v17.1 Q1: the map's marks by where they lie)
+    const own = typeof api2?.focusNext === 'function';
+    if (own) {
       let moved = false;
       try { moved = api2.focusNext(dx, dy) === true; } catch (e) { console.error('[fp] focusNext failed:', e); }
-      if (moved || current()) return;
+      if (moved) return;
     }
     const els = focusables();
     if (!els.length) return;
     const cur = current();
-    if (cur && cur.type === 'range' && (dir === 'left' || dir === 'right')) { stepRange(cur, dir === 'right' ? 1 : -1); return; }
+    if (cur && cur.type === 'range' && (dir === 'left' || dir === 'right')) { if (!own) stepRange(cur, dir === 'right' ? 1 : -1); return; }
     if (!cur) { focusEl(els[0]); return; }
-    const c = cur.getBoundingClientRect(), cx = c.left + c.width / 2, cy = c.top + c.height / 2;
+    const c = cur.getBoundingClientRect();
     let best = null, bs = Infinity;
     for (const el of els) {
       if (el === cur) continue;
-      const r = el.getBoundingClientRect(), ex = r.left + r.width / 2, ey = r.top + r.height / 2;
-      const along = (ex - cx) * dx + (ey - cy) * dy, across = Math.abs((ex - cx) * dy - (ey - cy) * dx);
-      // ahead: past the near edge of the focused one that way (a row's buttons share a top)
-      const half = dx ? c.width / 2 : c.height / 2;
-      if (along <= Math.min(half, 4)) continue;
-      const s = along + 2 * across;
+      const r = el.getBoundingClientRect();
+      // along: from our far edge that way to its near edge (a row's buttons share a top: well under 0, not ahead)
+      const along = dx > 0 ? r.left - c.right : dx < 0 ? c.left - r.right : dy > 0 ? r.top - c.bottom : c.top - r.bottom;
+      if (along < -4) continue;
+      const across = dx ? Math.max(0, r.top - c.bottom, c.top - r.bottom) : Math.max(0, r.left - c.right, c.left - r.right);
+      const s = Math.max(0, along) + 2 * across;
       if (s < bs) { bs = s; best = el; }
     }
     if (best) focusEl(best);
