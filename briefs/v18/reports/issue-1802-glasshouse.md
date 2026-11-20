@@ -45,3 +45,48 @@ export function buildLikeness(id, opts = {}) {}
 ```
 
 For a tub's underside: `buildLikeness(id, { at: [x, -3.2, z], plant: false })` gives the tub and its roots hanging to y -5.6; add `.mesh` to your scene (or pass `into` your own Painter and it costs no draw).
+
+## Hand-back (2026-11-20)
+
+**Built.** `src/v18/florilegium.js` (module `florilegium`, `?florilegium=0`), `florilegium/house.js`, `florilegium/likeness.js`; one row in `src/height/pads.js` (the court level at y -3.2: the site fell 2.5 m across the house); `LANDMARKS.florilegium` (`line` empty, `card: true`, `map: false` until the orchestrator gives it a stand: a default stand 19 m off would have been among trunks); `FLORILEGIUM` in `src/v18/plan.js`; the study page (seven subjects); `tools/geometry/places.mjs` (`v18-florilegium`, the walk round); `runtime.md`, `modules.md`, the story's beat 2 and Log. F1's branch is merged in twice (the claims, P57, P33): this branch carries its commits.
+
+The house is a twelve-sided bud of fish-scale glass, 12.6 m to the finial. The glass is one draw that filters and glows (`src * alpha + dst * src`). The lower wall, to a little over the transom, is a nearly clear band inside a border of each side's colours, so the tubs are seen; the upper wall and roof are saturated. Seven draws: frame, likenesses, glass, cast colour on the ground, halo and far glints, the glow in the air (gone inside 20 m), the dark under the grate. Five PointLights (the flask and four colours; the three slots take the nearest). Twelve wall colliders to the eave and one at the door.
+
+The flowers face out to the glass. Heads follow the visitor on a two-stage ease, each at its own pace (0.8 to 3.1 s; the lovers one pace); after 8 s of the visitor standing, or beyond 34 m, they go back to the flask; `sky.flicker.dark > 0.3` turns them west.
+
+**Numbers** (`views.mjs`, low, the same poses before and after; after includes F1's merge):
+
+| stand | before | after |
+|---|---|---|
+| `?pos=-250,128&yaw=1.57` | 170 calls, 1.380 M tris | 182 calls, 1.363 M |
+| the wood way (-205, 128) | 192 calls, 1.547 M | 202 calls, 1.532 M |
+
+Likenesses 2.4k to 5.3k triangles each on high (the study sheet's labels). `perf` 29/29 on low.
+
+**Tests** (`ONLY=... tools/suite.sh 8182`, the counts printed): dressing 22/22, strata 8/8, threads 25/25, edges PASS (no FAIL line), perf 29/29, study 15/15, roads 69/69, outline 77/77, regions 56/56, rocks 38/38. **Red:**
+
+- `geometry`: `v18-florilegium` 11 new, none of them this module's meshes now (its own coplanar faces are fixed): six floating `veg-pods` at (-254, 131) and (-255, 130), three sunk `rocks-pebble` on the court at (-267.2, 133.8), (-271.4, 120.1), (-255.9, 132.5), two `veg-toadstools` inside the sprout's tub at (-261, 126). These placers do not ask F1's claim `the Florilegium`; I would not re-record them, they want the claim. `span-west-stairs`: one baseline row no longer found (came with F1's merge).
+- `settings` 101/103: the stand "A gap at the Collation" (131.5, -72.5) now looks into `veg-trees` at 1.49 m. Not at this site; I did not find which change moved that tree (F1's merge or this branch), and did not bisect.
+- `paths` 90/91: the leads' count row says 56 and finds 59 (F1's three spurs).
+- `seams`: the ceiling, ghost 232 against 226 (seam 61/63 and off 412/414 are under). The sweep is the village's; not attributed.
+
+`walkers` not run.
+
+**Frames** (`shots/wip/`, medium `v18-F2-medium-*`, low `v18-F2-low-*`, the same twenty views): `far-road`, `far-30m`, `near-stand`, `near-door`, `who-1` .. `who-6` (fan, sword, hoop, cup, pair, hawk), `walk-00` .. `walk-06` (the half circle, door round by the north to the west, 2.2 s apart), `still-20s`, `gutter`, `gutter-off`; `v18-F2-phone-stand.png` (390 by 844, low: not blown out); `v18-F2-after-*` (four views after the last change to the clear band); the study sheet `v18-F2-study3-neutral.png`; before: `v18-F2-before-*`.
+
+**Blind readers** (sonnet, frames only, before the last change to the clear band):
+- far and near: "a stained-glass greenhouse in the woods"; from 30 m "the obvious reason to leave the path"; from 60 m "a small patch of multicoloured speckled glitter ... small and hard to read". Found the key behind the door. Said the colours are "a little cartoonish against the muted forest" and that it "would try to enter".
+- the six: "a stained-glass hothouse where flower-headed costumed figures stand in pots". The lady with a fan (70%), the armiger as "a grim guard or duellist" with a blade (60%), the child as "a hoop-dancer" (55%), the magnate as "a stout fat person or a cactus" (45%; the cup not named), the lovers as "a pair of courtiers or a couple" (40%), the falconer as "a robed noble or sorcerer" (50%; the bird read as "a gold ring and a small tag"). Three or four of six by the prop, not six.
+- the walk: faces toward the camera in walk-01 to 03, mixed in 04 and 05, turned away in 06; in the gutter "the figures' backs face the camera", after it faces again. It could not say what changed in `still-20s`.
+
+**Weak.**
+- From the wood way the house is a small coloured patch between trunks, not a scatter of lights that pulls; the glow in the air barely shows there.
+- The falconer's bird and the magnate's cup do not read through the glass; the bird reads on the study sheet.
+- Every face is the same pale mask with two slits: the readers call it mascot-like. It wants a marking of its own a flower.
+- The saturated panes are flat colour; "sticker-like" up close.
+- The walk's frame 06 shows the heads turned away: at 2.2 s a stop the slow heads (the magnate 3.1 s, the armiger 2.4 s) had not come round, or had wound past the stem's limit and gone back the other way. Not looked into.
+- The cast colour on the ground is thin at walking height (seen at a grazing angle).
+- The roots over the tubs' rims are few and stiff.
+- One geometry row may remain inside a plinth corner (0.02 m², seen in one run, gone in the last).
+
+**Defaults taken.** The pad. The door on the house's east axis at z 126 (the plan's doorstep (-257, 127) is on the paving). The flowers face out, not toward the flask. The sprout's tub inside the door. `map: false`. F1 merged in.
