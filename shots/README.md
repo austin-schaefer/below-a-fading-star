@@ -904,5 +904,9 @@ Agents write raw work-in-progress renders into `wip/` (the inbox). At each merge
 | `99-stair-village-after.webp` | The Lappet from the stair head looking down the notch. |
 | `99-tarn-above-after.webp` | After: Lees Tarn from above, the shore irregular and off its circle. |
 | `99-tarn-above-before.webp` | Before: Lees Tarn from above, a round pond. |
+| `101-map-panel-desktop.webp` | v17.1: the settings panel with the drawn map, the Swallow's mark lit and described. |
+| `101-map-panel-phone.webp` | v17.1: the map on a phone, the Lattice chosen. |
+| `101-title-controller-hints.webp` | v17.1: the first screen with a controller in use, its hints naming the pad's buttons. |
+| `101-listen-page.webp` | v17.1: the listening page, four sketches and the two-ways comparison. |
 | `plan-v2-placement-map.webp` | Placement map for the v2 plan. |
 | `plan-v4-placement-map.webp` | Placement map for the v4 to v7 plan: every site in `tools/sites-v4.json`, redrawn by `tools/map.mjs`. |

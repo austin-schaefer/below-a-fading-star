@@ -4,6 +4,31 @@ Engineering notes for each version (what was built and how, measurements, tests,
 
 One entry per release of [below-a-fading-star.netlify.app](https://below-a-fading-star.netlify.app/), newest first, written for someone who has never taken the walk: what it adds, what a visitor can find or will notice, and, when it matters to them, what is known not to work yet. Each entry is also published as a GitHub release (`tools/gh-release.sh <version>`). How to write one: `.agents/skills/orchestrator/release-notes.md`.
 
+## v17.1: A map, a controller, and music to try
+
+Released 2026-11-20.
+
+Getting around is easier: the list of places is now a map, and the walk can be played on a game controller. There are also four short pieces of new music to listen to, on a page of their own.
+
+### New
+
+- **A map of the valley**: The settings panel (the gear, top right) now shows the valley drawn from above, with a mark for each of sixteen places and one for where you stand. Point at a mark, or tap it, and it says what is there in plain words ("a sunken church, flooded to its broken roof"), then its name. Click or tap again to go there.
+- **Controller support**: Plug in a game controller and press a button. The left stick walks, the right stick looks, and the buttons hop, hurry and do what a place offers; Start opens the settings, and the map and every setting can be worked from the pad. The hints on screen name the controller's buttons while you use it.
+- **Four sketches of new music**: At [/listen.html](https://below-a-fading-star.netlify.app/listen.html), four thirty-second pieces, each written for one place and played by recorded instruments, and one of them played both the old way and the new for comparison. None of it is in the walk yet: this is a first round, to choose a direction from.
+
+### Fixed
+
+- **The list of places was long, and meant nothing unless you knew the names**: It was every named place in the valley under small headings. The map replaces it. The places left off the map are still in the valley, to be found on foot.
+
+### Behind the scenes
+
+- A study page for the people who build the walk: every figure and creature side by side, close up and moving, and trees, plants and buildings at six variations each, so that stiffness and sameness show in one look.
+- A new check fails when a new figure or creature is not on that page.
+
+Known issues: Controller support has been tested with a simulated controller, not yet with a real one in the hand; on some browsers the sound may wait for a first key press or click. The map is dark, and a few of its marks are hard to tell apart until you point at them. The new music is only on its own page; the walk's music is unchanged, and still off unless you turn it on.
+
+<p><img src="shots/101-map-panel-desktop.webp" width="24%" alt="The settings panel with a drawn map of the valley, one mark lit and described"> <img src="shots/101-map-panel-phone.webp" width="24%" alt="The map on a phone, the crystals at the glacier's foot chosen"> <img src="shots/101-title-controller-hints.webp" width="24%" alt="The first screen with a controller plugged in: its hints name the pad's buttons"> <img src="shots/101-listen-page.webp" width="24%" alt="The listening page: four sketches, each with a line about it and a play button"></p>
+
 ## v17: The water goes under
 
 Released 2026-11-17.

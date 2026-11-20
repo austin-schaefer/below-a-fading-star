@@ -207,3 +207,13 @@ World loading is now a small share of the gate's 39 minutes; two tests hold abou
 - The builder's boxes stand 6 mm proud of their nominal faces: decals need 8 mm or more; worth a helper (`B.decal`) that knows it.
 - The sphere's meshes and v17's four waters cost 18 calls from the heights (ceiling 380, now 377): merge further.
 
+
+## From v17.1's study sheets and reviews
+
+- Figures to redo, worst first: the woman in the tarn, the dead-letter clerk, the burner, the child on the Leads; the Bather wants judging in the world first.
+- An idle layer for every rig: most are frozen between frames 0.4 s apart.
+- Birds, bats and the eel are flat black shapes that vanish against the sun.
+- Recipes that are one thing six times: the crystal shard, the carrier house, the fallen trunk, the Sleeper's medlar, bracken, the undercroft.
+- The map's chart is dark and soft; the glacier is a pale blob; a few glyphs need their line to be read.
+- The panel's first open has a long task on a slow phone that is not the map's.
+- The four deferred figures (the Noonwright, the waystation's sleeper and seat, the Thrones) are not on the study page.
