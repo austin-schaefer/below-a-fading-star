@@ -130,6 +130,7 @@ export function buildControls(ctx) {
   let ringX = 0, ringY = 0;                // current ring centre, css px
   let homeX = 0, homeY = 0;                // the ring's CSS home, css px, measured at each touchstart
   const lookVel = { x: 0, y: 0 };          // rad/s inertia after release
+  const pad = { x: 0, z: 0, hurry: false }; // (v17.1) a gamepad's left stick, strafe and forward (-1..1), and its hurry: written by src/gamepad.js
   let lastLookT = 0;
 
   // At rest the ring carries no inline position, so the CSS (safe-area aware) places it wherever
@@ -277,6 +278,11 @@ export function buildControls(ctx) {
     jumpEl.addEventListener('touchmove', (e) => { e.preventDefault(); e.stopPropagation(); }, { passive: false });
     jumpEl.addEventListener('click', () => hop()); // assistive tech activates without touch events
   }
+  // --- a gamepad (v17.1, #72): src/gamepad.js is fetched at the first gamepadconnected and polls only while a pad is
+  // connected; it writes `pad` (above), turns the look and calls hop(). With no pad: this listener and one check.
+  const padArm = () => { removeEventListener('gamepadconnected', padArm); import('./gamepad.js').then((m) => m.installGamepad(ctx)).catch((e) => console.error('[fp] gamepad failed:', e)); };
+  addEventListener('gamepadconnected', padArm);
+  try { if ([...(navigator.getGamepads?.() || [])].some(Boolean)) padArm(); } catch (e) { /* no Gamepad API, or refused in a frame */ }
   // read-only view of the touch state, for tools/touch-test.mjs
   const touch = {
     moveVec,
@@ -550,7 +556,7 @@ export function buildControls(ctx) {
       if (k.has('KeyS') || k.has('ArrowDown')) mz -= 1;
       if (k.has('KeyA') || k.has('ArrowLeft')) mx -= 1;
       if (k.has('KeyD') || k.has('ArrowRight')) mx += 1;
-      mx += moveVec.x; mz -= moveVec.y;
+      mx += moveVec.x + pad.x; mz += pad.z - moveVec.y;
     }
     state.moveX = mx; state.moveZ = mz; // (v15) what the keys or the stick ask for, strafe and forward (-1..1): a carrier reads them (the ladder)
     // touch look inertia
@@ -582,7 +588,7 @@ export function buildControls(ctx) {
         return;
       }
     }
-    const hurry = k.has('ShiftLeft') || k.has('ShiftRight') || moveVec.raw > AUTO_HURRY;
+    const hurry = k.has('ShiftLeft') || k.has('ShiftRight') || moveVec.raw > AUTO_HURRY || pad.hurry;
     state.hurrying = hurry;
     const maxSpeed = (hurry ? HURRY : WALK) * speedMul;
     fwd.set(-Math.sin(state.yaw), 0, -Math.cos(state.yaw));
@@ -821,5 +827,5 @@ export function buildControls(ctx) {
   const floorProbe = (x, z, feet) => { if (state.collGrid) syncGrid(); const o = { y: 0, ground: 0, stack: null, top: false, wl: null }; floorAt(x, z, feet, true, o); return o; };
   // grid: the broad phase's cells and how often it was built again; near(x, z): its list at (x, z), after a sync (tools/hop-test.mjs holds it to the linear scan)
   const near = (x, z) => { syncGrid(); const l = nearColliders(x, z); return l ? l.map((i) => state.colliders[i]) : state.colliders.slice(); };
-  return { state, update, lock, addCollider, addWalkable, placeAt, setDragLook, release, hop, touch, carry, floorAt: floorProbe, near, grid };
+  return { state, update, lock, addCollider, addWalkable, placeAt, setDragLook, release, hop, touch, pad, carry, floorAt: floorProbe, near, grid };
 }
