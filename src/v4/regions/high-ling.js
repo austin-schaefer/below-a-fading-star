@@ -355,7 +355,7 @@ export const study = [{
     const tops = [], mat = new THREE.MeshStandardMaterial({ color: '#3a4426', roughness: 0.95 });
     for (let i = 0; i < 9; i++) {
       const a = i * 2.4, r = 2 + (i % 3) * 5, x = 255 + Math.cos(a) * r, z = -50 + Math.sin(a) * r;
-      const m = new THREE.Mesh(new THREE.SphereGeometry(0.5, 8, 6), mat); m.scale.y = 0.75; m.position.set(x, 0.2, z); m.castShadow = true; ctx.scene.add(m);
+      const m = new THREE.Mesh(new THREE.SphereGeometry(0.5, 8, 6), mat); m.scale.y = 0.75; m.position.set(x, 0.2, z); m.castShadow = true; m.userData.studyProp = true; ctx.scene.add(m);
       tops.push({ x, y: 0.58, z, used: false });
     }
     const { birds } = buildStonechats(ctx, ctx.makeRng(6100), tops, ctx.quality === 'low', []);

@@ -370,7 +370,7 @@ export const study = [{
     const stones = new THREE.InstancedMesh(new THREE.BoxGeometry(0.45, 0.35, 0.5), new THREE.MeshStandardMaterial({ color: '#77705f', roughness: 0.95 }), n);
     const M = new THREE.Matrix4();
     for (let i = 0; i < n; i++) { const u = (i % 20) / 19, y = i < 20 ? 0.18 : 0.53; M.makeRotationY((i * 1.7) % 0.3).setPosition(ax + (bx - ax) * u, y, az + (bz - az) * u); stones.setMatrixAt(i, M); }
-    stones.castShadow = stones.receiveShadow = true; ctx.scene.add(stones);
+    stones.castShadow = stones.receiveShadow = true; stones.userData.studyProp = true; ctx.scene.add(stones);
     ctx.regions = { ...ctx.regions, lynchetsWalls: [{ ax, az, bx, bz }] };
     const R = buildRepetend(ctx, stones);
     return { at: (o) => { const b = R.at(); return o.set(b.x, 0, b.z); }, face: () => R.at().yaw ?? 0 };

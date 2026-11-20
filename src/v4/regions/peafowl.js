@@ -220,7 +220,7 @@ export const study = [{
     const { THREE: T } = ctx, perches = [];
     for (const [x, z, sy] of [[75, -15, 0.9], [77.5, -14, 0.7], [73, -17, 0.8]]) {
       const m = new T.Mesh(new T.BoxGeometry(1.4, sy, 1.0), new T.MeshStandardMaterial({ color: '#9a9284', roughness: 0.9 }));
-      m.position.set(x, sy / 2, z); m.castShadow = m.receiveShadow = true; ctx.scene.add(m);
+      m.position.set(x, sy / 2, z); m.castShadow = m.receiveShadow = true; m.userData.studyProp = true; ctx.scene.add(m);
       perches.push({ x, y: sy / 2, z, sy });
     }
     const B = buildPeafowl(ctx, ctx.makeRng(5200), perches);

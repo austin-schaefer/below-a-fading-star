@@ -373,6 +373,9 @@ export const study = [{
     ctx.terrain = { ...ctx.terrain, heightAt: () => y - 0.5, waterLevelAt: () => y, waterDepthAt: () => 0.5 };
     const S = buildScriveners(ctx); let k = 6;
     ctx.registerUpdate((dt) => { if ((k -= dt) <= 0) { k = 18; S.form(6, { hold: 6 }); } });
-    return { at: (o) => o.set(S.centre.x, y, S.centre.z), floor: y - 0.5, face: () => Math.atan2(S.facing.x, S.facing.z) };
+    const M = new THREE.Matrix4(), P = new THREE.Vector3();
+    // on the shoal's middle (its first dozen fish), where it is now
+    const at = (o) => { o.set(0, 0, 0); for (let i = 0; i < 12; i++) { S.fish.getMatrixAt(i, M); o.add(P.setFromMatrixPosition(M)); } o.multiplyScalar(1 / 12); o.y = y; return o; };
+    return { at, floor: y - 0.5, face: () => Math.atan2(S.facing.x, S.facing.z) };
   },
 }];

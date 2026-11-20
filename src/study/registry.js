@@ -31,12 +31,15 @@ export const FIGURE_DIRS = ['src/fauna', 'src/fauna/uncanny', 'src/v7/walkers', 
 export const FIGURE_FILES = ['src/v2/riverlife.js', 'src/v17/sphere.js', 'src/v9/waystation.js', 'src/v10/halt-seat.js', 'src/v5/thrones.js', 'src/v5/plinths.js', 'src/v14/noon-road.js'];
 // the rig kits, and the names in them that make a body: a file anywhere under src/ that imports one of these names builds
 // a figure or a creature
+// ('*': any name, and `import * as`, counts)
 export const FIGURE_KITS = {
-  'v7/walkers/gait.js': ['figurePainter', 'figureMesh', 'Gait'],
+  'v7/walkers/gait.js': '*',
   'v7/workers/rig.js': ['rigPainter', 'rigMesh', 'makeBones'],
-  'v7/workers/body.js': ['clothBody', 'head', 'sleeve'],
-  'v15/people/body.js': ['figure', 'joints'],
-  'fauna/geo.js': ['flapMaterial', 'flapInstanced'],
+  'v7/workers/body.js': '*',
+  'v15/people/body.js': '*',
+  'fauna/geo.js': ['Mesher', 'flapMaterial', 'flapInstanced'],
+  'fauna/uncanny/kit.js': ['Painter', 'paintedMaterial'],
+  'v7/still/kit.js': '*',
 };
 // files in those places, or importing those names, that build no figure or creature of their own (or one the page does
 // not stand alone yet), and why
@@ -67,11 +70,16 @@ export const NOT_FIGURES = {
   'src/v8/twk.js': 'the Twk-men\'s flights (their model: twk/model.js)',
   'src/v8/house/clear.js': 'clearances', 'src/v8/house/kept.js': 'the house\'s kept arrays', 'src/v8/house/lamps.js': 'lamps', 'src/v8/house/props.js': 'props', 'src/v8/house/sound.js': 'sound',
   'src/v4/regions/bletting.js': 'no creature', 'src/v4/regions/common.js': 'the regions\' kit', 'src/v4/regions/demesne.js': 'its peafowl are peafowl.js\'s', 'src/v4/regions/saltings.js': 'no creature', 'src/v4/regions/skin.js': 'the ground skins', 'src/v4/regions/yews.js': 'no creature',
-  // figures that are part of a place, not on the page yet: each wants its figure lifted out of the place's build (a follow-on)
-  'src/v17/sphere.js': 'the Noonwright at the wheel, inside the sphere\'s glass: part of the place\'s build (not on the page yet)',
-  'src/v9/waystation.js': 'the Lantern Halt\'s sleeper: part of the waystation\'s build (not on the page yet)',
-  'src/v10/halt-seat.js': 'the sleeper\'s answer to the seat (the waystation\'s)',
-  'src/v5/thrones.js': 'the Acephalous Thrones: 150 m colossi carved from the wall, judged in the world',
   'src/v5/plinths.js': 'stone feet on plinths: statuary, not a figure',
   'src/v14/noon-road.js': 'the Noonwrights\' carriers: glass vessels, not figures',
+  'src/v8/livery/props.js': 'the liveries\' props (a slate, a peg)',
 };
+// real figures not on the page yet, each part of a place's build: lifting the figure out into a function of its own puts
+// it on the page. tools/study-test.mjs fails if this list grows past DEFERRED_MAX: it may only shrink.
+export const DEFERRED = {
+  'src/v17/sphere.js': 'the Noonwright at the wheel, built inside the sphere\'s build',
+  'src/v9/waystation.js': 'the Lantern Halt\'s sleeper, built inside the waystation\'s build',
+  'src/v10/halt-seat.js': 'the same sleeper\'s answer to the seat',
+  'src/v5/thrones.js': 'the Acephalous Thrones, 150 m colossi carved from the wall (a sheet cell cannot hold them; judged in the world)',
+};
+export const DEFERRED_MAX = 4;

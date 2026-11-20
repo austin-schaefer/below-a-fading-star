@@ -178,7 +178,7 @@ export const study = [{
   build(ctx) {
     const door = { x: 0, z: 0, y: 1.27, width: 1.1, height: 2.1 };
     const slab = new THREE.Mesh(new THREE.BoxGeometry(0.12, door.height, door.width), new THREE.MeshStandardMaterial({ color: '#4a4136', roughness: 0.9 }));
-    slab.position.set(door.x + 0.07, door.height / 2, door.z); slab.receiveShadow = true;
+    slab.position.set(door.x + 0.07, door.height / 2, door.z); slab.receiveShadow = true; slab.userData.studyProp = true;
     ctx.scene.add(slab);
     ctx.hypogeum = { door, floor: 0 };
     buildBeetles(ctx);

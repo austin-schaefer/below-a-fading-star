@@ -210,7 +210,7 @@ export const study = [{
     const { makeGround } = await import('../../fauna/uncanny/kit.js');
     const s = await buildStylite(ctx, makeGround(ctx)); ctx.registerUpdate(s.update);
     const tor = new THREE.Mesh(new THREE.CylinderGeometry(0.9, 1.6, s.seat.y, 9), new THREE.MeshStandardMaterial({ color: '#6a655c', roughness: 0.95 }));
-    tor.position.set(s.seat.x, s.seat.y / 2 - 0.05, s.seat.z); tor.castShadow = tor.receiveShadow = true; ctx.scene.add(tor);
+    tor.position.set(s.seat.x, s.seat.y / 2 - 0.05, s.seat.z); tor.castShadow = tor.receiveShadow = true; tor.userData.studyProp = true; ctx.scene.add(tor);
     return { at: (o) => o.set(s.seat.x, s.seat.y + 0.5, s.seat.z), face: () => Math.atan2(s.face[0], s.face[1]) };
   },
 }];

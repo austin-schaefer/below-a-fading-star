@@ -70,6 +70,7 @@ const SKY = {
   neutral: skyTexture([[0, '#8d9096'], [1, '#6c6e72']]),
   sun: skyTexture([[0, '#2a2540'], [0.55, '#3c3456'], [0.85, '#6a2a26'], [1, '#8a2a16']]),
 };
+const GROUND = { sun: new THREE.Color('#6d6a58'), neutral: new THREE.Color('#8a8676') };
 function setLight(which) {
   LIGHT = which;
   const sun = which === 'sun';
@@ -78,7 +79,7 @@ function setLight(which) {
   ambient.intensity = sun ? 1.6 : 0;
   renderer.toneMappingExposure = sun ? 1.25 : 1.0;
   scene.background = SKY[which];
-  ground.material.color.set(sun ? '#6d6a58' : '#8a8676');
+  ground.material.color.copy(GROUND[which]);
 }
 
 // ---- plain ground: a metre grid, every fifth line stronger, so size and travel read
@@ -225,7 +226,7 @@ function layout() {
     el.className = 'lab' + (s.ok ? '' : ' bad');
     el.style.left = `${x}px`; el.style.top = `${y}px`; el.style.maxWidth = `${cw - 8}px`;
     s.tris = s.ok ? countTris(s.group) : 0;
-    const what = s.kind === 'recipe' ? `seed ${s.seed}` : s.kind;
+    const what = (s.kind === 'recipe' ? `seed ${s.seed}` : s.kind) + (LIGHT === 'neutral' && s.lift > 1.15 ? ` · lifted ×${s.lift.toFixed(1)}` : '');
     el.innerHTML = s.ok
       ? `<b>${s.name}</b> <i>${what} · ${fmt(s.tris)} tris · ${s.module.replace(/^src\//, '')}</i>`
       : `<b>${s.name}</b> failed: ${s.error}${s.missing.length ? ` (ctx lacks ${s.missing.join(', ')})` : ''}`;
@@ -243,12 +244,55 @@ const fmt = (n) => (n >= 10000 ? `${Math.round(n / 1000)}k` : `${n}`);
 // distance that frames its height in the cell
 const view = { turn: 0, zoom: 1 };
 const T0 = new THREE.Vector3(), C0 = new THREE.Vector3();
+// Measured once, after the warm-up. The bounds: the subject's meshes near where it stands (within 2.5 heights; none
+// larger than 4 heights: a turf or a far piece of the same mesh is left out), so the cell fits what is there and not only
+// the height its registration gives (rigs posed in a shader keep their geometry at the origin and fall back to that
+// height). The albedo: its surfaces' mean reflectance (vertex colours times the material's colour), for the neutral lift.
+const B0 = new THREE.Box3(), B1 = new THREE.Box3(), VC = new THREE.Vector3(), VS = new THREE.Vector3(), CC = new THREE.Color();
+const lum = (r, g, b) => 0.2126 * r + 0.7152 * g + 0.0722 * b;
+function measure(s) {
+  s.group.updateMatrixWorld(true);
+  s.at(T0);
+  let wsum = 0, asum = 0;
+  B0.makeEmpty();
+  const R = Math.max(6, s.h * 2.5), cap = s.h * 4;
+  s.group.traverse((o) => {
+    if (!o.isMesh || !o.geometry?.attributes?.position) return;
+    const m = Array.isArray(o.material) ? o.material[0] : o.material;
+    if (m && !m.isMeshBasicMaterial && m.color) {
+      const col = o.geometry.attributes.color, n = o.geometry.attributes.position.count;
+      let a = lum(m.color.r, m.color.g, m.color.b);
+      if (col && col.itemSize >= 3) { let t = 0, k = 0; const step = Math.max(1, Math.floor(col.count / 1500)); for (let i = 0; i < col.count; i += step) { t += lum(col.getX(i), col.getY(i), col.getZ(i)); k++; } a *= t / Math.max(1, k); }
+      wsum += n; asum += a * n;
+    }
+    if (s.kind === 'recipe' || s.fly || o.userData.studyProp) return; // (a stand-in's prop never sets the framing)
+    if (o.isSkinnedMesh) { o.skeleton.update(); o.computeBoundingBox(); }
+    B1.setFromObject(o);
+    if (B1.isEmpty() || ![B1.min.x, B1.min.y, B1.max.x, B1.max.y, B1.min.z, B1.max.z].every(Number.isFinite)) return;
+    B1.getCenter(VC); B1.getSize(VS);
+    if (Math.hypot(VC.x - T0.x, VC.z - T0.z) > R || Math.max(VS.x, VS.y, VS.z) > cap) return;
+    B0.union(B1);
+  });
+  s.albedo = wsum ? asum / wsum : 0.3;
+  // the neutral light's lift: a dark thing (the trees' leaves, a crow) brought up toward a mid reflectance so its form and
+  // colour can be read; the ground is dimmed by as much, so every cell's ground looks alike. The sun is never lifted.
+  s.lift = Math.min(10, Math.max(1, 0.18 / Math.max(0.005, s.albedo)));
+  if (!B0.isEmpty()) {
+    B0.getCenter(VC); B0.getSize(VS);
+    s.fit = { dx: VC.x - T0.x, dz: VC.z - T0.z, y0: B0.min.y - T0.y, hy: VS.y, span: Math.max(s.h * 0.6, VS.y * 1.05, Math.max(VS.x, VS.z) * 0.8) };
+  }
+}
+
 function aim(s) {
   const cam = s.camera;
   s.at(T0);
   let span, mid;
-  if (s.kind === 'recipe') { span = Math.max(s.fitH, s.fitSpan * 0.75); mid = s.fitH * 0.45; }
-  else { span = s.h; mid = s.mid ?? (s.fly ? 0 : s.h * 0.52); }
+  if (s.kind === 'recipe') {
+    span = Math.max(s.fitH, s.fitSpan * 0.75); mid = s.fitH * 0.45;
+    if (s.box) { s.box.getCenter(VC); T0.x = VC.x; T0.z = VC.z; } // on the middle of its own bounds (a leaning tree)
+  } else if (s.fit && s.mid == null) {
+    span = s.fit.span; T0.x += s.fit.dx; T0.z += s.fit.dz; mid = s.fit.y0 + s.fit.hy * 0.5;
+  } else { span = s.h; mid = s.mid ?? (s.fly ? 0 : s.h * 0.52); }
   const fovV = THREE.MathUtils.degToRad(cam.fov), fit = Math.max(span / (2 * Math.tan(fovV / 2)), span / (2 * Math.tan(fovV / 2) * cam.aspect));
   const dist = fit * 1.25 * view.zoom * FAR + (s.kind === 'recipe' ? 0 : 0.25);
   const face = s.face ? s.face() : 0.7;
@@ -284,7 +328,7 @@ function render() {
     const s = c.s;
     if (!s.ok) { renderer.setViewport(c.x, H - c.y - c.h, c.w, c.h); renderer.setScissor(c.x, H - c.y - c.h, c.w, c.h); renderer.setClearColor('#2a1a1a'); renderer.clear(); continue; }
     let dist;
-    try { dist = aim(s); s.at(T0); }
+    try { dist = aim(s); } // (T0: where it stands, moved onto the middle of its bounds)
     catch (e) { s.ok = false; s.error = `at: ${e.message}`.slice(0, 300); errors.push(`${s.id}: at: ${e.message}`); layoutSoon = true; continue; }
     ground.position.set(T0.x, s.fly ? 0 : (s.floor ?? 0), T0.z);
     ground.visible = s.ground !== false;
@@ -297,6 +341,9 @@ function render() {
     key.position.copy(T0).addScaledVector(V, r * 3);
     const sc = key.shadow.camera; sc.left = sc.bottom = -r; sc.right = sc.top = r; sc.near = 0.1; sc.far = r * 6; sc.updateProjectionMatrix();
     key.target.updateMatrixWorld(); key.updateMatrixWorld();
+    const lift = LIGHT === 'neutral' ? s.lift || 1 : 1;
+    renderer.toneMappingExposure = (LIGHT === 'sun' ? 1.25 : 1.0) * lift;
+    ground.material.color.copy(GROUND[LIGHT]).multiplyScalar(1 / lift);
     renderer.setViewport(c.x, H - c.y - c.h, c.w, c.h);
     renderer.setScissor(c.x, H - c.y - c.h, c.w, c.h);
     renderer.render(scene, s.camera);
@@ -324,6 +371,7 @@ await buildSubjects();
 // a builder's ctx.built().then(...) runs now; give them a turn, then the warm-up the clock asks for
 await new Promise((r) => setTimeout(r, 0));
 advance(+(Q.get('t') || 1.5));
+for (const s of subjects) if (s.ok) { try { measure(s); } catch (e) { console.warn(`[study] ${s.id} measure:`, e); } }
 layout();
 render();
 window.__study.ready = true;

@@ -328,8 +328,8 @@ function buildGrouse(ctx, rng, erratics, inRegion, iceAt, G, meshes) {
 export const study = [{
   id: 'grouse', name: 'grouse', kind: 'creature', h: 1.4, at: [50, -195],
   build(ctx) {
-    const erratics = [{ x: 50, z: -195, s: 1.2 }, { x: 56, z: -190, s: 1 }, { x: 44, z: -199, s: 1.1 }];
-    for (const e of erratics) { const m = new THREE.Mesh(new THREE.DodecahedronGeometry(e.s, 0), new THREE.MeshStandardMaterial({ color: '#8a877e', roughness: 0.9 })); m.position.set(e.x, e.s * 0.6, e.z); m.castShadow = m.receiveShadow = true; ctx.scene.add(m); }
+    const erratics = [{ x: 50, z: -195, s: 0.7 }, { x: 56, z: -190, s: 0.6 }, { x: 44, z: -199, s: 0.65 }];
+    for (const e of erratics) { const m = new THREE.Mesh(new THREE.DodecahedronGeometry(e.s, 0), new THREE.MeshStandardMaterial({ color: '#8a877e', roughness: 0.9 })); m.position.set(e.x, e.s * 0.6, e.z); m.castShadow = m.receiveShadow = true; m.userData.studyProp = true; ctx.scene.add(m); }
     const { birds } = buildGrouse(ctx, ctx.makeRng(7100), erratics, () => true, () => 0, { heightAt: () => 0 }, []);
     const b = birds[0]; return { at: (o) => o.set(b.x, b.y ?? 0, b.z), face: () => b.yaw, floor: 0 };
   },

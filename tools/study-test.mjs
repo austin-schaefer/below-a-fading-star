@@ -26,18 +26,27 @@ for (const d of R.FIGURE_DIRS) for (const f of fs.readdirSync(d)) if (f.endsWith
 for (const f of all) {
   if (f.startsWith('src/study/')) continue;
   const s = fs.readFileSync(f, 'utf8');
-  for (const m of s.matchAll(/import\s*\{([^}]*)\}\s*from\s*['"]([^'"]+)['"]/g)) {
-    const file = path.normalize(path.join(path.dirname(f), m[2]));
+  // import { a, b as c } from '…kit', import * as K from '…kit', import('…kit') (a dynamic import counts as all of it)
+  const imports = [...s.matchAll(/import\s*\{([^}]*)\}\s*from\s*['"]([^'"]+)['"]/g)].map((m) => [m[2], m[1].split(',').map((n) => n.trim().split(/\s+as\s+/)[0]).filter(Boolean)])
+    .concat([...s.matchAll(/import\s*\*\s*as\s+\w+\s+from\s*['"]([^'"]+)['"]/g)].map((m) => [m[1], ['*']]))
+    .concat([...s.matchAll(/import\(\s*['"]([^'"]+)['"]\s*\)/g)].map((m) => [m[1], ['*']]));
+  for (const [spec, got] of imports) {
+    const file = path.normalize(path.join(path.dirname(f), spec));
     for (const [k, names] of Object.entries(R.FIGURE_KITS)) {
-      const used = m[1].split(',').map((n) => n.trim().split(/\s+as\s+/)[0]).filter((n) => names.includes(n));
-      if (file === path.join('src', k) && used.length && !cand.has(f)) cand.set(f, `imports ${used.join(', ')} from ${k}`);
+      if (file !== path.join('src', k)) continue;
+      const used = got.filter((n) => n === '*' || names === '*' || names.includes(n));
+      if (used.length && !cand.has(f)) cand.set(f, `imports ${used.join(', ')} from ${k}`);
     }
   }
 }
 const reg = new Set(R.STUDY_MODULES);
-const missing = [...cand.keys()].filter((f) => !reg.has(f) && !(f in R.NOT_FIGURES)).sort();
-check(missing.length === 0, `every figure or creature module is registered or excused (${cand.size} found${missing.length ? '; not: ' + missing.map((f) => `${f} (${cand.get(f)})`).join(', ') : ''})`);
-const stale = Object.keys(R.NOT_FIGURES).filter((f) => !fs.existsSync(f));
+const missing = [...cand.keys()].filter((f) => !reg.has(f) && !(f in R.NOT_FIGURES) && !(f in R.DEFERRED)).sort();
+const nDef = Object.keys(R.DEFERRED).length;
+check(nDef <= R.DEFERRED_MAX, `the deferred figures do not grow (${nDef} of at most ${R.DEFERRED_MAX}: ${Object.keys(R.DEFERRED).join(', ')})`);
+const both = Object.keys(R.DEFERRED).filter((f) => f in R.NOT_FIGURES || reg.has(f));
+check(both.length === 0, `no file is both deferred and excused or registered${both.length ? ': ' + both.join(', ') : ''}`);
+check(missing.length === 0, `every figure or creature module is registered, excused or deferred (${cand.size} found${missing.length ? '; not: ' + missing.map((f) => `${f} (${cand.get(f)})`).join(', ') : ''})`);
+const stale = [...Object.keys(R.NOT_FIGURES), ...Object.keys(R.DEFERRED)].filter((f) => !fs.existsSync(f));
 check(stale.length === 0, `every excused file exists${stale.length ? ': not ' + stale.join(', ') : ''}`);
 const noExport = R.STUDY_MODULES.filter((f) => !fs.existsSync(f) || !/export const study\b/.test(fs.readFileSync(f, 'utf8')));
 check(noExport.length === 0, `every registered module exports study (${reg.size}${noExport.length ? '; not: ' + noExport.join(', ') : ''})`);

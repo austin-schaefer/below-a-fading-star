@@ -385,7 +385,7 @@ export function buildSleeper(ctx, at) {
 
 // The study page (src/study/registry.js): the Pomegranate House's four, each with a stand-in for what they lean on (a
 // table for the two at play, a bench for the sleeper's table and the musician's rim).
-const studyBox = (ctx, x, y, z, w, h, d) => { const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), new THREE.MeshStandardMaterial({ color: '#5a4636', roughness: 0.9 })); m.position.set(x, y - h / 2, z); m.castShadow = m.receiveShadow = true; ctx.scene.add(m); };
+const studyBox = (ctx, x, y, z, w, h, d) => { const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), new THREE.MeshStandardMaterial({ color: '#5a4636', roughness: 0.9 })); m.position.set(x, y - h / 2, z); m.castShadow = m.receiveShadow = true; m.userData.studyProp = true; ctx.scene.add(m); };
 const studyRun = (ctx, R, cam) => ctx.registerUpdate((dt, t) => R.update(dt, t, cam, () => true));
 export const study = [
   { id: 'house-host', name: 'the host', kind: 'figure', h: 2.0, at: [97, -60],
@@ -402,5 +402,5 @@ export const study = [
   { id: 'house-musician', name: 'the musician', kind: 'figure', h: 1.8, at: [84, -60],
     build(ctx) { const at = { x: 84, z: -60, y: 0, yaw: 0, hs: 0.575 }; studyBox(ctx, 84, 0.575, -60.1, 1.2, 0.575, 0.5); const R = buildMusician(ctx, at); studyRun(ctx, R, ctx.camera.position); return { at: (o) => o.set(at.x, 0, at.z), face: () => 0 }; } },
   { id: 'house-sleeper', name: 'the sleeper at the table', kind: 'figure', h: 1.8, at: [78, -60],
-    build(ctx) { const at = { x: 78.6, z: -60, y: 0, yaw: Math.PI / 2 }; studyBox(ctx, 78, 0.8, -60, 1.0, 0.8, 1.6); const R = buildSleeper(ctx, at); studyRun(ctx, R, ctx.camera.position); return { at: (o) => o.set(at.x, 0, at.z), face: () => at.yaw }; } },
+    build(ctx) { const at = { x: 78.6, z: -60, y: 0, yaw: Math.PI / 2 }; studyBox(ctx, 78, 0.72, -60, 0.7, 0.72, 1.1); const R = buildSleeper(ctx, at); studyRun(ctx, R, ctx.camera.position); return { at: (o) => o.set(at.x, 0, at.z), face: () => at.yaw }; } },
 ];

@@ -140,7 +140,7 @@ export const study = [{
     for (const dx of [0, 6]) { // two lamps (it waits for two), the second out of the cell
       const light = new THREE.PointLight('#' + LAMP_COLOUR, 3, 8); light.position.set(pos.x + dx, pos.y, pos.z);
       const post = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.05, 2.4, 6), new THREE.MeshStandardMaterial({ color: '#3a3026' }));
-      post.position.set(pos.x + dx, 1.2, pos.z); post.castShadow = true;
+      post.position.set(pos.x + dx, 1.2, pos.z); post.castShadow = true; post.userData.studyProp = true;
       ctx.scene.add(light, post);
     }
     buildLampMoths(ctx);
