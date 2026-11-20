@@ -101,7 +101,7 @@ export async function build(ctx) {
 
   // ---- the likenesses: one mesh, the heads turned in its vertex shader
   const P = new Painter(TURN_ATTRS), heads = [];
-  for (const t of tubs) heads.push(...buildLikeness(t.id, { at: [cx + t.x, fy + 0.03, cz + t.z], yaw: t.yaw, into: P, low, rootDepth: 0 }).heads);
+  for (const t of tubs) heads.push(...buildLikeness(t.id, { at: [cx + t.x, fy + 0.05, cz + t.z], yaw: t.yaw, into: P, low, rootDepth: 0 }).heads);
   const uTurn = Array.from({ length: N_SLOTS }, () => new THREE.Vector4());
   const people = new THREE.Mesh(P.geometry(), likenessMaterial(uTurn));
   people.name = 'florilegium-likenesses'; people.receiveShadow = false;
@@ -171,9 +171,9 @@ export async function build(ctx) {
   // ---- nobody gets in: a wall a side
   for (let k = 0; k < N; k++) {
     const a0 = (k - 0.5) * (Math.PI * 2 / N), a1 = (k + 0.5) * (Math.PI * 2 / N), r = RC + 0.05;
-    ctx.addCollider({ x1: cx + Math.cos(a0) * r, z1: cz + Math.sin(a0) * r, x2: cx + Math.cos(a1) * r, z2: cz + Math.sin(a1) * r, r: 0.32, y: fy - 2, h: 16, stand: false });
+    ctx.addCollider({ x1: cx + Math.cos(a0) * r, z1: cz + Math.sin(a0) * r, x2: cx + Math.cos(a1) * r, z2: cz + Math.sin(a1) * r, r: 0.3, y: fy - 0.7, h: 4.75, stand: false });
   }
-  ctx.addCollider({ x: cx + A + 0.3, z: cz, r: 0.75, y: fy - 2, h: 16, stand: false }); // the door's case and its step
+  ctx.addCollider({ x: cx + A + 0.15, z: cz, r: 0.5, y: fy - 0.7, h: 3.4, stand: false }); // the door's case and its step
 
   // ---- the heads, and the flask's breath (it breathes; it does not flicker)
   const turn = makeTurner(heads, flask, uTurn);

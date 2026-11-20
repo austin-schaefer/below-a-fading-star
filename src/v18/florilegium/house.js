@@ -46,7 +46,7 @@ export function buildFrame({ low = false, tubs = [] } = {}) {
       P.paint(mixc(STONE, h > 0.5 ? STONE_L : STONE_D, Math.abs(h - 0.5) * 1.3), 0, 0.95, 0);
       wallBox(P, x1 + (x2 - x1) * (t0 + 0.004), z1 + (z2 - z1) * (t0 + 0.004), x1 + (x2 - x1) * (t1 - 0.004), z1 + (z2 - z1) * (t1 - 0.004), -0.7, SILL - 0.1 - 0.03 * h, 0.5);
       P.paint(mixc(STONE_L, MOSS, 0.45 + 0.5 * hash(k * 13 + i)), 0, 1, 0);
-      wallBox(P, x1 + (x2 - x1) * t0, z1 + (z2 - z1) * t0, x1 + (x2 - x1) * t1, z1 + (z2 - z1) * t1, SILL - 0.13, SILL, 0.62, 0.02);
+      wallBox(P, x1 + (x2 - x1) * (t0 + 0.003), z1 + (z2 - z1) * (t0 + 0.003), x1 + (x2 - x1) * (t1 - 0.003), z1 + (z2 - z1) * (t1 - 0.003), SILL - 0.13, SILL - 0.004 * i, 0.62, 0.02);
     });
   }
   // ---- the floor: flags, mottled, cracked where the roots go down
@@ -68,7 +68,7 @@ export function buildFrame({ low = false, tubs = [] } = {}) {
   // ---- the iron: posts, the sill bar, the transom, the ribs up the roof and their curled tips, the purlins
   for (let j = 0; j < N; j++) {
     const [x, z] = corner(j), a = (j + 0.5) * (Math.PI * 2 / N), ca = Math.cos(a), sa = Math.sin(a);
-    bar(P, [x, SILL, z], [x, MID, z], 0.07, rustOf(j)); bar(P, [x, MID, z], [x, EAVE, z], 0.065, rustOf(j + 40));
+    bar(P, [x, SILL - 0.05, z], [x, MID, z], 0.07, rustOf(j)); bar(P, [x, MID, z], [x, EAVE, z], 0.065, rustOf(j + 40));
     P.paint(IRON, 0.5, 0.7, 0); P.box(x, MID, z, 0.2, 0.09, 0.2, -a);
     const rib = PROF.map(([r, y]) => [ca * r, y, sa * r]), half = 4;
     P.paint(rustOf(j + 80), 0.5, 0.75, 0); P.loft(rib.slice(0, half + 1), rib.slice(0, half + 1).map(() => 0.06), 4, 0, false);
@@ -98,7 +98,7 @@ export function buildFrame({ low = false, tubs = [] } = {}) {
   // ---- the door: a stone case, an iron leaf shut in it, its lock, and the key on a nail inside
   {
     const x = A, h = DOOR.h, w = DOOR.half;
-    for (const s of [-1, 1]) { P.paint(mixc(STONE, STONE_L, 0.3 + 0.3 * s), 0, 0.95, 0); P.box(x + 0.02, h / 2 - 0.1, s * (w + 0.13), 0.5, h + 0.2, 0.26); }
+    for (const s of [-1, 1]) { P.paint(mixc(STONE, STONE_L, 0.3 + 0.3 * s), 0, 0.95, 0); P.box(x + 0.02, h / 2 - 0.1, s * (w + 0.15), 0.5, h + 0.2, 0.3); }
     P.paint(STONE_L, 0, 0.95, 0); P.box(x + 0.04, h + 0.14, 0, 0.56, 0.3, w * 2 + 0.66);
     P.paint(mixc(STONE_L, MOSS, 0.6), 0, 1, 0); P.box(x + 0.04, h + 0.3, 0, 0.6, 0.04, w * 2 + 0.7);
     const leaf = x + 0.03, iron = mixc(IRON, RUST, 0.45).clone();
