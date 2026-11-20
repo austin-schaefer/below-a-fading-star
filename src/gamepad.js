@@ -10,8 +10,9 @@
 //   On the title card the bottom face or Start goes out, with no capture of the mouse (main.js's begin skips lock()).
 //   In the panel: the d-pad or the left stick moves the focus to the nearest control that way (left and right step a
 //   slider instead), the bottom face presses it, the right face (B) or Start shuts the panel, the right stick scrolls.
-//   The panel's places (v17.1 Q1's map) are driven through DOM focus, so any mark that is a focusable element works;
-//   when the panel's api offers `padMove(dir)` / `padActivate()` they are asked first and their `true` ends it.
+//   When the panel's api has `focusNext(dx, dy)` and `activate()` (v17.1 Q1's map: its marks move by where they lie)
+//   they are asked first, and a `true` ends it; without them, or when they find nothing, plain DOM focus does it, so
+//   any focusable mark works. B shuts the panel with settings.close(), never by "Back to the moor"'s click (below).
 // Any other mapping gets the plain minimum: axes 0 and 1 walk, 2 and 3 look, button 0 hops (and presses in the panel),
 // 1 shuts the panel, 2 does the act, 3 opens the panel; no d-pad.
 //
@@ -131,15 +132,18 @@ export function installGamepad(ctx) {
   // the nearest control in a direction from the focused one: ahead of it, scored by the distance along plus twice
   // the distance across (so a list goes row by row and a map's marks go to the one that way)
   function move(dir) {
-    const api2 = ctx.settings;
-    if (api2?.padMove && api2.padMove(dir) === true) return;
+    const api2 = ctx.settings, [dx, dy] = DIRS[dir];
+    if (typeof api2?.focusNext === 'function') { // the panel's own (v17.1 Q1: the map's marks by where they lie)
+      let moved = false;
+      try { moved = api2.focusNext(dx, dy) === true; } catch (e) { console.error('[fp] focusNext failed:', e); }
+      if (moved || current()) return;
+    }
     const els = focusables();
     if (!els.length) return;
     const cur = current();
     if (cur && cur.type === 'range' && (dir === 'left' || dir === 'right')) { stepRange(cur, dir === 'right' ? 1 : -1); return; }
     if (!cur) { focusEl(els[0]); return; }
     const c = cur.getBoundingClientRect(), cx = c.left + c.width / 2, cy = c.top + c.height / 2;
-    const [dx, dy] = DIRS[dir];
     let best = null, bs = Infinity;
     for (const el of els) {
       if (el === cur) continue;
@@ -163,14 +167,14 @@ export function installGamepad(ctx) {
     el.dispatchEvent(new Event('change', { bubbles: true }));
   }
   function activate() {
-    const api2 = ctx.settings;
-    if (api2?.padActivate && api2.padActivate() === true) return;
     const cur = current();
     if (!cur) { const els = focusables(); if (els.length) focusEl(els[0]); return; }
     // "Back to the moor" takes the mouse again on a click; a pad's press is not a gesture the capture takes, and a
     // refused capture would fall back to drag-look: shut the panel instead
     if (cur.id === 'set-close') { closePanel(); return; }
-    if (cur.type === 'range') return;
+    const api2 = ctx.settings;
+    if (typeof api2?.activate === 'function') { try { if (api2.activate() === true) return; } catch (e) { console.error('[fp] activate failed:', e); } }
+    if (cur.type === 'range' || !current()) return;
     cur.click();
   }
   function closePanel() { ctx.settings?.close(); document.activeElement?.blur?.(); }
@@ -232,7 +236,7 @@ export function installGamepad(ctx) {
 
   // the focus ring a pad needs (a script's focus() shows no ring in some browsers) and the act's key on a touch device
   const st = document.createElement('style');
-  st.textContent = 'body.pad #settings-panel :focus { outline: 1px solid var(--ink, #ffd9b0); outline-offset: 3px; } body.touch.pad #act kbd { display: inline; }';
+  st.textContent = 'body.pad #settings-panel :focus { outline: 1px solid var(--ink, #ffd9b0); outline-offset: 3px; } body.touch.pad #act kbd { display: inline; } @media (max-width: 700px) { body.pad #card .keys { display: block; } }';
   document.head.appendChild(st);
 
   arm();
