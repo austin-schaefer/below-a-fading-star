@@ -1,0 +1,24 @@
+Brief: v18 F2, the Florilegium (the glasshouse)
+Worktree: `.claude/worktrees/issue-1802-glasshouse`, branch `issue-1802-glasshouse`, port 8182. Model: fable. Work only there. `briefs/v18/_common.md` first; `stories/the-graffer.md` is your brief's heart.
+
+Goal. The owner: "a multi-hued stained glass greenhouse you can't enter with woman- and man-shaped flowers growing inside. As always, riff, expand, build on ideas, be ambitious". This is the milestone's centrepiece and the one thing in the wood a visitor should tell a friend about. At `GLASSHOUSE` in `src/v18/plan.js` ((-265, 126), a claim of r 13, door facing east at (-257, 127)).
+
+**The house.** An old hothouse, rich once: iron ribs gone to rust and verdigris, a stone plinth mossed over, a lantern roof, panes in many colours, leaded, some cracked, some replaced with the wrong colour, a few fallen and lying in the leaf litter still catching light. Not a Victorian conservatory copied and not a cathedral window: find its own shape (the Heliarchy's and the Noonwrights' kits in `visual-art/architecture.md` are the neighbours; this is a private folly of a rich house, later than both). It is lit from inside by one flask of stored noon hung from the lantern (the Nave's flasks, `the-noon-road.md`, `src/v13/` or wherever they are built: the same make). In a wood that is black and teal it is the only many-coloured thing: the glass glows, colour lies in patches on the trunks and the ground round it and moves a little as the flask breathes (never flickers), and from the wood way at about (-205, 128), 60 m east, it is a scatter of coloured lights between trunks that makes a visitor leave the road. Do the cast colour cheaply (emissive panes, a few decals or one projected texture, the three shared light slots: `world-code` on point lights), not with a light a pane.
+
+**Nobody gets in.** The door is shut and locked; its key hangs on a nail inside, in plain sight through the glass. Colliders all round. A visitor walks the whole way round it on a worn path, close to the glass.
+
+**The likenesses.** Inside, in seven stone tubs: six flowers the size and shape of people, the `LIKENESSES` of the plan, in that order, and each must read as its person at 15 m through the glass by silhouette and prop: a lady with an open fan (a leaf), an armiger with both hands on a sword (a bud spike) point-down, a child with a hoop (a tendril ring), a fat magnate raising a cup (a bloom), two lovers hand in hand with heads together in one tub, a falconer with a bird (a bud) on a lifted wrist. They are plants first: a bloom for a head with the face in its markings, petals for dress, leaves for arms, stem and root for the body, each a different flower in a different colour; not mannequins with petals glued on, not cartoon sunflowers with smiles. Beautiful and wrong. The seventh tub holds a sprout a hand high, already stooped. Roots as thick as an arm leave each tub and go down through the cracked floor.
+
+**They turn.** Each head follows the visitor round the glass, slowly, a little late, each at its own pace, the lovers together; when the visitor stands still they settle and, after a while, drift back toward the flask. When the sun gutters they all turn west together. This is the beat that must be judged in frames taken in order as a visitor walks a half circle.
+
+Also: a grate in the paving outside the door, dark below, bars close-set (F3 builds the room under it at `BEDS.under`: leave the grate a 1.2 m square opening at ground level within 2 m of the door and say its exact position in your first push; do not build below ground). Moths belong at the glass (F4 brings them; leave them the panes).
+
+Name it in `LANDMARKS` as "The Florilegium" with an empty `line`; one mark on the map is the orchestrator's to add later, not yours. Register every likeness on the study page. Export the flower builder so F3 can show the tubs' undersides (`export function buildLikeness(id, opts)`), and say its signature in your first push.
+
+Read: `visual-art` whole, with `figures.md` and the light reference; `src/v17/garth/` (a garden in stored noon: the nearest kin, and its light); the study page's docs in `runtime.md`; `src/lights.js`.
+
+Done when: the plan's Done when 3; inside the module budget on low and medium with your numbers before and after at the stand `?pos=-250,128&yaw=1.57` and from the road; `ONLY=dressing,strata,geometry,edges,threads,perf,study,settings` green; frames: from the wood way, from 30 m, from the door, each likeness through the glass, the walk round in order (heads turning), the gutter, the phone (390 by 844, low: not blown out); two blind readers (one shown the far and near frames, one shown the six likenesses and asked who each is).
+
+What the owner can see: `http://localhost:8171/?pos=-250,128&yaw=1.57`.
+
+Finish and report as `_common.md` says.

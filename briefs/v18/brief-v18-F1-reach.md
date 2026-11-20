@@ -1,0 +1,18 @@
+Brief: v18 F1, the wood's reach and its spurs
+Worktree: `.claude/worktrees/issue-1801-reach`, branch `issue-1801-reach`, port 8181. Model: opus. Work only there. `briefs/v18/_common.md` first.
+
+Goal. The owner: "expand its reach a bit ... Little spur trails off the main road, dark and twisty things". Two things.
+
+1. **The north lobe.** The Deodand Wood grows north onto the moor: `NORTH_LOBE` in `src/v18/plan.js` (centre (-198, 22), r about 38, inside the box x -232..-165, z -5..42; keep off the tor at (-230, 30), rivulet R4 and the Stones' ring). It must read as the same wood grown out, joined to the old one by a neck of trees (the old edge is at about z 45), not a second round blob: ragged, older and thinner at its rim, the same grade, mist and litter. The survey found the wood's edge from outside "a dense, even tree wall ... flat": while you are in the edge code, give the whole rim some outliers, gaps and a few giants so it has a skyline. **The low tier is at its limit:** the lobe is paid for, not added. Find the trees' cost (triangles, shadow casters) and hold the frame at the survey's stands (wood heart, road middle, road entering) and at a new stand in the lobe to no worse than before, by whatever is honest (LOD distances in the wood, fewer shadow casters under closed canopy, a thinner far set); say what you traded.
+
+2. **Three spurs** (`SPURS` in the plan): twisting tracks off the wood way (P32), each to another brief's doorstep: west to the glasshouse's door, south-west to the crypt's door in the bank, north out through the neck into the lobe to the stilters' grove. Narrow, darker than the road, bending so the end is never seen from the start; roots and fallen trunks to step round; the canopy closed over them. A visitor finds each junction without being told and without a signpost: **foxfire** (pale green-white fungus glowing on old trunks and stumps, `plans/IDEAS.md` line 9), thickest at the junction and then one clump always in sight from the last, is the only marker. The glasshouse's own coloured light does the rest on the west spur (F2 builds it; leave the sightline from about (-205, 128) west to (-265, 126) open enough that it will be seen: thin a few trunks, do not clear a ride). Spurs are `LEADS` rows appended in `src/v4/paths/routes.js` (append only: a lead's seed is its index); new ground claims through `src/claims.js` for the three sites in the plan (the glasshouse r 13, the crypt door, the grove), so no tree stands in a door.
+
+Read: `src/height/field.js` (`biomeAt().wood`, `woodRag`), `src/height/regions.js` (`PLACES.wood`), `src/vegetation/trees.js` (the wood's scatter, the BatchedMesh and its LODs), `src/v4/paths/routes.js`, `src/v8/roads/place.js` (the gnomons), `src/v8/shafts.js` and `src/particles.js` (shafts, fireflies and moths should reach the lobe), `src/claims.js`.
+
+You own the ground, the biome, the trees and the tracks. F2, F3 and F4 are building at the plan's coordinates now: do not move a coordinate; if a site's ground is wrong for them, say so in your first push.
+
+Done when: the plan's Done when 1 and 2; the tests `_common.md` lists for moved ground, by name, with counts, and `walkers`; `perf` green and your before and after numbers at the four stands; each spur walked on the keys end to end (`tools/step-frames.mjs` or a walk script) at low and medium; frames at each junction from the road, read by a blind reader asked "is there a way off this road, and where?"; the lobe from the moor to its north and from inside.
+
+What the owner can see: `http://localhost:8171/?pos=-205,128&yaw=1.57` (the west junction), and the lobe from `?pos=-198,-20&yaw=3.14`.
+
+Finish and report as `_common.md` says.
