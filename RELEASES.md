@@ -6,7 +6,7 @@ One entry per release of [below-a-fading-star.netlify.app](https://below-a-fadin
 
 ## v17.1: A map, a controller, and music to try
 
-Released 2026-11-20.
+Released 2026-11-19.
 
 Getting around is easier: the list of places is now a map, and the walk can be played on a game controller. There are also four short pieces of new music to listen to, on a page of their own.
 

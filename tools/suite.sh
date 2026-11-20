@@ -19,6 +19,13 @@ if [ -z "$(lsof -ti:"$PORT")" ]; then
   for i in {1..40}; do curl -s -o /dev/null "$B/" && break; sleep 0.5; done
 fi
 
+# The port must serve this checkout: another project's server on it answers 200 and every test then loads the wrong
+# site (v17.1's first gate ran 40 minutes against the owner's other project on 8123 and failed 38 tests).
+if ! curl -s "$B/tools/suite.sh" | cmp -s - tools/suite.sh; then
+  echo "FAIL port $PORT does not serve this checkout ($(pwd)): something else is listening there. Pick a free port: tools/suite.sh <port>"
+  exit 2
+fi
+
 typeset -a names codes passes secs
 t_all=$SECONDS
 log="$(mktemp)"

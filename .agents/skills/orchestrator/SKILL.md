@@ -11,7 +11,7 @@ Load the `wilderness` skill too (serving, renders), and `world-code` when you re
 
 ## The working branch
 
-- The working branch is `next`, checked out in the deploy worktree `.claude/worktrees/deploy` (`git worktree add .claude/worktrees/deploy next`, creating `next` from `origin/main` if it is gone). It is served on 8123, the owner's view: `nohup nice -n 10 tools/serve.sh 8123 > /tmp/serve-8123.log 2>&1 &` from there, again whenever `lsof -ti:8123` is empty. Files update live. Merge there; never run agents there.
+- The working branch is `next`, checked out in the deploy worktree `.claude/worktrees/deploy` (`git worktree add .claude/worktrees/deploy next`, creating `next` from `origin/main` if it is gone). It is served on 8123, the owner's view: `nohup nice -n 10 tools/serve.sh 8123 > /tmp/serve-8123.log 2>&1 &` from there, again whenever `lsof -ti:8123` is empty. A listener on 8123 is not proof it is ours: the owner's other projects use 8123 and the 8160s too. If `curl -s localhost:8123/tools/suite.sh | cmp - tools/suite.sh` differs, leave that server alone, serve `next` on a free port (8171 up), say the port in Status, and pass it to `tools/suite.sh` (which refuses a port that serves another checkout). Files update live. Merge there; never run agents there.
 - `main` is the live site: every push that touches what the site serves starts a Netlify build (`DEPLOY.md`). Work reaches it only as a release PR from `next`.
 
 ## Start of session

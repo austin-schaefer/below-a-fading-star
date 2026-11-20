@@ -31,6 +31,13 @@ Four briefs at once, `briefs/v17.1/`. A point release: the suite, a cold read of
 
 ## Status
 
+**2026-11-19, 23:58 PST. The gate is green; releasing.**
+
+- **The first whole run was void.** Ports 8123 and 8160 are held by servers of the owner's other project, so 38 tests loaded another site and failed in under a second each. Those servers were left alone. `next` is served on **8171** for this session (not 8123). `tools/suite.sh` now refuses a port that does not serve its own checkout, and the `orchestrator` and `wilderness` skills say to check whose server a port is.
+- **The second whole run, on 8171, on everything that ships:** 49 tests, 48 green, 46 min 46 s. Red: `shore` (tarn-north at medium, a worst step of 3.79 against 3.00), **rerun alone: 6 passed, 0 failed**; nothing in v17.1 touches water, light or shadow, and it was red beside nothing else. Taken as load. After the run only `tools/suite.sh` (the preflight) and docs changed; `ONLY=releases` rerun green.
+- **Done when, line by line.** 1 the map: met (sixteen marks, mouse, touch, keys, pad; `settings` 103; the blind reader named it and picked a place, and called the chart murky). 2 the controller: met by the test with a faked pad; **not met in the hand** (no real controller was used). 3 the study page: the issue's lines met; four figures deferred. 4 music round one: met; unheard. 5 the suite: as above.
+- No critic, no curator (a point release); each diff was read cold by an opus reviewer, and the reviews found what the tests could not: the two-pad and resting-trigger bugs, and the service worker failing `listen.html` for returning visitors.
+
 **2026-11-19, 22:28 PST. All four merged; the gate is running on `next`.**
 
 - **Q2 the controller** (opus, two rounds; `briefs/v17.1/reports/issue-1752-gamepad.md`): `src/gamepad.js`, fetched on the first `gamepadconnected`, polling only while a pad is connected; `controls.js` takes a pad vector and hurry; `main.js` one line (a pad's start skips pointer lock). The cold review's two blockers fixed in round two: two pads both holding a button fired it every frame; a non-standard pad's trigger resting at -1 read as a full right stick. `gamepad` 39. **Weak:** never held in a hand (a faked pad only); whether a pad press starts the sound outside headless Chromium is unverified.

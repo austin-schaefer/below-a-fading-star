@@ -13,7 +13,7 @@ The repository is a static Three.js r170 site with no build step and no package.
 
 ## Serve and walk
 
-- **Ports:** 8123 is the working branch's server, the owner's view (the `orchestrator` skill keeps it up). Every other agent takes its own port from 8160 up and serves its own worktree, never the deploy worktree.
+- **Ports:** 8123 is the working branch's server, the owner's view (the `orchestrator` skill keeps it up). Every other agent takes its own port from 8160 up, one that `lsof -ti:PORT` shows free (the owner's other projects serve on some of them) and serves its own worktree, never the deploy worktree.
 - In a fresh worktree: `npm install --no-save --silent playwright@1.63.0` (keep it without a package.json).
 - Serve: `nohup nice -n 10 tools/serve.sh PORT > /tmp/serve-PORT.log 2>&1 &`. Kill it when you hand back. Below, `B=http://localhost:PORT`.
 - **Controls:** WASD walk, mouse look, Shift hurry, Space hop; on touch, the stick bottom right, the hop ring left of it, drag to look; holding the speaker 1.2 s opens the debug panel. Where an act is offered (v10), `E`, a click with the mouse captured, or a tap on the offer does it. The gear opens the settings panel, whose map (v17.1) goes to sixteen places; `settings.teleport(name)` reaches any stand.
