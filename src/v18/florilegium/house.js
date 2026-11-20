@@ -37,16 +37,16 @@ function wallBox(P, x1, z1, x2, z2, y0, y1, t, out = 0) {
 export function buildFrame({ low = false, tubs = [] } = {}) {
   const P = new Painter();
   const rustOf = (i) => mixc(RUST, i % 3 === 0 ? VERD : RUST_L, hash(i) * 0.8).clone();
-  // ---- the plinth: three blocks a side, a coping gone to moss; the door's side keeps only its ends
+  // ---- the plinth: a course a side, a coping gone to moss; the door's side keeps only its ends
   for (let k = 0; k < N; k++) {
     const [x1, z1] = corner(k - 1, RC + 0.06), [x2, z2] = corner(k, RC + 0.06);
-    const cuts = k === 0 ? [[0, 0.5 - (DOOR.half + 0.24) / Math.hypot(x2 - x1, z2 - z1)], [0.5 + (DOOR.half + 0.24) / Math.hypot(x2 - x1, z2 - z1), 1]] : [[0, 0.31], [0.31, 0.7], [0.7, 1]];
+    const cuts = k === 0 ? [[0, 0.5 - (DOOR.half + 0.24) / Math.hypot(x2 - x1, z2 - z1)], [0.5 + (DOOR.half + 0.24) / Math.hypot(x2 - x1, z2 - z1), 1]] : [[0, 1]]; // (one stone a side: the joints between blocks in one plane flickered; the weathering is the material's)
     cuts.forEach(([t0, t1], i) => {
       const h = hash(k * 7 + i);
       P.paint(mixc(STONE, h > 0.5 ? STONE_L : STONE_D, Math.abs(h - 0.5) * 1.3), 0, 0.95, 0);
-      wallBox(P, x1 + (x2 - x1) * (t0 + 0.004), z1 + (z2 - z1) * (t0 + 0.004), x1 + (x2 - x1) * (t1 - 0.004), z1 + (z2 - z1) * (t1 - 0.004), -0.7, SILL - 0.1 - 0.03 * h, 0.5);
+      wallBox(P, x1 + (x2 - x1) * (t0 + 0.004), z1 + (z2 - z1) * (t0 + 0.004), x1 + (x2 - x1) * (t1 - 0.004), z1 + (z2 - z1) * (t1 - 0.004), -0.7 - 0.02 * (k % 2), SILL - 0.09 + 0.015 * (k % 2), 0.5 - 0.016 * (k % 2));
       P.paint(mixc(STONE_L, MOSS, 0.45 + 0.5 * hash(k * 13 + i)), 0, 1, 0);
-      wallBox(P, x1 + (x2 - x1) * (t0 + 0.003), z1 + (z2 - z1) * (t0 + 0.003), x1 + (x2 - x1) * (t1 - 0.003), z1 + (z2 - z1) * (t1 - 0.003), SILL - 0.13, SILL - 0.004 * i, 0.62, 0.02);
+      wallBox(P, x1 + (x2 - x1) * (t0 + 0.012), z1 + (z2 - z1) * (t0 + 0.012), x1 + (x2 - x1) * (t1 - 0.012), z1 + (z2 - z1) * (t1 - 0.012), SILL - 0.13 - 0.01 * (k % 2), SILL - 0.006 * i - 0.02 * (k % 2), 0.62, 0.02);
     });
   }
   // ---- the floor: flags, mottled, cracked where the roots go down
