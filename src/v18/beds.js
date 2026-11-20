@@ -41,21 +41,21 @@ export async function build(ctx) {
   const drops = BEDS.tombs.map(([tx, tz]) => { const far = tx < vcx ? -1 : 1; return [tx + far * 0.42, YV + 1.5, tz + 0.16]; });
   const litStone = (x, y, z, out) => {
     const s = skyAt(x); out[0] = s; out[1] = s;
-    out[2] = Math.min(1.1, 0.03 + near(fox, x, y, z, 0.5, 0.8) * s + (z < LA.z1 + 0.5 && x < ST.x0 ? near(drops, x, y, z, 0.42, 1.3) : 0));
+    out[2] = Math.min(1.1, 0.02 + near(fox, x, y, z, 0.5, 0.8) * s + (z < LA.z1 + 0.5 && x < ST.x0 ? near(drops, x, y, z, 0.6, 1.0) : 0));
     return out;
   };
   const _n = {};
-  const litWay = (x, y, z, out) => { L.way.near(x, z, _n); const h = (y - L.way.floorY(Math.max(0, Math.min(L.way.LEN, _n.s)))) / L.way.height; out[0] = 0.01; out[1] = 0; out[2] = 0.05 + 0.32 * Math.max(0, h) ** 2; return out; };
+  const litWay = (x, y, z, out) => { L.way.near(x, z, _n); const h = (y - L.way.floorY(Math.max(0, Math.min(L.way.LEN, _n.s)))) / L.way.height; out[0] = 0.01; out[1] = 0; out[2] = 0.16 + 0.4 * Math.max(0, h) ** 2; return out; };
   const slant = [-1.1, 0.15], spot = [GR.x + slant[0], YC + 0.3, GR.z + slant[1]];
   const litChamber = (x, y, z, out) => { out[0] = 0.01; out[1] = 0; out[2] = Math.min(1.2, 0.06 + near([spot, [GR.x, YC + CH.ceil, GR.z]], x, y, z, 0.6, 1.6) + near(BEDS.tubs.slice(0, 6).map(([a, b]) => [a, YC + CH.ceil - 0.8, b]), x, y, z, 0.12, 1.0)); return out; };
-  const litRoot = (x, y, z, out) => { out[0] = 0.01; out[1] = 0; out[2] = 0.42; return out; };
+  const litRoot = (x, y, z, out) => { out[0] = 0.01; out[1] = 0; out[2] = 0.24; return out; };
 
   // ---- the parts
   const BD = new UnderBuilder(litDoor), dr = door(BD, T);
   const BS = new UnderBuilder(litStone); stair(BS); const VT = vault(BS);
   // the way's tube from inside the vault's north wall to the chamber's wall (where the line crosses r - 0.05)
   let sEnd = L.way.LEN; { const a = {}; for (let s = L.way.LEN; s > 0; s -= 0.05) { L.way.at(s, a); if (Math.hypot(a.x - CH.x, a.z - CH.z) >= CH.r - 0.05) { sEnd = s; break; } } }
-  const BW = new UnderBuilder(litWay); wayTube(BW, -0.5, sEnd);
+  const BW = new UnderBuilder(litWay); wayTube(BW, 0, sEnd);
   const BC = new UnderBuilder(litChamber), ch = {}; chamber(BC, ch);
   const BR = new UnderBuilder(litRoot);
   const we = L.way.at(sEnd); const RT = roots(BR, { tubs: ch.tubs, ends: VT.roots, vault: VT, wayEnd: { x: we.x, z: we.z, s: sEnd }, tomb: ch.tomb });
@@ -92,10 +92,10 @@ export async function build(ctx) {
   // grate's in the chamber. lights.js keeps the nearest three; each breathes, none flickers
   const lights = [];
   const pl = (hex, i, d, x, y, z) => { const l = new THREE.PointLight(hex, i, d, 2); l.position.set(x, y, z); ctx.scene.add(l); lights.push({ L: l, i, ph: lights.length * 1.7 }); return l; };
-  pl('#8fe0b8', 2.2, 6, BEDS.face + 1.2, L.Y.sill + 0.6, 172);
-  pl(HUES[0], 5, 7.5, vcx, YV + 2.4, 165.4);
-  pl(HUES[3], 5, 7.5, vcx, YV + 2.4, 161.2);
-  { const a = L.way.at(L.way.LEN * 0.5); pl('#c8b088', 1.6, 6, a.x, L.way.floorY(L.way.LEN * 0.5) + 1.9, a.z); }
+  pl('#8fe0b8', 1.1, 5, BEDS.face + 1.0, L.Y.sill + 0.4, 172);
+  pl(HUES[0], 2.6, 6, vcx, YV + 2.5, 165.6);
+  pl(HUES[3], 2.6, 6, vcx, YV + 2.5, 161.0);
+  for (const f of [0.3, 0.7]) { const a = L.way.at(L.way.LEN * f); pl(f < 0.5 ? HUES[2] : HUES[4], 3.2, 7, a.x, L.way.floorY(L.way.LEN * f) + L.way.height - 0.3, a.z); }
   pl(HUES[1], 7, 8, spot[0], YC + 2.6, spot[2]);
 
   // ---- the floors: the forecourt and the doorway are the ground there (replacing heightAt, so the bank's walkers
@@ -116,7 +116,7 @@ export async function build(ctx) {
     const ys = L.Y.sill;
     for (const s of [-1, 1]) { const z = (s < 0 ? CT.z0 : CT.z1) + s * 0.375; ctx.addCollider({ x1: CT.x0 - 0.2, z1: z, x2: CT.x1 + 0.3, z2: z, r: 0.375, y: ys - 0.4, h: 4, stand: false }); }
     for (const z of [(BK.z0 + 172 - L.DOOR_HALF) / 2, (BK.z1 + 172 + L.DOOR_HALF) / 2]) ctx.addCollider({ x1: BK.x0 + 0.65, z1: z, x2: BEDS.face - 0.65, z2: z, r: 0.7, y: ys - 0.5, h: BK.top - ys + 0.5, stand: false });
-    ctx.addCollider({ x1: BK.x0 + 0.95, z1: 172, x2: BEDS.face - 0.95, z2: 172, r: 1.0, y: ys + 2.6, h: BK.top - ys - 2.6 + 1.2, stand: false });
+    ctx.addCollider({ x1: BK.x0 + 0.95, z1: 172, x2: BEDS.face - 0.95, z2: 172, r: 1.0, y: ys + L.DOOR_H, h: BK.top - ys - L.DOOR_H + 1.2, stand: false });
     ctx.addCollider({ x1: dr.leaf.a[0], z1: dr.leaf.a[1], x2: dr.leaf.b[0], z2: dr.leaf.b[1], r: 0.07, y: ys, h: 2.6, stand: false });
     const tr = BEDS.tree; ctx.addCollider({ x: tr.x + 0.2, z: tr.z, r: tr.r, y: T.heightAt(tr.x, tr.z) - 1.5, h: 1e5 });
     BEDS.tombs.forEach(([tx, tz], i) => { const hx = i === 4 ? 0.75 : 0.55, hz = i === 2 ? 0.85 : 1.08; ctx.addCollider({ x1: tx, z1: tz - hz + hx, x2: tx, z2: tz + hz - hx, r: hx + 0.05, y: YV, h: 1.0, stand: false }); });
@@ -179,7 +179,7 @@ export async function build(ctx) {
 
   const meshes = [mDoor, mStone, mWay, mCh, mRoots, mGlow, GL.mesh];
   ctx.beds = {
-    floor, line: L, meshes, lights, cut: G.cut, get capped() { return capped; }, roots: RT,
+    floor, line: L, meshes, lights, cut: G.cut, get capped() { return capped; }, roots: RT, overRooms, ground: G.mesh,
     stats() { let tris = 0; for (const m of meshes) tris += (m.geometry.index ? m.geometry.index.count : m.geometry.attributes.position.count) / 3; return { draws: meshes.length + (G.mesh ? 1 : 0), tris: Math.round(tris), ground: G.tris, cut: G.cut }; },
   };
   void COL;

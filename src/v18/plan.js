@@ -34,7 +34,7 @@ export const BEDS = {
   vault: { x0: -262.5, x1: -256.5, z0: 158.5, z1: 168.5, y: -8.4, spring: 1.7, crown: 3.0 }, // the six tombs' room
   // the six tombs, LIKENESSES' order: the west row south to north, then the east row south to north (heads to the north)
   tombs: [[-261.1, 166.2], [-261.1, 163.3], [-261.1, 160.4], [-257.9, 166.2], [-257.9, 163.3], [-257.9, 160.4]],
-  way: { pts: [[-259.5, 158.5], [-259.2, 155], [-258.6, 151.5], [-261.5, 145.5], [-267, 141], [-269, 136.5], [-266.2, 130.2]], half: 0.85, height: 2.2 }, // the way under, north (half: its walls; a walker keeps 0.4 m inside them)
+  way: { pts: [[-259.5, 158.5], [-259.5, 155.2], [-258.6, 151.5], [-261.5, 145.5], [-267, 141], [-269, 136.5], [-266.2, 130.2]], half: 0.85, height: 2.7 }, // the way under, north (half: its walls; a walker keeps 0.4 m inside them)
   chamber: { x: -265, z: 126, r: 4.5, y: -9.0, wall: 3.0, ceil: 4.2 }, // the round room under the glasshouse
   grate: { x: -263, z: 126, half: 0.6 },                        // F2's opening in the glasshouse's floor (assumed 2 m east of the centre)
   tubs: [[-262.23, 127.6], [-265, 129.2], [-267.77, 127.6], [-267.77, 124.4], [-265, 122.8], [-262.23, 124.4], [-265, 126]], // the seven tubs' undersides overhead, a ring of six at r 3.2 clear of the grate (F2's tubs until it says where); the seventh over the open tomb

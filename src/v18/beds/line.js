@@ -13,6 +13,7 @@ const { court: C, stair: ST, landing: LA, steps: SP, vault: V, way: W, chamber: 
 const YS = BEDS.sill, YL = YS - ST.slope * (ST.x0 - ST.x1), YV = V.y, YC = CH.y;
 export const Y = { sill: YS, landing: YL, vault: YV, chamber: YC };
 export const DOOR_HALF = 1.0; // the doorway's half width (z 171..173)
+export const DOOR_H = 2.85;   // its height over the sill (a hop lifts the eye to 2.46 m)
 
 // the stair's floor at x (eased over 0.6 m at its head and foot: a mean of the straight profile)
 const stairLin = (x) => YS - ST.slope * Math.min(ST.x0 - ST.x1, Math.max(0, ST.x0 - x));
@@ -83,6 +84,17 @@ export function floorAt(x, z) {
   // the chamber
   { const dx = x - CH.x, dz = z - CH.z; if (dx * dx + dz * dz <= (CH.r - WALK_IN) ** 2) return YC; }
   return null;
+}
+// the roof over the floor at (x, z) (the eye stays under it; edges-test asks), or Infinity in the open
+export function ceilAt(x, z) {
+  if (x >= ST.x0) return x >= C.x0 ? Infinity : YS + DOOR_H;
+  if (x >= ST.x1 - 0.01 && Math.abs(z - ST.z) <= ST.half) return stairY(x) + 2.85 - 0.17;
+  if (x >= LA.x0 && x <= LA.x1 && z >= LA.z0 && z <= LA.z1) return YL + 2.85;
+  if (Math.abs(x - SP.x) <= SP.half && z <= LA.z0 && z >= SP.z1) return stepsY(z) + 2.85 - 0.18;
+  if (x >= V.x0 && x <= V.x1 && z >= V.z0 && z <= V.z1) { const hw = (V.x1 - V.x0) / 2, sag = V.crown - V.spring, R = (hw * hw + sag * sag) / (2 * sag), d = x - (V.x0 + hw); return YV + V.crown - R + Math.sqrt(Math.max(0, R * R - d * d)); }
+  { const n = wayNear(x, z, {}); if (n.s >= -0.2 && n.s <= LEN && Math.abs(n.d) <= W.half) { const dx = x - CH.x, dz = z - CH.z; if (dx * dx + dz * dz > CH.r * CH.r) return wayFloor(Math.max(0, Math.min(LEN, n.s))) + W.height; } }
+  { const dx = x - CH.x, dz = z - CH.z; if (dx * dx + dz * dz <= CH.r * CH.r) return YC + CH.wall; }
+  return Infinity;
 }
 // everything the floor covers, for a quick reject
 export const BBOX = { x0: Math.min(WB.x0, V.x0, CH.x - CH.r) - 1, x1: C.x1 + 1, z0: Math.min(WB.z0, CH.z - CH.r) - 1, z1: C.z1 + 1 };
