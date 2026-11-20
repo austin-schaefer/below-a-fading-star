@@ -13,6 +13,7 @@ import * as THREE from 'three';
 import { GLASSHOUSE, FLORILEGIUM, LIKENESSES } from './plan.js';
 import { Painter, paintedMaterial, makeGround, angDiff } from '../fauna/uncanny/kit.js';
 import { hyp } from '../noise.js';
+import { leads } from '../v4/paths/routes.js';
 import { NOON } from '../v8/strata/noon.js';
 import { buildLikeness, likenessMaterial, TURN_ATTRS, N_SLOTS } from './florilegium/likeness.js';
 import { buildFrame, buildGlass, buildCast, N, A, RC, SILL, EAVE, FLASK_Y, GRATE, PROF, PANES, SCHEME_A, SCHEME_B } from './florilegium/house.js';
@@ -24,8 +25,8 @@ export function tubsOf() {
   const F = FLORILEGIUM;
   return LIKENESSES.map((L, i) => {
     if (L.id === 'graffer') return { id: L.id, x: F.sprout.x - GLASSHOUSE.x, z: F.sprout.z - GLASSHOUSE.z, yaw: Math.PI / 2 };
-    const a = ((30 + 60 * i) * Math.PI) / 180, r = L.id === 'cup' ? F.ring + 1.0 : F.ring; // the magnate back by the wall: out of the door's view of the rest
-    return { id: L.id, x: Math.cos(a) * r, z: Math.sin(a) * r, yaw: Math.atan2(Math.cos(a), Math.sin(a)) };
+    const a = ((30 + 60 * i) * Math.PI) / 180; // (every tub on the plan's ring: the Lower Beds builds their undersides from it)
+    return { id: L.id, x: Math.cos(a) * F.ring, z: Math.sin(a) * F.ring, yaw: Math.atan2(Math.cos(a), Math.sin(a)) };
   });
 }
 
@@ -144,9 +145,11 @@ export async function build(ctx) {
   // the glow in the wood's air: five soft discs that face the eye, drawn at the house's depth so every trunk between
   // stands black against them; from 20 m in they are gone and the house is its own light
   const hz = { p: [], o: [], c: [], i: [] };
-  [[NOON.light, 0, 7, 0, 13, 0.55], [PANES[0], 4.6, 4.5, 3.4, 12, 0.95], [PANES[3], -2.6, 5, 4.6, 12, 1.1], [PANES[4], -4.4, 6, -3.6, 12, 0.95], [PANES[1], 3.8, 7, -4.4, 12, 0.8], [PANES[2], 0, 10, 0, 9, 0.7],
+  // (on low: three discs at 0.4 of their light and no mist, so the phone's small frame is colour, not a white core)
+  const DISCS = [[NOON.light, 0, 7, 0, 13, 0.55], [PANES[0], 4.6, 4.5, 3.4, 12, 0.95], [PANES[3], -2.6, 5, 4.6, 12, 1.1], [PANES[4], -4.4, 6, -3.6, 12, 0.95], [PANES[1], 3.8, 7, -4.4, 12, 0.8], [PANES[2], 0, 10, 0, 9, 0.7],
     // the mist between the house and the wood way: its colours carried east along the spur, low, thinning
-    [PANES[1], 14, 2.5, 3, 8, 0.3], [PANES[5], 22, 2.2, -4, 9, 0.24], [PANES[3], 30, 2, 2, 9, 0.2], [PANES[0], 38, 2, -2, 9, 0.15], [PANES[4], 12, 3, -9, 8, 0.25], [PANES[2], 13, 3, 10, 8, 0.22]].forEach(([c, x, y, z, r, k], q) => {
+    [PANES[1], 14, 2.5, 3, 8, 0.3], [PANES[5], 22, 2.2, -4, 9, 0.24], [PANES[3], 30, 2, 2, 9, 0.2], [PANES[0], 38, 2, -2, 9, 0.15], [PANES[4], 12, 3, -9, 8, 0.25], [PANES[2], 13, 3, 10, 8, 0.22]];
+  (low ? DISCS.slice(0, 3).map((d) => [...d.slice(0, 5), d[5] * 0.4]) : DISCS).forEach(([c, x, y, z, r, k], q) => {
     for (const [ox, oy] of [[-1, -1], [1, -1], [1, 1], [-1, 1]]) { hz.p.push(cx + x, fy + y, cz + z); hz.o.push(ox, oy, r); hz.c.push(c[0] * k, c[1] * k, c[2] * k); }
     hz.i.push(q * 4, q * 4 + 1, q * 4 + 2, q * 4, q * 4 + 2, q * 4 + 3);
   });
@@ -160,16 +163,52 @@ export async function build(ctx) {
     fragmentShader: `uniform float uBreath; varying vec3 vCol; varying vec2 vC; void main() { float r2 = dot(vC, vC); gl_FragColor = vec4(vCol * exp(-r2 * 3.2) * (1.0 - smoothstep(0.75, 1.0, r2)) * uBreath, 1.0); }`,
     transparent: true, depthWrite: false, blending: THREE.AdditiveBlending,
   }));
-  haze.name = 'florilegium-haze'; haze.frustumCulled = false; haze.renderOrder = 1;
+  hzg.boundingSphere = new THREE.Sphere(new THREE.Vector3(cx + 15, fy + 5, cz), 40); // (the quads open in the shader: the house's discs and the mist to 38 m east)
+  haze.name = 'florilegium-haze'; haze.renderOrder = 1;
   scene.add(haze);
-  halo.name = 'florilegium-halo'; halo.frustumCulled = false; halo.renderOrder = 1;
+  hg.computeBoundingSphere(); hg.boundingSphere.radius += 2;
+  halo.name = 'florilegium-halo'; halo.renderOrder = 1;
   scene.add(halo);
 
-  // ---- the light: the flask's own, and the panes' colours on the trunks round about, a quarter of the house each
+  // ---- the light: the flask's own, and two of the panes' colours on the trunks round about, east (the spur's side) and
+  // west: three lights in all, lit only within 45 m, so the house fills the three shared slots and no more and gives
+  // them back to the spur's foxfire beyond; the rest of its colour is the cast on the ground and the haze
   const lights = [];
   const lamp = (hex, i, d, x, y, z) => { const L = new THREE.PointLight(new THREE.Color(hex), i, d, 2); L.position.set(x, y, z); L.name = 'florilegium-light'; scene.add(L); lights.push({ L, i }); return L; };
   lamp(NOON.lightHex, low ? 9 : 10, 15, flask[0], flask[1] - 0.6, flask[2]);
-  [['#ff3a4a', 0.6], ['#3aa0ff', 2.2], ['#b05aff', 3.75], ['#ffa030', 5.3]].forEach(([hex, a]) => lamp(hex, 14, 22, cx + Math.cos(a) * (RC + 1.2), fy + EAVE + 0.4, cz + Math.sin(a) * (RC + 1.2)));
+  (low ? [] : [['#ff5a40', 0.3], ['#7a6aff', 3.3]]).forEach(([hex, a]) => lamp(hex, 14, 22, cx + Math.cos(a) * (RC + 1.2), fy + EAVE + 0.4, cz + Math.sin(a) * (RC + 1.2)));
+
+  // ---- fallen panes: the trail in from the wood way. Four shards of the house's glass lying in the litter beside the
+  // spur (routes.js P57), one on its threshold at the road (on the tread, between the kerb trunks' ends), the next some 7 m in, one where it first bends and one
+  // past that, each a different colour, each tipped up on an edge toward the road; unlit, they hold a little of the
+  // flask's colour in the dark. ctx.florilegium.shards: [{ x, y, z, s, pane }]
+  const shards = [], shardMesh = new THREE.Mesh(new THREE.BufferGeometry(), new THREE.MeshBasicMaterial({ vertexColors: true, side: THREE.DoubleSide, fog: true }));
+  {
+    const L = leads().list.find((l) => l.id === 'P57'), S = L?.lines?.[0] || [];
+    if (S.length > 2) {
+      const at = (s) => { let i = 1; while (i < S.length - 1 && S[i].s < s) i++; const a = S[i - 1], b = S[i], t = Math.max(0, Math.min(1, (s - a.s) / ((b.s - a.s) || 1))), l = Math.hypot(b.x - a.x, b.z - a.z) || 1; return { x: a.x + (b.x - a.x) * t, z: a.z + (b.z - a.z) * t, tx: (b.x - a.x) / l, tz: (b.z - a.z) / l }; };
+      const h0 = at(0.5); let bend = 14;
+      for (let s = 4; s < 30; s += 0.5) { const q = at(s); if (q.tx * h0.tx + q.tz * h0.tz < 0.9) { bend = s; break; } }
+      const pos = [], col = [], idx = [], rng = ctx.makeRng(18021);
+      [[1.0, 0, 1, 0.9, 0.3], [8.5, 3, -1, 0.8, 0.7], [Math.max(bend + 1, 14), 1, 1, 0.75, 0.7], [Math.max(bend + 1, 14) + 7.5, 4, -1, 0.7, 0.7]].forEach(([s, pane, sd, size, off]) => {
+        const q = at(s), x = q.x - q.tz * sd * off, z = q.z + q.tx * sd * off, y = ground.at(x, z), c = PANES[pane], yaw = Math.atan2(q.tx, q.tz) + (rng() - 0.5) * 0.8;
+        // a broken quarry: five corners, its far edge propped up on the litter so its face is toward who comes
+        const n = 5, base = pos.length / 3, cs = Math.cos(yaw), sn = Math.sin(yaw);
+        for (const [k, dy, dim] of [[1.12, -0.012, 0.06], [1, 0, 1]]) { // the lead it broke out with, then the glass
+          const b = pos.length / 3;
+          for (let i = 0; i < n; i++) { const a = (i / n) * Math.PI * 2 + 0.4, r = size * 0.5 * k * (0.7 + 0.45 * ((i * 0.618 + s * 0.37) % 1)), lx = Math.cos(a) * r, lz = Math.sin(a) * r * 0.75, up = Math.max(0, lz + size * 0.2) * 0.7;
+            pos.push(x + lx * cs + lz * sn, y + 0.02 + up + dy, z - lx * sn + lz * cs);
+            const g = dim * (0.8 + 0.9 * (up / (size * 0.3 + 0.001))); col.push(c[0] * g, c[1] * g, c[2] * g); }
+          for (let i = 1; i < n - 1; i++) idx.push(b, b + i, b + i + 1);
+        }
+        shards.push({ x, y, z, s, pane });
+      });
+      shardMesh.geometry.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); shardMesh.geometry.setAttribute('color', new THREE.Float32BufferAttribute(col, 3)); shardMesh.geometry.setIndex(idx);
+      shardMesh.geometry.computeBoundingSphere();
+    }
+  }
+  shardMesh.name = 'florilegium-shards';
+  scene.add(shardMesh);
 
   // ---- nobody gets in: a wall a side
   for (let k = 0; k < N; k++) {
@@ -189,15 +228,27 @@ export async function build(ctx) {
     turn.update(dt, ctx.player.pos, ctx.sky?.flicker?.dark ?? 0);
   };
   ctx.registerUpdate(update, { pos: { x: cx, z: cz }, near: 70, hz: 2 });
+  // culled hard by distance (every frame, cheap): past 200 m nothing of the house is drawn or in the shadow pass (the
+  // halo and haze have faded out by 170 and 190 m in their own shaders, so nothing pops); the lights only within 45 m;
+  // the shards within 130 m of the spur's middle
+  const allMeshes = [frame, dark, people, panes, cast.mesh, halo, haze];
+  let shown = null, lit = null, shardsOn = null;
+  const sc = shardMesh.geometry.boundingSphere?.center || new THREE.Vector3(cx, 0, cz);
+  ctx.registerUpdate(() => {
+    const c = ctx.camera.position, d2 = (c.x - cx) ** 2 + (c.z - cz) ** 2, on = d2 < 200 * 200, l = d2 < 45 * 45, so = (c.x - sc.x) ** 2 + (c.z - sc.z) ** 2 < 130 * 130;
+    if (on !== shown) { shown = on; for (const m of allMeshes) m.visible = on; }
+    if (l !== lit) { lit = l; for (const o of lights) o.L.visible = l; }
+    if (so !== shardsOn) { shardsOn = so; shardMesh.visible = so; }
+  });
 
   // what the moths beat against (F4): each wall's pane, sill to eave, and the house's whole shape
   const walls = [];
   for (let k = 0; k < N; k++) { const a = k * (Math.PI * 2 / N); walls.push({ x: cx + Math.cos(a) * A, z: cz + Math.sin(a) * A, nx: Math.cos(a), nz: Math.sin(a), half: RC * Math.sin(Math.PI / N), y0: fy + SILL, y1: fy + EAVE, door: k === 0 }); }
   ctx.florilegium = {
-    centre: { x: cx, z: cz }, floor: fy, flask, heads, turn, uTurn, panes: walls,
+    centre: { x: cx, z: cz }, floor: fy, flask, heads, turn, uTurn, panes: walls, shards,
     grate: { x: cx + GRATE.x, z: cz + GRATE.z, half: GRATE.half, y: fy + GRATE.top, dark },
     tubs: tubs.map((t) => ({ id: t.id, x: cx + t.x, z: cz + t.z, yaw: t.yaw })),
-    meshes: { frame, people, panes, cast: cast.mesh, halo, haze, dark }, lights: lights.map((l) => l.L), glass: glass.uniforms, castU: cast.uniforms,
+    meshes: { frame, people, panes, cast: cast.mesh, halo, haze, dark, shards: shardMesh }, lights: lights.map((l) => l.L), glass: glass.uniforms, castU: cast.uniforms,
   };
 }
 

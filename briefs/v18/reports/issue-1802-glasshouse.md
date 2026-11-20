@@ -116,3 +116,17 @@ Frames: `shots/wip/v18-F2-medium-{far-road,far-30m,near-stand,near-door,who-1..6
 5. Court at y -3.2, the grate's row in `plan.js`, the kerb and the dark patch are as they were; no row name or import of this module changed. `foxfire.js` now imports `GLASSHOUSE` and `FLORILEGIUM` from `plan.js`.
 
 Tests. `ONLY=dressing,strata,geometry,edges,threads,perf,study,settings,seams,paths,foxfire,florilegium tools/suite.sh 8182`: eleven green, geometry red on the two foxfire findings above. After the foxfire fix, `ONLY=geometry,foxfire,paths,perf,edges,florilegium`: all six green (geometry 149, foxfire 21, paths 91, edges 214, perf 29/29, florilegium 7). dressing, strata, threads, study, settings and seams were not rerun after the foxfire fix (one module, no shared code). Frames: `shots/wip/v18-F2-medium-{who-4,who-6,near-stand,far-road}-r3.png`, taken after the last code change.
+
+## Round four (2026-11-20 06:49)
+
+`origin/next` (F1's round three) merged clean.
+
+1. **The magnate's tub** is back on the plan's ring (r 3.4, at (-267.94, 124.30)): the table above and `FLORILEGIUM.ring` are right again and nothing of F3's moves. Cost: he stands in the door's view of the others again, as in round two.
+2. **Culled by distance.** A second, every-frame update sets `visible` on frame, grate dark, likenesses, glass, cast, halo and haze: off past 200 m (the halo and haze have already faded out in their shaders by 170 and 190 m). The halo and haze are frustum-culled with real bounding spheres.
+3. **Lights:** three in all (the flask, one warm east, one violet west), visible only within 45 m; on low the flask alone.
+4. **Low and the phone:** three haze discs at 0.4 of their light, no mist discs. `shots/wip/v18-F2-phone-far-30m-r4.png` (390 by 844, low): coloured glass through the trees, no white core. The phone at the stand was not re-taken.
+5. **foxfire.js:** the `onTop` dy change is reverted to F1's. The filter now drops every host (stump, post, log) and its stump inside the Florilegium's claim (r 13), which also removes the stump whose top shelf floated. foxfire 24 rows green.
+6. **The test** now also walks the page's own visitor a half circle and holds each head's drawn heading (`uTurn[slot]`) against the bearing to the camera, and checks the cull, the lights (at most three), the bounds and the shards: 12 rows. It reads the Vector4s the material was built over, not pixels: a break in the shader's use of `uTurn` would not fail it.
+7. **Fallen panes:** four shards of pane glass beside P57 (`florilegium-shards`, one unlit draw, read from the lead's line at build): on the threshold 1 m in, at 8.5 m, past the first bend (14 m) and at 21.5 m, each a different colour, tipped up toward the road. From the byre side at 12 m (`mouth-from-byre-r4`) a red shard at the mouth and a blue one beyond it show. From the Span side (`mouth-from-span-r4`) they are two faint slivers and the moss light's teal pool in the foreground still takes the eye: **not solved from that side.** No blind reader was run on these.
+
+Tests, `ONLY=florilegium,geometry,settings,foxfire,perf,edges,dressing,strata,threads,study,seams,paths tools/suite.sh 8182`, after the last code change: 12 tests, 0 failed (florilegium 12, geometry 149, settings 103, foxfire 24, perf 29/29, edges 214, dressing 22, strata 8, threads 25, study 15, seams 3, paths 91). Frames: `shots/wip/v18-F2-medium-{mouth-from-byre,mouth-from-span,far-road}-r4.png`, `shots/wip/v18-F2-phone-far-30m-r4.png`.

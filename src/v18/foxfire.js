@@ -12,7 +12,7 @@
 import * as THREE from 'three';
 import { leads, nearestLead } from '../v4/paths/routes.js';
 import { SPUR_IDS } from './wood-reach.js';
-import { GLASSHOUSE, FLORILEGIUM } from './plan.js';
+import { GLASSHOUSE } from './plan.js';
 import { fogPars, fogAtten } from '../particles/shaderParts.js';
 
 const STEP_MIN = 6, STEP_MAX = 11; // m along a spur between clumps
@@ -118,10 +118,11 @@ export async function build(ctx) {
     }
   }
   // no stump stands in a tread or on claimed ground: the spurs' own lines ruled them, but another lead may cross
-  // nor on the Florilegium's paved court (the spur's own claim lets a stump stand beside its line; not before that door)
-  const court = (o) => Math.hypot(o.x - GLASSHOUSE.x, o.z - GLASSHOUSE.z) < FLORILEGIUM.pad.half + 0.5;
+  // nor inside the Florilegium's claim (the spur's own claim answers first in onStump and lets a host stand beside its
+  // line; not on that court, whatever the host: stump, post or log)
+  const court = (o) => Math.hypot(o.x - GLASSHOUSE.x, o.z - GLASSHOUSE.z) < GLASSHOUSE.r;
   for (let i = stumps.length - 1; i >= 0; i--) if (court(stumps[i])) stumps.splice(i, 1);
-  for (let i = clumps.length - 1; i >= 0; i--) if (clumps[i].host === 'stump' && court(clumps[i])) clumps.splice(i, 1);
+  for (let i = clumps.length - 1; i >= 0; i--) if (court(clumps[i])) clumps.splice(i, 1);
   ctx.foxfire = { clumps, heads, stumps };
   if (!clumps.length) return;
 
@@ -159,7 +160,7 @@ export async function build(ctx) {
     for (let i = 0; i < c.n; i++) {
       // stacked up the bark in a loose run, the lower ones larger; on a stump some on its top
       const onTop = c.host === 'stump' && i === c.n - 1;
-      const dy = onTop ? c.top - c.y - 0.1 : i * (c.gate ? 0.13 + rng() * 0.06 : 0.09 + rng() * 0.08) - 0.05, side = (rng() - 0.5) * (c.gate ? 0.5 : 0.35);
+      const dy = onTop ? c.top - c.y + 0.01 : i * (c.gate ? 0.13 + rng() * 0.06 : 0.09 + rng() * 0.08) - 0.05, side = (rng() - 0.5) * (c.gate ? 0.5 : 0.35);
       const sz = (c.n >= 4 ? 0.16 + rng() * 0.16 : 0.12 + rng() * 0.13) * (1 - i * 0.06);
       const ox = Math.cos(yaw) * side, oz = -Math.sin(yaw) * side;
       v3.set(c.x + ox + (onTop ? -c.nx * c.r * 0.5 : 0), c.y + dy, c.z + oz + (onTop ? -c.nz * c.r * 0.5 : 0));
