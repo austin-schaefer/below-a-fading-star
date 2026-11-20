@@ -85,9 +85,11 @@ export function startWoodSound(a, ctx) {
   const flaskAt = () => { const f = ctx.florilegium?.flask; return f ? { x: f[0], y: f[1], z: f[2] } : { x: G.x, y: floor + 2.2, z: G.z }; };
   const vaultDrip = { x: (VAULT.x0 + VAULT.x1) / 2 + 1.1, y: VAULT.y + 0.05, z: VAULT.z0 + 2.2 };
   const roosts = [-2.6, -1.9, -1.2, -0.5, 0.2, 0.9, 1.6, 2.3].map((ang, i) => { const r = W.r * (0.35 + 0.15 * (i % 3)); const x = W.x + Math.cos(ang) * r, z = W.z + Math.sin(ang) * r; return { x, y: (ctx.terrain.heightAt(x, z) || 0) + 11, z }; });
-  // under the ground: the eye's height (the Lower Beds' floors lie at -3.3 and lower; the wood's ground is above -3)
-  const under = () => cam.y < -4.3;
-  const surface = () => !under();
+  // under the ground: the feet more than 2.2 m below the ground over them (the wood's ground itself lies low, near -4 by
+  // the glasshouse, so the eye's height alone says nothing); read once a tick
+  let isUnder = false;
+  const under = () => isUnder;
+  const surface = () => !isUnder;
   const inWood = () => dxz(W.x, W.z) < W.r - 5 && (ctx.terrain.biomeAt(cam.x, cam.z)?.wood ?? 1) > 0.3;
 
   // ---- the one-shot kit: placed voices, grains of noise from this module's own stream
@@ -298,6 +300,7 @@ export function startWoodSound(a, ctx) {
     acc += dt; if (acc < 0.1) return; const step = acc; acc = 0;
     if (ac.state === 'closed') return;
     const now = ac.currentTime, fl = ctx.sky?.flicker?.value ?? 1;
+    isUnder = cam.y - 1.72 < ctx.terrain.heightAt(cam.x, cam.z) - 2.2;
     // the grove's hush: the canopy is a little quieter among the stilters (bed.js)
     state.grove = under() ? 0 : 1 - ss(GROVE.r * 0.7, GROVE.r * 1.4, dxz(GROVE.x, GROVE.z));
     for (const c of callers) c.tick(step);
