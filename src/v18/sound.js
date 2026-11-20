@@ -19,7 +19,7 @@
 //                  the chamber     the glass's ticking heard dully through the grate overhead (a lowpass at 900 Hz,
 //                                  from the grate): the glasshouse's own sounds, under the ground, are only this
 //   the stilters     a step         a deep creak of green wood and a soft heavy set-down, where the stilter stands (the
-//                                  'stilter' event's place), heard and not seen: not every move, never twice within 5 s;
+//                                  'stilter' event's place), heard and not seen: the follower (the one that strides to stand behind the walker) on every stride, heavier, the others rarely (15 %, 5 s apart);
 //                                  at the gutter's ring a few seconds of them from all round, then nothing. The grove is a
 //                                  little quieter than the wood (ctx.woodSound.grove, read by the canopy in bed.js)
 //   the wood         the owl        a far hoot from a roost inside the wood, 60-140 m off, muffled and wet, sometimes
@@ -136,7 +136,9 @@ export function startWoodSound(a, ctx) {
       grain(v, out, t0 + 0.002, jit(1250, 0.1), 2, 0.01 * k, 0.003, 0.03);
     }
   }
-  const pickKind = () => { const u = rng(); return u < 0.55 ? 'tick' : u < 0.8 ? (low ? 'tick' : 'moth') : 'ring'; };
+  // the moths beating at the panes (v18-F4, ctx.inhabitants.moths: 90 on low, 180 above): their knocks are more of the glass's
+  // sounds the more of them there are
+  const pickKind = () => { const m = ctx.inhabitants?.moths, pm = m ? 0.12 + 0.18 * Math.min(1, m.n / 180) : 0, u = rng(); return u < pm ? 'moth' : u < pm + 0.2 ? 'ring' : 'tick'; };
 
   // ---- the gutter's concerted rustle: every head turning west at once
   function concerted(pos) {
@@ -213,10 +215,14 @@ export function startWoodSound(a, ctx) {
     if (d.kind === 'ring') {
       // at the gutter they all move: each its own set-downs spread over some seconds (3.4 at most), then nothing
       const n = low ? 1 : 2;
-      for (let i = 0; i < n; i++) S.queue.push({ at: now + span(0.1, 3.4), p: d, k: 0.6 * jit(1, 0.2) });
+      for (let i = 0; i < n; i++) S.queue.push({ at: now + span(0.1, 2.2), p: d, k: 0.6 * jit(1, 0.2) });
       S.ring = now + 8;
     } else if (d.kind === 'step') {
-      if (now - S.last < 5 || now < S.ring || rng() > 0.62) return;
+      // the follower (stilters.js: one, the same each time; a stride of 3 m or more to stand behind on the back-trail) is the
+      // sound that tells a visitor something is behind: heard on every stride, heavier. The others, rarely.
+      const follower = ctx.stilters?.follower ? ctx.stilters.follower.i === d.i : (d.stride >= 3 && d.trailOff < 1.3);
+      if (follower) { S.queue.push({ at: now + span(0.02, 0.12), p: d, k: 1.35, follower: true }); S.last = now; return; }
+      if (now - S.last < 5 || now < S.ring || rng() > 0.15) return;
       S.last = now; S.queue.push({ at: now + span(0, 0.15), p: d, k: 1 });
     } else if (d.kind === 'turn') {
       if (now - S.last < 5 || now < S.ring || rng() > 0.25) return;
@@ -350,7 +356,7 @@ export function startWoodSound(a, ctx) {
   function cue(name, pos, opts) {
     if (name === 'act-wood-glass') { glass(opts?.ring ? 'ring' : opts?.moth ? 'moth' : 'tick', !!opts?.dull, pos); return true; }
     if (name === 'act-wood-petals') { concerted(pos); return true; }
-    if (name === 'act-wood-step') { stilterStep(pos || { x: cam.x + 3, y: cam.y - 1.7, z: cam.z - 4 }, 1, 11); return true; }
+    if (name === 'act-wood-step') { stilterStep(pos || { x: cam.x + 3, y: cam.y - 1.7, z: cam.z - 4 }, opts?.k || 1, 11); return true; }
     if (name === 'act-wood-ring') { // the gutter's ring, as the stilters send it: five round the walker, 7-13 m off
       for (let i = 0; i < 5; i++) { const ang = i * 1.257 + 0.4, r = 7 + 1.5 * i; onStilter({ detail: { kind: 'ring', i, x: cam.x + Math.cos(ang) * r, y: cam.y - 1.7, z: cam.z + Math.sin(ang) * r, h: 11 } }); }
       return true;

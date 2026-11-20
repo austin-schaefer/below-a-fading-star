@@ -6,7 +6,7 @@
 // cue log (every audio.cue call, every new one-shot voice, every footstep, the gutter) in seconds from the render's
 // first sample. Used by tools/audio-survey.mjs and audio-quality-test.mjs through render().
 // Usage: node tools/audio-render.mjs <url> <out.wav> [--seconds=20] [--cue=name[,name]] [--at=dx,dy,dz] [--opts=<json>]
-//        [--every=<s>] [--walk=<m/s>] [--steps=<n>] [--gutter [--gutter-at=<s>] | --gutter-hold=<v>] [--pre] [--tap=cue] [--mono] [--draw] [--settle=<s>] [--seed=<n>] [--y=<feet y>]
+//        [--every=<s>] [--walk=<m/s>] [--steps=<n>] [--gutter [--gutter-at=<s>] | --gutter-hold=<v>] [--pre] [--tap=cue] [--mono] [--draw] [--settle=<s>] [--seed=<n>] [--y=<feet y>] [--stilters]
 // --cue fires 1 s in at the camera plus --at (world axes, as tools/audio-test.mjs's offsets), --every repeats it.
 // --walk holds W at that speed (over 3.6 m/s it hurries: Shift, the speed scaled from 6.6); --steps fires n of the
 // walker's steps standing, 0.59 s apart. --gutter starts a real gutter 1 s in (the sun's own course, its length pinned at 14 s by ?gutter=14,600); without
@@ -44,6 +44,7 @@ export function plan(o = {}) {
     cue: o.cue ? (Array.isArray(o.cue) ? o.cue : String(o.cue).split(',')).filter(Boolean) : [],
     at: { dx: at[0] || 0, dy: at[1] || 0, dz: at[2] || 0 }, opts: opts || null, every: o.every ? Number(o.every) : 0,
     walk: o.walk ? Number(o.walk) : 0, steps: o.steps ? Number(o.steps) : 0,
+    stilters: !!o.stilters && o.stilters !== 'false', // v18-F5: the stilters move though the gutter is held off (ctx.stilters.live)
     gutter: !!o.gutter && o.gutter !== 'false', gutterAt: o['gutter-at'] != null ? Number(o['gutter-at']) : 1, gutterHold: o['gutter-hold'] != null ? Number(o['gutter-hold']) : null,
     pre: !!o.pre, cueTap: o.tap === 'cue', mono: !!o.mono, draw: !!o.draw, settle: num(o.settle, 6), seed: o.seed != null ? Number(o.seed) : null,
     y: o.y != null ? Number(o.y) : null, // v14-D0: the feet's height at the url's pos (a floor under the ground: placeAt(x, z, y))
@@ -92,6 +93,7 @@ async function pageSetup(P) {
   // headless Chromium here: starting the page's audio in the first seconds after body.ready stalls the main thread
   // (frames at 1-15 fps and timers seconds late, so walks crawl and cues fire late); after ~6 s it does not
   await sleep(P.settle * 1000);
+  if (P.stilters && fp.stilters) { fp.stilters.live = true; fp.events.addEventListener('stilter', (e) => info.notes.push(`stilter ${e.detail.kind} #${e.detail.i} at ${a.ctx.currentTime.toFixed(1)} s, ${e.detail.d?.toFixed(1)} m off`)); }
   try { fp.events.dispatchEvent(new Event('begin')); } catch (e) { /* pointer lock refuses headless */ }
   for (let i = 0; i < 100 && !a.ctx; i++) await sleep(50);
   const ac = a.ctx; if (!ac) return { error: 'no AudioContext after begin' };
