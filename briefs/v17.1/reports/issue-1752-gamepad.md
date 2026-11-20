@@ -9,3 +9,14 @@ Outside the module: `controls.js` +`pad` vector beside the touch stick (2 lines)
 **Frames** (in order): `shots/wip/v17.1-Q2-hint-{1-title-keys,2-title-pad,3-offer-pad,4-panel-focus,5-panel-place,6-offer-keys}-desktop.png`, `...-{1,2,3,4}-*-phone.png`. Blind reader (haiku): could play with a controller from the screen; said lowercased "a"/"x" read as keys and the 1 px ring was thin: both fixed.
 
 **Weak.** Audio from a pad press: headless runs with autoplay allowed, so untested; if the context stays suspended a hint says the sound waits for a key or click. Real hardware untested. Spatial nav down a column can skip a slider beside a button (left reaches it).
+
+## Round two (the cold review)
+
+- Two pads: each pad keeps its own last buttons; another pad takes the lead only on a button newly pressed on it, and a switch clears nothing. Two pads holding A hop once; holding Start toggle the panel once.
+- Other mappings: each axis's first reading is its rest; one resting far from 0 (a trigger at -1 on axis 2) is not a stick and reads 0, the rest read from their rest. "Pad used" (the hints) is a button newly pressed or a stick moved since the last poll, never a steady axis or a held button.
+- `controls.js`: Escape toggles the pause with no capture held (gone out on the pad), as in drag-look.
+- `move()`: the panel's `focusNext` first; when it moves nothing, DOM focus (left/right on a slider left to the panel's own). The fallback scores by the edge gap along the move plus twice the gap across (0 where spans overlap).
+- The stick click's hurry latch clears when the panel opens.
+- New rows: two pads holding A / Start, a trigger resting at -1 (no turn, pulled or not; hints stay on keys after a key), Escape after a pad start, focus moved compared by element.
+
+`ONLY=gamepad,walk,touch,settings,loading,perf tools/suite.sh 8162`: settings 90, walk 13, loading 28, perf 29, touch 45, gamepad 39 PASS; 0 failed.
