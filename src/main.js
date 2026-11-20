@@ -111,6 +111,7 @@ const MODULES = [
   ['garth', () => import('./v17/garth.js')], // v17-U2: the Meridian Garth, the garden under the mountain where it is still noon (?garth=0)
   ['sphere', () => import('./v17/sphere.js'), M], // v17-S1: the man at the wheel, the Noonwrights' glass junction at the east wall's foot; cuts the terrain mesh (?sphere=0)
   ['inhabitants', () => import('./v18/inhabitants.js')], // v18-F4: the stilters in the north grove, eyes between the trees, moths at the glass; 'stilter' on ctx.events (?inhabitants=0)
+  ['foxfire', () => import('./v18/foxfire.js')], // v18-F1: the foxfire that marks the wood's three spurs, on old trunks and stumps (?foxfire=0)
   ['locallights', () => import('./v5/lights.js'), M], // v5: the local lights (the moss, the embers, the post lamp, the lit doorway, the Leerie's standards)
 ];
 
@@ -205,7 +206,8 @@ async function start() {
   //   time: { t, dt }; log(); progress(label, fraction) for the loading bar; throttle
   // - also set below or by the module named: tinctures, places (v8-02), strata (v8-03), hud, post, lightSlots,
   //   shadowCadence, setShadowMapSize, pacing, settings (settings.js), gpumem, acts (v10/acts.js), claims (claims.js), below (v14/under.js:
-  //   add(fn), inside(x, y, z), here: how far under the ground a point is, read by post and the audio)
+  //   add(fn), inside(x, y, z), here: how far under the ground a point is, read by post and the audio); woodTrees and
+  //   trunks (vegetation.js: every tree { x, y, z, h, kind, hidden } and trunk(t), its trunk's radius, for what grows on one)
   // - inhabitants, stilters (v18/inhabitants.js): the stilters' state (list, ring, steps) for tests and the sound
   const ctx = {
     THREE, scene, renderer, camera, quality, events,

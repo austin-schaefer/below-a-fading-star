@@ -8,6 +8,7 @@
 import { heightAt, slopeAt, waterLevelAt, causewayDistance } from '../../height/field.js'; // (v13 L2: the three-free heightfield)
 import { regionAt, regionDistance } from '../../height/regions.js';
 import { LANDMARKS, SITES } from '../../world.js';
+import { GLASSHOUSE } from '../../v18/plan.js';
 import { makeSimplex, smoothstep, clamp } from '../../noise.js';
 
 const SN = makeSimplex(41108);
@@ -72,7 +73,7 @@ export const LEADS = [
   { id: 'P30', kind: 'path', cls: 'trod', w: 0.5, brief: 'trod, the Link-Boy\'s post to the causeway', pts: [[-168.2, -101.3], [-185, -98], [-201, -90]] }, // v8-09: from the wall's gap
   { id: 'P31', kind: 'path', cls: 'trod', w: 0.5, brief: 'red clay trod to the Galleries\' foot', pts: [[-264, -48], [-282, -58], [-298, -67]] },
   { id: 'P32', kind: 'path', cls: 'way', w: 1.0, brief: 'the wood way, the byre through the Deodand Wood to the Span\'s west stair', pts: [[-135, 62], [-160, 86], [-188, 112], [-212, 140], [-214, 172], [-205, 176], [-195, 180], [-194, 196]] },
-  { id: 'P33', kind: 'path', cls: 'trod', w: 0.5, brief: 'trod out of the wood to the Thrones and the causeway\'s west end', pts: [[-214, 172], [-240, 140], [-268, 118], [-298, 100]] },
+  { id: 'P33', kind: 'path', cls: 'trod', w: 0.5, brief: 'trod out of the wood to the Thrones and the causeway\'s west end', pts: [[-214, 172], [-240, 140], [-262, 147], [-283, 133], [-298, 100]] }, // v18-F1: round the south and west of the Florilegium (GLASSHOUSE, r 13), not through it nor across its spur
   { id: 'P34', kind: 'path', cls: 'trod', w: 0.5, brief: 'shingle trod down to the bay\'s strand', pts: [[-122, 172], [-117, 186], [-113, 193]] },
   { id: 'P35', kind: 'path', cls: 'way', w: 1.0, brief: 'the shore way, the spit to the bay', pts: [[-42, 150], [-50, 166]] },
   { id: 'P36', kind: 'path', cls: 'trod', w: 0.5, brief: 'trod out along the spit', pts: [[-42, 150], [-55, 148], [-66, 143]] },
@@ -97,6 +98,13 @@ export const LEADS = [
   // v17-N1: the water's new places each get their way (the owner's #54 and roads-test). P55: from the leat's slab bridge (P14 and P38 meet at its east foot (9, 252)) down the leat's east bank, then west along the slope south of it and the mere to the Swallow's quay: the south shore is not reached from the north without crossing water, and this line keeps 1.5 m or more from it all the way (a dry-ground search over heightAt and the water, 1 m cells). P56: off P51 (the trod to the Lonely Staircase's foot), round the Noon Road's east end, to the sphere's glass (moved with the sphere to the east wall's foot, the owner's word 2026-11-17).
   { id: 'P55', kind: 'path', cls: 'trod', w: 0.5, brief: 'a trod from the leat\'s bridge down its east bank and along the slope south of the Slake to the Swallow\'s quay', pts: [[9, 252], [9, 259], [8.5, 265], [6, 271], [1, 277], [-5, 285], [-12, 291], [-23, 295.5], [-35, 297], [-47, 297], [-59, 297], [-70, 297.5], [-78, 298], [-84, 297.5], [-89, 296], [-90.5, 294.2]] },
   { id: 'P56', kind: 'path', cls: 'trod', w: 0.5, brief: 'a trod off the Lonely Staircase\'s trod (P51) north past the Noon Road\'s east end and up the moor to the glass sphere\'s valley face', pts: [[275, 4.6], [284, 16], [293, 29], [299, 42], [297, 57], [290, 71], [282, 85], [276.5, 95], [274, 100]] },
+  // v18-F1 (the owner's #18: "little spur trails off the main road, dark and twisty things"): three spurs off the wood way
+  // (P32), each to another brief's doorstep (src/v18/plan.js SPURS). cls 'spur': narrower and darker than a trod, no
+  // gnomon at their heads or along them (src/v8/roads/place.js); foxfire marks them (src/v18/foxfire.js). Their points
+  // bend every 6-9 m, so no spur's end is in sight from its head.
+  { id: 'P57', kind: 'path', cls: 'spur', w: 0.4, brief: 'a spur west off the wood way, twisting between the trunks to the Florilegium\'s door', pts: [[-200, 125], [-207, 123.5], [-213, 127], [-219, 124.5], [-226, 121.5], [-232, 124.5], [-237, 130], [-243, 131.5], [-249, 129], [-253.5, 127.5], [-257, 127]] },
+  { id: 'P58', kind: 'path', cls: 'spur', w: 0.4, brief: 'a spur south-west off the wood way, round the roots to the Lower Beds\' door in the bank', pts: [[-214, 172], [-218, 177], [-224, 177.5], [-229, 173], [-234, 169.5], [-239, 172], [-243, 175.5], [-246.5, 174], [-249, 172]] },
+  { id: 'P59', kind: 'path', cls: 'spur', w: 0.4, brief: 'a spur north off the wood way, out of the old wood through the neck and into the north lobe to the stilters\' grove', pts: [[-160, 86], [-166, 81], [-165.5, 74], [-171, 68], [-178, 64.5], [-182, 58], [-188, 53], [-187, 46], [-192, 40.5], [-197, 36.5], [-195, 30], [-198, 24]] },
 ];
 
 // ---------------------------------------------------------------- what the leads keep off
@@ -110,6 +118,8 @@ const AVOID = [
   // the moles, the Scriveners, the Simulacrum, the Toadstone
   { x: -255, z: 10, r: 4 }, { x: -45, z: 160, r: 6 }, { x: 180, z: -40, r: 6 }, { x: 158, z: 228, r: 10 }, { x: 55, z: 274, r: 18 },
   { x: 60, z: -180, r: 3 }, { x: 75, z: 0, r: 12 }, { x: -100, z: 58, r: 8 }, { x: 20, z: -205, r: 5 }, { x: 180, z: 230, r: 2 },
+  // v18: the Florilegium (src/v18/plan.js GLASSHOUSE): only its spur comes to it
+  { x: GLASSHOUSE.x, z: GLASSHOUSE.z, r: GLASSHOUSE.r },
 ];
 const BLOCKS = ['spanWest', 'spanEast', 'fallLip', 'nave'].map((k) => SITES[k].block);
 // the set-dressing strips (section 4's table): the Discontinued Track, 2 m (dressing/track.js's TRACK), and the Surveyor's Pegs, 1 m

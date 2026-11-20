@@ -255,6 +255,7 @@ export async function build(ctx) {
       if (LEAT_BODY.sd(x, z) < size * 0.6 + 0.9) continue; // v17 W2: nor on the leat's kerbs (its stones stand to 0.5 m out of the water)
       // v17: pebbles keep off the cut's dug banks and the sphere's ground (its opened inside, the hill behind) too: the
       // claims (claims.js) hold only stones and boulders elsewhere, so only these two are read for pebbles
+      if (cls === 'pebble' && claimedBy(x, z, 0, 'pebbles', ctx)) continue; // v18-F1: a claim that keeps pebbles says so ('pebbles')
       if (cls === 'pebble' && ((x > -109 && x < -80.5 && z > 288 && z < 311.5) || (x > 238 && x < 340 && z > 78 && z < 152)) && clear(x, z, 0)) continue;
       if (Math.hypot(x - L.court.x, z - L.court.z) < L.court.r) continue;
       if (Math.hypot(x - L.tower.x, z - L.tower.z) < 17) continue;

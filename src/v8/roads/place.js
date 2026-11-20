@@ -107,8 +107,9 @@ export function placeGnomons() {
 
   // ---- the junctions: a lead's end on another track (or the causeway), merged within 12 m
   const J = [];
+  // (v18-F1: a spur has no gnomon, at its head, along it or pointing to it: foxfire is its only mark)
   for (const T of TR) {
-    if (T.id === 'causeway' || T.cls === 'kerb') continue;
+    if (T.id === 'causeway' || T.cls === 'kerb' || T.cls === 'spur') continue;
     for (const e of [T.pts[0], T.pts[T.pts.length - 1]]) {
       let on = false;
       for (const U of TR) { if (U === T) continue; if (nearestOn(U, e.x, e.z).d < U.w + 3.5) { on = true; break; } }
@@ -121,6 +122,7 @@ export function placeGnomons() {
     // the branches: each track passing within reach, both ways along it unless it ends here
     const br = [];
     for (const T of TR) {
+      if (T.cls === 'spur') continue;
       const n = nearestOn(T, j.x, j.z);
       if (n.d > T.w + 4) continue;
       const len = T.pts[T.pts.length - 1].s;
@@ -173,7 +175,7 @@ export function placeGnomons() {
 
   // ---- along the leads
   for (const T of TR) {
-    if (T.id === 'causeway' || T.cls === 'kerb') continue;
+    if (T.id === 'causeway' || T.cls === 'kerb' || T.cls === 'spur') continue;
     const len = T.pts[T.pts.length - 1].s;
     // a way's first stands 20-30 m from its head, where a walker leaving the junction looks for it; then every
     // 30-55 m, tried again every 6 m where another stands too near
@@ -204,6 +206,7 @@ export function placeGnomons() {
   // ---- in sight at every point: raise one wherever a walker could see none
   const seen = (x, z) => near(x, z, SIGHT, (g) => g.visible && sees(x, z, g.x, g.top, g.z));
   for (const T of TR) {
+    if (T.cls === 'spur') continue;
     const len = T.pts[T.pts.length - 1].s;
     for (let s = 0; s <= len; s += STEP) {
       const p = pointAt(T, s);

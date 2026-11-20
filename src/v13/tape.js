@@ -16,7 +16,7 @@
 // keeps nothing (a miss next time). tape.stats: { calls, fromTape, missed, skipped, bytes }; done() lets the arrays go.
 const CHUNK = 1 << 12, AHEAD = 8, PART = 1.5e6;
 const NUM = ['heightAt', 'slopeAt', 'causewayDistance'];
-const BIOME = ['moor', 'heath', 'wood', 'marsh', 'shore', 'rock', 'ice', 'orchard', 'crystal', 'slope', 'h', 'wet', 'bleak', 'lee', 'stone', 'strand']; // biomeWith's fields, in its order (v16 L4: the floor's character last)
+const BIOME = ['moor', 'heath', 'wood', 'marsh', 'shore', 'rock', 'ice', 'orchard', 'crystal', 'slope', 'h', 'wet', 'bleak', 'lee', 'stone', 'strand', 'wood0']; // biomeWith's fields, in its order (v16 L4: the floor's character last; v18-F1: the old wood's weight, wood0)
 const W = { heightAt: 1, slopeAt: 1, causewayDistance: 1, biomeAt: BIOME.length };
 const pack = { biomeAt: (o, v, j) => { for (let k = 0; k < BIOME.length; k++) v[j + k] = o[BIOME[k]]; } };
 const unpack = { biomeAt: (v, j) => { const o = {}; for (let k = 0; k < BIOME.length; k++) o[BIOME[k]] = v[j + k]; return o; } };

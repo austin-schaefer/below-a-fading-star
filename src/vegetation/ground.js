@@ -17,6 +17,7 @@ import { houseClear } from '../v8/house/clear.js'; // v8-05: the Pomegranate Hou
 import { threadsClear } from '../v8/threads/plan.js'; // v8-04: the story threads' props
 import { twkClear } from '../v8/twk/plan.js'; // v8-07: the Twk-men's salt
 import { COARSE_BOXES } from '../v4/regions.js'; // v4 regions: where a ground skin lies over a lowered mesh
+import { SUN } from '../world.js'; // v18-F1: the stands that look at the sun
 import { PLACES as STANDS } from '../settings.js'; // v16 L5: the settings map's stands, where a visitor is put down
 import { claimedBy } from '../claims.js'; // v15-G1: the claimed ground (the Lappet's, so far: the rest below are still each place's own)
 import { coarseLowering } from '../v4/regions/skin.js';
@@ -29,7 +30,7 @@ import { waterLevelBeforeV17, inV17Water } from '../height/field.js'; // v17 W1:
 const CLEARINGS = [[-86, -48, 7], [-108, -128, 9], [-15, 255, 24]];
 const CLEAR_N = makeSimplex(1605);
 
-const BIOME_KEYS = ['moor', 'heath', 'wood', 'marsh', 'shore', 'rock', 'ice', 'orchard', 'crystal', 'glacier', 'wet', 'bleak', 'lee']; // (v16 L4: the floor's character, src/height/floor.js)
+const BIOME_KEYS = ['moor', 'heath', 'wood', 'marsh', 'shore', 'rock', 'ice', 'orchard', 'crystal', 'glacier', 'wet', 'bleak', 'lee', 'wood0']; // (v16 L4: the floor's character, src/height/floor.js; v18-F1: wood0, the old wood alone)
 
 export function makeGround(ctx) {
   const { terrain, landmarks: L, water } = ctx;
@@ -89,7 +90,7 @@ export function makeGround(ctx) {
     grid.moor[k] = b.moor; grid.heath[k] = b.heath; grid.wood[k] = b.wood; grid.marsh[k] = b.marsh;
     grid.shore[k] = b.shore; grid.rock[k] = b.rock; grid.ice[k] = b.ice; grid.orchard[k] = b.orchard;
     grid.crystal[k] = b.crystal; grid.glacier[k] = terrain.glacierMask(x, z);
-    grid.wet[k] = b.wet ?? 0; grid.bleak[k] = b.bleak ?? 0; grid.lee[k] = b.lee ?? 0;
+    grid.wet[k] = b.wet ?? 0; grid.bleak[k] = b.bleak ?? 0; grid.lee[k] = b.lee ?? 0; grid.wood0[k] = b.wood0 ?? b.wood;
   }
   // Bilinear biome lookup into a reusable object.
   const biome = {}; for (const k of BIOME_KEYS) biome[k] = 0;
@@ -171,8 +172,18 @@ export function makeGround(ctx) {
   const TOWER_HIDE = new URL(location.href).searchParams.get('tower') === 'v2' ? 12 : 17;
   // (v16 L5) a tree or a bush within a body's width (0.6 m) of a stand on the settings map: the visitor put down there
   // would stand in it (L3's reshuffle put two by the Laid Sun and the Collation's gap; tools/rocks-test.mjs)
-  const STAND_XZ = STANDS.filter((p) => p.x !== undefined).map((p) => [p.x, p.z]);
-  const standNear = (x, z, r) => STAND_XZ.some(([px, pz]) => (x - px) ** 2 + (z - pz) ** 2 < (r + 0.6) ** 2);
+  // (v18-F1: and along the first 4.5 m it looks down, a body's width and a metre either side: settings-test asks that no
+  // collider shuts the view within 3 m and nothing drawn meets its centre within 2 m, and a reshuffle stood a tree there)
+  const STAND_XZ = STANDS.filter((p) => p.x !== undefined).map((p) => {
+    const yaw = p.look === 'sun' ? Math.atan2(-SUN.dir.x, -SUN.dir.z) : p.look ? Math.atan2(-(p.look.x - p.x), -(p.look.z - p.z)) : p.yaw ?? null;
+    return [p.x, p.z, yaw == null ? 0 : -Math.sin(yaw), yaw == null ? 0 : -Math.cos(yaw)];
+  });
+  const standNear = (x, z, r) => STAND_XZ.some(([px, pz, fx, fz]) => {
+    const ex = x - px, ez = z - pz;
+    if (ex * ex + ez * ez < (r + 0.6) ** 2) return true;
+    const along = ex * fx + ez * fz; // (0 when the stand has no look)
+    return along > 0 && along < 4.5 + r && Math.abs(ex * fz - ez * fx) < r + 1.0;
+  });
   const hiddenAt = (x, z, r = 0) => d2(x, z, L.court) < 39 * 39 || d2(x, z, L.tower) < TOWER_HIDE * TOWER_HIDE || d2(x, z, L.arcature) < L.arcature.r * L.arcature.r || d2(x, z, L.moraine) < MOTHER_FOOT * MOTHER_FOOT || plinthsClear(x, z) || naveClear(x, z) || stairClear(x, z, 1.5) || collationTreeClear(x, z) || !!claimedBy(x, z, r, 'trees') || standNear(x, z, r) || inV17Water(x, z); // (v16 L5: r, the collider's footprint)
   return { heightAt, normalAt, slopeAt, wetAt, biomeAt, waterDepth, waterNear, excluded, hiddenAt, causewayDistance: terrain.causewayDistance, wornAt: (x, z) => Math.max(wornAt(x, z), stillWorn(x, z)), leadNear: (x, z) => leadNear(x, z) || stillNear(x, z) }; // v7: the cover (not the trees: excluded() reads the routes' own) is worn off round the Sleeper
 }
