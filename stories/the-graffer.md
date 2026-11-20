@@ -14,7 +14,7 @@ Six people of a rich house were laid in a vault under the wood: a lady with her 
 
 | # | Where | What the visitor finds | What it tells them alone | What points on | State |
 |---|---|---|---|---|---|
-| 1 | The wood way, about (-205, 128), looking west | Coloured light between the trunks, where the wood is otherwise black and teal | Something is lit in there | A spur marked with foxfire | written |
+| 1 | The wood way, about (-205, 128), looking west | Coloured light between the trunks, where the wood is otherwise black and teal | Something is lit in there | A spur marked with foxfire (P57, built: a knot of pale fungus on the trunks at its mouth, then a clump at a time to the door; a few trunks thinned off the line west to the glass, the canopy left whole) | spur built (F1); the light is F2's |
 | 2 | The Florilegium (-265, 126) | A glasshouse of many-coloured panes, lit from inside, its door locked with the key hanging inside. Six flowers the size and shape of people stand in tubs; their heads turn to follow you round the glass. A seventh tub has a sprout | People grown as flowers; they know you are there | Roots through the floor; a grate in the paving outside, dark below | written |
 | 3 | The Lower Beds, door at (-249, 172) | A vault door in a bank. Six tombs, each lid an effigy: the fan, the sword, the hoop, the cup, the pair, the hawk. Each lid is cracked and a root as thick as an arm comes down through the roof into it | The flowers are these dead, grown back | A passage north, the roots running along its roof | written |
 | 4 | The chamber under the glasshouse (-265, 126) | A round room; overhead a grate, coloured light through it and the undersides of the tubs. A seventh tomb, open, empty, its lid half carved with a stooped figure, a watering can set on it | He meant to follow them; the sprout above is his | | written |
@@ -36,3 +36,4 @@ Whether the Graffer is in the seventh tomb's pot by his own doing, or is simply 
 ## Log
 
 - 2026-11-20, the orchestrator (v18's plan): written from the owner's issue #18.
+- 2026-11-20, F1 (`issue-1801-reach`): the three spurs built as leads P57 (to the glasshouse's door), P58 (to the Lower Beds' door) and P59 (north through the neck into the new lobe, to the stilters' glade), each marked only by foxfire; P33, the trod west out of the wood, now goes round the south of the glasshouse instead of through it.
