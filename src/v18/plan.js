@@ -27,7 +27,7 @@ export const GROVE = { x: -198, z: 22, r: 22 };
 // F4: the stilters: where each starts (bearing in radians from north toward east, metres from the grove's middle), how
 // tall, how many legs; the asleep one never moves. `leash`: none strays further than this from the grove's middle.
 export const STILTERS = {
-  leash: 34, near: 7, keep: 6, ring: 7.5, gap: 1.6,
+  leash: 34, near: 5.5, keep: 7, ring: 8, gap: 1.6,
   list: [
     { a: 0.6, d: 12, h: 12.5, legs: 2 },
     { a: 2.3, d: 15, h: 10.5, legs: 3 },

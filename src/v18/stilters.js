@@ -5,7 +5,7 @@
 // so standing still they pass for its trees.
 //
 // They move only when nobody is looking: a stilter outside a widened view (the camera's frustum with its vertical field
-// 26 degrees wider and its aspect 1.2x, so the frame's edge is never a seam: a phone's tall view included), and not
+// 16 degrees wider and its aspect 1.1x, so the frame's edge is never a seam: a phone's tall view included), and not
 // within STILTERS.near of the visitor, takes a step every few seconds: nearer, round behind the visitor, or only turns to
 // face them. Never into the widened view, never within STILTERS.keep of the visitor, never within 4 m of a track's
 // middle, of a trunk, or of each other, never further than the leash from the grove. In the sun's gutter, at the dark's
@@ -166,7 +166,24 @@ export function growStilter(rng, spec) {
       sk.moss.push({ p: V(Math.cos(a) * bodyR * 0.8, bodyY + rng() * 1.6, Math.sin(a) * bodyR * 0.8), len: 1.4 + rng() * 2.2, w: 0.5 + rng() * 0.5, ang: a });
     }
   }
+  sk.spheres = boundSpheres(sk);
   return sk;
+}
+
+// what it occupies, as a few dozen spheres in its own frame: one round each limb, each leaf cluster, each hank of moss,
+// the face and the nest. The test of whether it can be seen is these against the view (stilters can be seen past their
+// arms' reach: a box round them is most of a clearing)
+function boundSpheres(sk) {
+  const out = [];
+  for (const L of sk.limbs) {
+    let x0 = Infinity, y0 = Infinity, z0 = Infinity, x1 = -Infinity, y1 = -Infinity, z1 = -Infinity, r = 0;
+    for (const p of L.pts) { x0 = Math.min(x0, p.x); x1 = Math.max(x1, p.x); y0 = Math.min(y0, p.y); y1 = Math.max(y1, p.y); z0 = Math.min(z0, p.z); z1 = Math.max(z1, p.z); r = Math.max(r, p.r * (1 + (p.wob || 0))); }
+    out.push([(x0 + x1) / 2, (y0 + y1) / 2, (z0 + z1) / 2, Math.hypot(x1 - x0, y1 - y0, z1 - z0) / 2 + r * 1.6]);
+  }
+  for (const L of sk.leaves) out.push([L.p.x, L.p.y + L.s * 0.2, L.p.z, L.s * 0.85]);
+  for (const M of sk.moss) out.push([M.p.x, M.p.y - M.len / 2, M.p.z, M.len / 2 + M.w]);
+  if (sk.nest) out.push([sk.nest.x, sk.nest.y, sk.nest.z, sk.nest.r * 1.5]);
+  return out;
 }
 
 export function meshStilter(sk, colors, rng, detail = 'hi') {
@@ -293,7 +310,7 @@ export function buildStilters(ctx, { leadAt = null, exitAt = null, trees = [] } 
   const offTrees = (x, z) => { for (const t of trees) if (hyp(t.x - x, t.z - z) < 3.6) return false; return true; };
   const inLeash = (x, z) => hyp(x - GROVE.x, z - GROVE.z) < S.leash;
   const dry = (x, z) => { const wl = terrain.waterLevelAt(x, z); return wl === null || terrain.heightAt(x, z) > wl + 0.4; };
-  const apart = (x, z, me) => { for (const o of list) if (o !== me && hyp(o.x - x, o.z - z) < 6.5) return false; return true; };
+  const apart = (x, z, me) => { for (const o of list) if (o !== me && hyp(o.x - x, o.z - z) < 5.5) return false; return true; };
   const ground = (x, z) => terrain.heightAt(x, z);
 
   S.list.forEach((spec, i) => {
@@ -326,12 +343,25 @@ export function buildStilters(ctx, { leadAt = null, exitAt = null, trees = [] } 
   // the widened view: the camera's own, its field and aspect opened out so nothing moves at the frame's edge
   const wide = new THREE.PerspectiveCamera(70, 1, 0.1, 600), fr = new THREE.Frustum(), pm = new THREE.Matrix4(), sph = new THREE.Sphere();
   function updateWide() {
-    wide.fov = Math.min(camera.fov + 26, 150); wide.aspect = camera.aspect * 1.2; wide.near = 0.1; wide.far = 600;
+    wide.fov = Math.min(camera.fov + 16, 150); wide.aspect = camera.aspect * 1.1; wide.near = 0.1; wide.far = 600;
     wide.updateProjectionMatrix();
     wide.position.copy(camera.position); wide.quaternion.copy(camera.quaternion); wide.updateMatrixWorld(true);
     pm.multiplyMatrices(wide.projectionMatrix, wide.matrixWorldInverse); fr.setFromProjectionMatrix(pm);
   }
-  const seenAt = (x, z, h) => { sph.center.set(x, ground(x, z) + h * 0.55, z); sph.radius = h * 0.62 + 1.5; return fr.intersectsSphere(sph); };
+  // what it occupies as it would stand there facing `yaw`: its spheres turned and set down, 1.5 m more each, against the
+  // widened view; the whole first (one sphere round them all), then each
+  for (const st of list) { const b = st.mesh.geometry.boundingSphere; st.bound = { y: b.center.y, r: b.radius + hyp(b.center.x, b.center.z) + 1.5 }; }
+  const seenAt = (x, z, st, yaw = st.yaw) => {
+    const y = ground(x, z);
+    sph.center.set(x, y + st.bound.y, z); sph.radius = st.bound.r;
+    if (!fr.intersectsSphere(sph)) return false;
+    const c = Math.cos(yaw), s = Math.sin(yaw);
+    for (const [lx, ly, lz, r] of st.sk.spheres) {
+      sph.center.set(x + lx * c + lz * s, y + ly, z - lx * s + lz * c); sph.radius = r + 1.5;
+      if (fr.intersectsSphere(sph)) return true;
+    }
+    return false;
+  };
   const faceYaw = (x, z) => Math.atan2(cam.x - x, cam.z - z);
   const fine = (st, x, z) => inLeash(x, z) && hyp(x - cam.x, z - cam.z) >= S.keep && offTrack(x, z) && offTrees(x, z) && dry(x, z) && apart(x, z, st);
 
@@ -341,7 +371,7 @@ export function buildStilters(ctx, { leadAt = null, exitAt = null, trees = [] } 
   };
 
   let cool = 0, ringHold = 0, ringed = false;
-  const state = { list, ring: null, steps: 0, rings: 0, frozen: false };
+  const state = { list, ring: null, steps: 0, rings: 0, frozen: false, why: { fine: 0, seen: 0 } };
 
   function step(st) {
     const vx = cam.x, vz = cam.z, d = hyp(st.x - vx, st.z - vz), inGrove = hyp(vx - GROVE.x, vz - GROVE.z) < S.leash + 20;
@@ -354,11 +384,11 @@ export function buildStilters(ctx, { leadAt = null, exitAt = null, trees = [] } 
       if (hd < 1) return false;
       const k = Math.min(1, 3.5 / hd);
       tries.push([st.x + (st.home.x - st.x) * k, st.z + (st.home.z - st.z) * k]);
-    } else if (r < 0.22) {
+    } else if (r < 0.2) {
       tries = null; // only turn
-    } else if (r < 0.62) {
-      // nearer, but never inside the near ring
-      const want = Math.max(S.near + 1.5, d - (2.5 + rng() * 2));
+    } else if (r < 0.6 && d > S.keep + 3) {
+      // nearer, but never inside the keep
+      const want = Math.max(S.keep + 1, d - (2.5 + rng() * 2));
       for (let k = 0; k < 8; k++) {
         const a = Math.atan2(st.x - vx, st.z - vz) + (rng() - 0.5) * 0.7;
         tries.push([vx + Math.sin(a) * want, vz + Math.cos(a) * want]);
@@ -367,18 +397,20 @@ export function buildStilters(ctx, { leadAt = null, exitAt = null, trees = [] } 
       // round behind the visitor's back
       const back = ctx.player.yaw; // the look is (-sin yaw, -cos yaw): behind is the bearing yaw itself
       for (let k = 0; k < 10; k++) {
-        const a = back + (rng() - 0.5) * 1.6, dd = 9 + rng() * 6;
+        const a = back + (rng() - 0.5) * 2.4, dd = 8.5 + rng() * 8;
         tries.push([vx + Math.sin(a) * dd, vz + Math.cos(a) * dd]);
       }
     }
     if (tries) for (const [x, z] of tries) {
-      if (!fine(st, x, z) || seenAt(x, z, st.h)) continue;
-      st.x = x; st.z = z; st.yaw = faceYaw(x, z) + (rng() - 0.5) * 0.3;
+      const ny = faceYaw(x, z) + (rng() - 0.5) * 0.3;
+      if (!fine(st, x, z)) { state.why.fine++; continue; }
+      if (seenAt(x, z, st, ny)) { state.why.seen++; continue; }
+      st.x = x; st.z = z; st.yaw = ny;
       place(st); st.steps++; state.steps++; ev(st, 'step', from);
       return true;
     }
     const y = faceYaw(st.x, st.z);
-    if (Math.abs(Math.atan2(Math.sin(y - st.yaw), Math.cos(y - st.yaw))) < 0.25) return false;
+    if (Math.abs(Math.atan2(Math.sin(y - st.yaw), Math.cos(y - st.yaw))) < 0.25 || seenAt(st.x, st.z, st, y)) return false;
     st.yaw = y; place(st); st.turns++; ev(st, 'turn', from);
     return true;
   }
@@ -391,15 +423,17 @@ export function buildStilters(ctx, { leadAt = null, exitAt = null, trees = [] } 
     const woke = list.filter((s) => !s.asleep);
     const span = Math.PI * 2 - S.gap;
     const placed = [];
+    const taken = list.filter((s) => s.asleep).map((s) => [s.x, s.z]);
+    const clear = (x, z) => taken.every(([tx, tz]) => hyp(tx - x, tz - z) >= 6);
     woke.forEach((st, k) => {
       const base = gap + S.gap / 2 + ((k + 0.5) / woke.length) * span;
       const from = { x: st.x, z: st.z };
-      for (let t = 0; t < 24; t++) {
-        const a = base + (t ? (rng() - 0.5) * 0.35 : 0), rr = S.ring + (t ? (rng() - 0.3) * 2.5 : 0);
+      for (let t = 0; t < 40; t++) {
+        const a = base + (t ? (rng() - 0.5) * (0.4 + t * 0.04) : 0), rr = S.ring + (t ? (rng() - 0.3) * 3.5 : 0);
         const x = vx + Math.sin(a) * rr, z = vz + Math.cos(a) * rr;
-        if (hyp(x - vx, z - vz) < S.keep || !offTrack(x, z) || !offTrees(x, z) || !dry(x, z) || !apart(x, z, st)) continue;
+        if (hyp(x - vx, z - vz) < S.keep || !offTrack(x, z) || !offTrees(x, z) || !dry(x, z) || !clear(x, z)) continue;
         st.x = x; st.z = z; st.yaw = faceYaw(x, z); place(st); st.steps++; state.steps++; ev(st, 'ring', from);
-        placed.push({ i: st.i, a, r: rr });
+        taken.push([x, z]); placed.push({ i: st.i, a, r: rr });
         break;
       }
     });
@@ -412,7 +446,7 @@ export function buildStilters(ctx, { leadAt = null, exitAt = null, trees = [] } 
     updateWide();
     const f = ctx.sky?.flicker, dark = f?.dark ?? 0;
     const vx = cam.x, vz = cam.z, inGrove = hyp(vx - GROVE.x, vz - GROVE.z) < GROVE.r + 8;
-    for (const st of list) st.inView = seenAt(st.x, st.z, st.h);
+    for (const st of list) st.inView = seenAt(st.x, st.z, st);
     if (dark > 0.85 && inGrove && !ringed) { ringed = true; ring(); ringHold = 20; return; }
     if (dark < 0.3) ringed = false;
     if (ringHold > 0) { if (dark < 0.5) ringHold -= dt; if (hyp(vx - state.ring.x, vz - state.ring.z) > 6) ringHold = 0; return; }

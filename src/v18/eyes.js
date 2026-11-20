@@ -13,11 +13,11 @@ import { hyp } from '../noise.js';
 
 // kind: eye gap (m), height over the ground (m), eye size (m), count, colour (linear, pre-tonemap)
 export const EYE_KINDS = [
-  { id: 'small', gap: 0.07, y: 0.22, s: 0.035, n: 2, col: [1.2, 1.25, 0.85] },
-  { id: 'fox', gap: 0.12, y: 0.45, s: 0.045, n: 2, col: [1.35, 1.1, 0.55] },
-  { id: 'low', gap: 0.2, y: 0.12, s: 0.04, n: 2, col: [0.85, 1.25, 1.1], slant: 0.05 },
-  { id: 'high', gap: 0.1, y: 2.6, s: 0.04, n: 2, col: [1.25, 1.2, 1.0] },
-  { id: 'three', gap: 0.11, y: 0.6, s: 0.042, n: 3, col: [1.1, 1.25, 1.0] },
+  { id: 'small', gap: 0.07, y: 0.22, s: 0.035, n: 2, col: [1.5, 1.55, 1.05] },
+  { id: 'fox', gap: 0.12, y: 0.45, s: 0.045, n: 2, col: [1.7, 1.4, 0.7] },
+  { id: 'low', gap: 0.2, y: 0.12, s: 0.04, n: 2, col: [1.1, 1.6, 1.4], slant: 0.05 },
+  { id: 'high', gap: 0.1, y: 2.6, s: 0.04, n: 2, col: [1.6, 1.5, 1.25] },
+  { id: 'three', gap: 0.11, y: 0.6, s: 0.042, n: 3, col: [1.4, 1.6, 1.25] },
 ];
 const MAXW = 4, SHUT = 0.24; // watchers; radians off the look at which they shut
 
@@ -52,11 +52,12 @@ export function buildEyes(ctx, { leadAt = null, woodTrees = [] } = {}) {
 
   // the points: every watcher has room for three eyes; an eye a watcher's kind does not use sits at size 0
   const N = W * 3;
-  const pos = new Float32Array(N * 3), aW = new Float32Array(N), aS = new Float32Array(N), aC = new Float32Array(N * 3);
+  const pos = new Float32Array(N * 3), off = new Float32Array(N * 3), aW = new Float32Array(N), aS = new Float32Array(N), aC = new Float32Array(N * 3);
   for (let i = 0; i < N; i++) aW[i] = Math.floor(i / 3);
   const geo = new THREE.BufferGeometry();
   geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
   geo.setAttribute('aW', new THREE.BufferAttribute(aW, 1));
+  geo.setAttribute('aOff', new THREE.BufferAttribute(off, 3));
   geo.setAttribute('aS', new THREE.BufferAttribute(aS, 1));
   geo.setAttribute('aC', new THREE.BufferAttribute(aC, 3));
   const uOpen = { value: new Array(MAXW).fill(0) }, uSink = { value: new Array(MAXW).fill(0) }, uScale = { value: 400 };
@@ -64,18 +65,21 @@ export function buildEyes(ctx, { leadAt = null, woodTrees = [] } = {}) {
     uniforms: THREE.UniformsUtils.merge([THREE.UniformsLib.fog, {}]),
     vertexShader: /* glsl */`
       uniform float uOpen[${MAXW}]; uniform float uSink[${MAXW}]; uniform float uScale;
-      attribute float aW; attribute float aS; attribute vec3 aC;
+      attribute float aW; attribute float aS; attribute vec3 aC; attribute vec3 aOff;
       varying float vOpen; varying vec3 vC;
       #include <fog_pars_vertex>
       void main() {
         int w = int(aW + 0.5);
         float open = uOpen[w];
-        vec3 transformed = position - vec3(0.0, uSink[w] * 0.35, 0.0);
+        // the eyes apart by their gap, or by 3.5 px from their middle when that is more: a pair still reads as two at 40 m
+        float dc = max(-(modelViewMatrix * vec4(position, 1.0)).z, 0.1), lo = length(aOff);
+        float k = lo > 0.0 ? max(1.0, 3.5 * dc / uScale / lo) : 1.0;
+        vec3 transformed = position + aOff * k - vec3(0.0, uSink[w] * 0.35, 0.0);
         vec4 mvPosition = modelViewMatrix * vec4(transformed, 1.0);
         gl_Position = projectionMatrix * mvPosition;
         float depth = -mvPosition.z;
         vOpen = open; vC = aC;
-        gl_PointSize = aS <= 0.0 || open <= 0.01 ? 0.0 : clamp(aS * 2.2 * uScale / max(depth, 0.1), 2.6, 9.0);
+        gl_PointSize = aS <= 0.0 || open <= 0.01 ? 0.0 : clamp(aS * 2.4 * uScale / max(depth, 0.1), 3.2, 9.0);
         #include <fog_vertex>
       }`,
     fragmentShader: /* glsl */`
@@ -127,10 +131,10 @@ export function buildEyes(ctx, { leadAt = null, woodTrees = [] } = {}) {
         if (e >= kind.n) { aS[i] = 0; continue; }
         const o = kind.n === 3 ? (e - 1) * kind.gap : (e - 0.5) * kind.gap;
         const dy = kind.n === 3 && e === 1 ? kind.gap * 0.55 : (kind.slant || 0) * (e - 0.5) * 2;
-        pos[i * 3] = s.x + px * o; pos[i * 3 + 1] = y + dy; pos[i * 3 + 2] = s.z + pz * o;
+        pos[i * 3] = s.x; pos[i * 3 + 1] = y; pos[i * 3 + 2] = s.z; off[i * 3] = px * o; off[i * 3 + 1] = dy; off[i * 3 + 2] = pz * o;
         aS[i] = kind.s; aC.set(kind.col, i * 3);
       }
-      geo.attributes.position.needsUpdate = geo.attributes.aS.needsUpdate = geo.attributes.aC.needsUpdate = true;
+      geo.attributes.position.needsUpdate = geo.attributes.aOff.needsUpdate = geo.attributes.aS.needsUpdate = geo.attributes.aC.needsUpdate = true;
       return true;
     }
     return false;
@@ -171,8 +175,8 @@ export function buildEyes(ctx, { leadAt = null, woodTrees = [] } = {}) {
     const Wt = watchers[w], kind = EYE_KINDS[k], y = terrain.heightAt(x, z) + kind.y;
     Wt.kind = kind; Wt.x = x; Wt.z = z; Wt.y = y; Wt.mode = 'open'; Wt.open = 1; Wt.sink = 0; Wt.blink = 99; Wt.how = 'shut';
     const a = Math.atan2(x - cam.x, z - cam.z), px = Math.cos(a), pz = -Math.sin(a);
-    for (let e = 0; e < 3; e++) { const i = w * 3 + e; if (e >= kind.n) { aS[i] = 0; continue; } const o = (e - (kind.n - 1) / 2) * kind.gap; pos[i * 3] = x + px * o; pos[i * 3 + 1] = y; pos[i * 3 + 2] = z + pz * o; aS[i] = kind.s; aC.set(kind.col, i * 3); }
-    geo.attributes.position.needsUpdate = geo.attributes.aS.needsUpdate = geo.attributes.aC.needsUpdate = true;
+    for (let e = 0; e < 3; e++) { const i = w * 3 + e; if (e >= kind.n) { aS[i] = 0; continue; } const o = (e - (kind.n - 1) / 2) * kind.gap; pos[i * 3] = x; pos[i * 3 + 1] = y; pos[i * 3 + 2] = z; off[i * 3] = px * o; off[i * 3 + 1] = 0; off[i * 3 + 2] = pz * o; aS[i] = kind.s; aC.set(kind.col, i * 3); }
+    geo.attributes.position.needsUpdate = geo.attributes.aOff.needsUpdate = geo.attributes.aS.needsUpdate = geo.attributes.aC.needsUpdate = true;
   };
   return state;
 }
