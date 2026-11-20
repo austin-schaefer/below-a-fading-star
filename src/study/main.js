@@ -136,7 +136,7 @@ async function buildSubjects() {
         const r = (await def.build(S.ctx)) || {};
         sub.at = r.at || ((out) => out.set(guess[0], 0, guess[1]));
         sub.face = r.face || null; sub.floor = r.floor; sub.fly = !!def.fly || !!r.fly;
-        sub.ground = r.ground !== false;
+        sub.ground = r.ground !== false; sub.el = r.el ?? def.el;
         if (r.h) sub.h = r.h;
         sub.ok = true;
       } catch (e) {
@@ -237,7 +237,7 @@ function aim(s) {
   const fovV = THREE.MathUtils.degToRad(cam.fov), fit = Math.max(span / (2 * Math.tan(fovV / 2)), span / (2 * Math.tan(fovV / 2) * cam.aspect));
   const dist = fit * 1.25 * view.zoom * FAR + (s.kind === 'recipe' ? 0 : 0.25);
   const face = s.face ? s.face() : 0.7;
-  const b = face + (s.face ? 0.6 : 0) + view.turn, el = s.kind === 'recipe' ? 0.32 : 0.14;
+  const b = face + (s.face ? 0.6 : 0) + view.turn, el = s.el ?? (s.kind === 'recipe' ? 0.32 : 0.14);
   C0.set(T0.x, T0.y + mid, T0.z);
   cam.position.set(C0.x + Math.sin(b) * Math.cos(el) * dist, C0.y + Math.sin(el) * dist, C0.z + Math.cos(b) * Math.cos(el) * dist);
   cam.lookAt(C0);

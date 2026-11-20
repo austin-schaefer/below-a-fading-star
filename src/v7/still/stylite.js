@@ -201,3 +201,16 @@ export async function buildStylite(ctx, G) {
   api.stats = () => ({ calls: 2, tris: Math.round(geo.index.count / 3 + ri.length / 3) });
   return api;
 }
+
+// The study page (src/study/registry.js): the Stylite on a stand-in tor (no tor: he sits 10 m up, as the walk puts
+// him when the High Ling has none), his basket below.
+export const study = [{
+  id: 'stylite', name: 'the Stylite', kind: 'figure', h: 1.6, fly: true, at: [0, 0],
+  async build(ctx) {
+    const { makeGround } = await import('../../fauna/uncanny/kit.js');
+    const s = await buildStylite(ctx, makeGround(ctx)); ctx.registerUpdate(s.update);
+    const tor = new THREE.Mesh(new THREE.CylinderGeometry(0.9, 1.6, s.seat.y, 9), new THREE.MeshStandardMaterial({ color: '#6a655c', roughness: 0.95 }));
+    tor.position.set(s.seat.x, s.seat.y / 2 - 0.05, s.seat.z); tor.castShadow = tor.receiveShadow = true; ctx.scene.add(tor);
+    return { at: (o) => o.set(s.seat.x, s.seat.y + 0.5, s.seat.z), face: () => Math.atan2(s.face[0], s.face[1]) };
+  },
+}];

@@ -247,3 +247,13 @@ export function buildSleeper(ctx, G, flags) {
   return api;
 }
 const hyp3 = (a, b) => Math.sqrt((a[0] - b[0]) ** 2 + (a[1] - b[1]) ** 2 + (a[2] - b[2]) ** 2);
+
+// The study page (src/study/registry.js): the Long Sleeper under his medlar, breathing.
+export const study = [{
+  id: 'sleeper', name: 'the Long Sleeper', kind: 'figure', h: 1.2, el: 0.6, at: [0, 0],
+  async build(ctx) {
+    const { makeGround } = await import('../../fauna/uncanny/kit.js');
+    const s = buildSleeper(ctx, makeGround(ctx), {}); ctx.registerUpdate(s.update);
+    return { at: (o) => o.set(s.centre.x, 0, s.centre.z), face: () => s.yaw + Math.PI / 2 };
+  },
+}];
