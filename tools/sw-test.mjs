@@ -14,7 +14,8 @@
 // tab's cache is kept while it lives and dropped after; two tabs on one commit keep their bindings through a stopped
 // worker; a slow commit.json (past 1.5 s) and offline serve the last release whole; commit.json as HTML goes to the
 // network; a first visit whose fill reads an older page files it under that page's commit; a cut-off or error answer
-// is not kept; a Worker's imports are its page's release; bindings lost mean a reload, never a pass-through; a host
+// is not kept; a Worker's imports are its page's release; bindings lost mean a reload, never a pass-through; another
+// page in the scope (listen.html) gets the plain network; a host
 // that stops stamping, and a replacement sw.js that removes itself, leave no worker and no cache; ?sw=0 likewise.
 import { ANGLE } from './launch.mjs';
 import { readFileSync, existsSync } from 'node:fs';
@@ -64,6 +65,9 @@ const site = (v) => ({
   '/src/w.js': `import { v as wb } from './wb.js'; import { v as wc } from './wc.js'; postMessage({ w: '${v}', wb, wc, files: performance.getEntriesByType('resource').map((e) => e.name) });\n`,
   '/src/wb.js': `export const v = '${v}';\n`,
   '/src/wc.js': `export const v = '${v}';\n`,
+  // a second page in the worker's scope that is not the walk's (listen.html, v17.1): its own module under src/
+  '/listen.html': `<!doctype html><meta charset="utf-8"><title>other ${v}</title><script type="module" src="./src/other.js"></script><body>`,
+  '/src/other.js': `window.__other = '${v}'; window.__got = await fetch('./src/same.js').then((r) => r.ok, () => false);\n`,
   '/commit.json': JSON.stringify({ commit: v }),
 });
 // a replacement sw.js that takes itself and its caches away (DEPLOY.md, "Turning it off")
@@ -157,6 +161,24 @@ try {
   let c = await cachesOf(page);
   check(sw?.filled?.commit === cur && sw.filled.kept >= 4, 'first visit: the worker kept what the page fetched, from the HTTP cache', JSON.stringify(sw?.filled));
   check((c[`fp1-${cur}`] || []).includes('/src/late.js') && !(c[`fp1-${cur}`] || []).some((p) => /commit\.json|probe/.test(p)), 'the cache holds the dynamic import, not commit.json or the probe', (c[`fp1-${cur}`] || []).join(' '));
+
+  // 1b. another page in the scope (listen.html): the worker controls it but it is not the walk's page, so its files
+  // under src/ and vendor/ come from the plain network: never an error, never the cache, never kept, twice over
+  {
+    const other = await ctx.newPage(), errs = [];
+    other.on('pageerror', (e) => errs.push(e.message)); other.on('requestfailed', (r) => errs.push('failed ' + new URL(r.url()).pathname));
+    for (const n of [1, 2]) {
+      reset();
+      await other.goto(`${B}/listen.html`);
+      for (let i = 0; i < 30 && !(await other.evaluate(() => window.__other).catch(() => null)); i++) await sleep(100);
+      const o = await other.evaluate(() => ({ v: window.__other || null, got: window.__got, controlled: !!navigator.serviceWorker.controller })), r = reqs();
+      check(o.controlled && o.v === cur && o.got === true && errs.length === 0 && r['/src/other.js'] >= 1 && r['/src/same.js'] >= 1, `a page that is not the walk's, under the worker (visit ${n}): its module and its fetch come from the network`, `${JSON.stringify(o)} ${fmt(r)} ${errs.join(' ')}`);
+    }
+    const kept = (await cachesOf(page))[`fp1-${cur}`] || [];
+    check(!kept.includes('/src/other.js') && !kept.includes('/listen.html'), 'and nothing of it is kept', kept.join(' '));
+    await dump(other);
+    await other.close();
+  }
 
   // 2. the second visit of the same commit
   reset();

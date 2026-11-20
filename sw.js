@@ -22,7 +22,8 @@
 //   the HTTP cache, and if that is another commit too, the request fails and the page is told to reload
 //   ('fp-stale'): it never runs a module from another release. index.html allows one such reload per page; a
 //   second turns the worker off. A page the worker cannot place (no binding) gets the same; a request with no
-//   client at all passes through, unkept.
+//   client at all passes through, unkept, and so does every request from a page in the scope that is not the
+//   walk's (listen.html): the worker binds only the walk's page and has no release to keep whole for another.
 // - Kept: only full 200 same-origin answers (no 206, no redirect, no error) for the page, src/, vendor/ and the two
 //   icons, whose stamp matches; never commit.json, sw.js, a query string, anything cross-origin (there is none: the
 //   type is vendor/fonts/). A fetch that fails or is cut off mid-body is not kept (cache.put rejects). The page is kept
@@ -239,6 +240,11 @@ async function file(event, url) {
       const r = await fetch(new Request(event.request, { cache: 'reload' })).catch(() => null);
       return full(r) && latest && stampOf(r) === latest ? r : Response.error();
     }
+    // a window that is not the walk's page (listen.html: this worker controls every page in its scope, and binds only
+    // the walk's): no release to keep whole, so its files are the plain network's, never the cache's, never kept
+    let other = false;
+    try { other = !!c && !isPage(new URL(c.url)); } catch { /* a client with no URL: treated as the walk's */ }
+    if (other) { T('other page', event.clientId.slice(0, 4), url.pathname); return fetch(event.request); }
     return sendRound(event.clientId, null, url.pathname + ' from a page of unknown release');
   }
   if (!b.commit) return fetch(event.request); // this page's release is unknown to the network too: as if no worker
